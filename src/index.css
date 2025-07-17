@@ -1,0 +1,14 @@
+@import "tailwindcss";
+
+@theme {
+  /* Fuentes personalizadas */
+  --font-sans: "Inter", sans-serif;
+  --font-serif: "Merriweather", serif;
+  --font-mono: "Menlo", monospace;
+
+  /* Colores personalizados */
+  --color-primary-blue-nav: #1b2440;
+  --color-secondary-blue-nav: #2c3e6e;
+  --color-secondary-yellow-nav: #d9a711;
+  --color-primary-blue-backwround: #010440;
+}
