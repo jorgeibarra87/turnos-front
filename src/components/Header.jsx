@@ -1,8 +1,12 @@
+import { CalendarRangeIcon } from 'lucide-react';
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 const Header = () => (
     <header className="bg-white shadow p-4 flex justify-between items-center">
-        <h1 className="text-xl font-bold text-gray-800">Gestión de Turnos</h1>
+        <Link to="/">
+            <h1 className="text-xl font-bold text-gray-800 flex items-center gap-1"><CalendarRangeIcon />APP TURNOS</h1>
+        </Link>
         <button className="text-sm text-red-600 hover:underline">Logout</button>
     </header>
 );
