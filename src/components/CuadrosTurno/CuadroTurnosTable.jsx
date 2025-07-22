@@ -3,7 +3,7 @@ import { Eye, Edit, Trash2, CopyPlusIcon, CopyPlus, UsersIcon, BoxesIcon } from 
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
-import CrearCuadro from './CuadrosTurno/CrearCuadro';
+import CrearCuadro from './CrearCuadro';
 
 export default function TurnosTable() {
     const [cuadros, setCuadros] = useState([]);
@@ -14,7 +14,7 @@ export default function TurnosTable() {
 
     const loadCuadros = async () => {
         const result = await axios.get("http://localhost:8080/cuadro-turnos");
-        console.log(result.data);
+        //console.log(result.data);
         setCuadros(result.data);
     };
     return (
