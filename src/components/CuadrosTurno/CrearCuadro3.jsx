@@ -7,7 +7,7 @@ export default function SiguientePaso() {
     const [searchParams] = useSearchParams();
     const categoria = searchParams.get('categoria');
     const seleccion = searchParams.get('seleccion');
-    const [selectedEquipo, setSelectedEquipo] = useState("");
+    const [selectedEquipo, setSelectedEquipo] = useState({ id: "", nombre: "" });
     const [equipos, setEquipos] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -19,9 +19,13 @@ export default function SiguientePaso() {
                 setError(null);
                 const response = await axios.get('http://localhost:8080/equipo');
 
-                // Verificar que la respuesta tenga datos
                 if (response.data && Array.isArray(response.data)) {
-                    setEquipos(response.data);
+                    // Asegurarnos de que los equipos tienen idEquipo y nombre
+                    const equiposFormateados = response.data.map(equipo => ({
+                        idEquipo: equipo.idEquipo || equipo.id || "",
+                        nombre: equipo.nombre || equipo.descripcion || "Sin nombre"
+                    }));
+                    setEquipos(equiposFormateados);
                 } else {
                     setEquipos([]);
                     console.warn('La respuesta no contiene un array de equipos');
@@ -36,26 +40,34 @@ export default function SiguientePaso() {
             }
         };
 
-        // Cargar equipos al montar el componente
         fetchEquipos();
-    }, []); // Solo se ejecuta una vez al montar
+    }, []);
 
     const handleEquipoChange = (e) => {
-        setSelectedEquipo(e.target.value);
+        const equipoId = e.target.value;
+        const equipoSeleccionado = equipos.find(equipo => equipo.idEquipo.toString() === equipoId.toString());
+
+        if (equipoSeleccionado) {
+            setSelectedEquipo({
+                id: equipoSeleccionado.idEquipo,
+                nombre: equipoSeleccionado.nombre
+            });
+        } else {
+            setSelectedEquipo({ id: "", nombre: "" });
+        }
     };
 
-    // Función para generar la URL del siguiente paso
     const getNextStepUrl = () => {
-        if (!selectedEquipo) return "#";
+        if (!selectedEquipo.id) return "#";
 
         const params = new URLSearchParams({
             categoria: categoria || '',
             seleccion: seleccion || '',
-            equipo: selectedEquipo
+            equipoId: selectedEquipo.id,
+            equipoNombre: selectedEquipo.nombre
         });
 
-        // Determinar la ruta según la categoría
-        const nextRoute = categoria === 'Multiproceso' ? '/crearCuadro4' : '/crearCuadro3';
+        const nextRoute = categoria === 'Multiproceso' ? '/crearCuadroMulti' : '/crearCuadro4';
         return `${nextRoute}?${params.toString()}`;
     };
 
@@ -64,7 +76,6 @@ export default function SiguientePaso() {
             <div className='bg-white p-8 rounded-lg flex flex-col justify-center items-center gap-5 max-w-lg w-full mx-4'>
                 <div className='text-3xl text-center font-bold'>Crear Cuadro de Turno</div>
 
-                {/* Mostrar información de selección previa */}
                 <div className='text-center space-y-2'>
                     <div className='text-lg font-semibold text-blue-600'>
                         Categoría: {categoria || 'No especificada'}
@@ -74,7 +85,6 @@ export default function SiguientePaso() {
                     </div>
                 </div>
 
-                {/* Selector de equipos */}
                 <div className="w-full">
                     <label htmlFor="equipo-select" className="block text-sm font-bold text-gray-700 mb-2">
                         Selecciona un Equipo
@@ -91,37 +101,32 @@ export default function SiguientePaso() {
                     ) : (
                         <select
                             id="equipo-select"
-                            value={selectedEquipo}
+                            value={selectedEquipo.id}
                             onChange={handleEquipoChange}
                             className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         >
                             <option value="">-- Selecciona un equipo --</option>
                             {equipos.map((equipo, index) => (
-                                <option key={equipo.id || index} value={equipo.nombre}>
+                                <option key={equipo.idEquipo || index} value={equipo.idEquipo}>
                                     {equipo.nombre}
                                 </option>
                             ))}
                         </select>
                     )}
 
-                    {selectedEquipo && (
-                        <p className="mt-2 text-xs text-green-600">
-                            Equipo seleccionado: <strong>{selectedEquipo}</strong>
-                        </p>
+                    {selectedEquipo.id && (
+                        <p className="text-xs font-semibold text-gray-700 p-2">Equipo seleccionado: {selectedEquipo.nombre}</p>
                     )}
                 </div>
 
-                {/* Botones de acción */}
                 <div className='flex justify-center items-center gap-4 mt-4'>
-
-                    <Link
-                        to={seleccion ? `/crearCuadro4?categoria=${categoria}&seleccion=${seleccion}&equipo=${selectedEquipo}` : "#"}>
+                    <Link to={getNextStepUrl()}>
                         <button
-                            className={`px-6 py-2 text-white rounded-lg flex justify-center items-center gap-2 transition-colors ${selectedEquipo
+                            className={`px-6 py-2 text-white rounded-lg flex justify-center items-center gap-2 transition-colors ${selectedEquipo.id
                                 ? 'bg-green-500 hover:bg-green-600'
                                 : 'bg-gray-400 cursor-not-allowed'
                                 }`}
-                            disabled={!selectedEquipo}
+                            disabled={!selectedEquipo.id}
                         >
                             <CheckIcon size={20} color="white" strokeWidth={2} />
                             Aceptar
