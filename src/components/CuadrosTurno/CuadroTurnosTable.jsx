@@ -40,9 +40,9 @@ export default function TurnosTable() {
                             <td className="p-3 text-xs">{cuadro.nombre}</td>
                             <td className="p-3 text-xs">{cuadro?.nombreEquipo || 'Sin equipo'}</td>
                             <td className="p-3 space-x-3">
-                                <button title="Ver"><Eye size={18} className="text-gray-600 hover:text-blue-600" /></button>
-                                <button title="Editar"><Edit size={18} className="text-gray-600 hover:text-yellow-600" /></button>
-                                <button title="Eliminar"><Trash2 size={18} className="text-gray-600 hover:text-red-600" /></button>
+                                <button title="Ver"><Eye size={18} className="text-green-600 hover:text-green-800" /></button>
+                                <button title="Editar"><Edit size={18} className="text-yellow-600 hover:text-yellow-800" /></button>
+                                <button title="Eliminar"><Trash2 size={18} className="text-red-600 hover:text-red-800" /></button>
                             </td>
                         </tr>
                     ))}

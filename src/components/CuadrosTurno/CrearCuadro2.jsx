@@ -6,11 +6,12 @@ import axios from 'axios';
 export default function SiguientePaso() {
     const [searchParams] = useSearchParams();
     const categoria = searchParams.get('categoria');
-    const [selectedOption, setSelectedOption] = useState("");
+    const [selectedOption, setSelectedOption] = useState(null);
     const [options, setOptions] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-
+    const [optionId, setOptionId] = useState('');
+    //console.log("Options:", options);
     useEffect(() => {
         const fetchOptions = async () => {
             try {
@@ -20,21 +21,27 @@ export default function SiguientePaso() {
                 switch (categoria) {
                     case 'Macroproceso':
                         endpoint = 'http://localhost:8080/macroprocesos';
+                        setOptionId('idMacroproceso');
                         break;
                     case 'Proceso':
                         endpoint = 'http://localhost:8080/procesos';
+                        setOptionId('idProceso');
                         break;
                     case 'Servicio':
                         endpoint = 'http://localhost:8080/servicio';
+                        setOptionId('idServicio');
                         break;
                     case 'Sección':
                         endpoint = 'http://localhost:8080/seccionesServicio';
+                        setOptionId('idSeccionServicio');
                         break;
                     case 'Subsección':
                         endpoint = 'http://localhost:8080/subseccionesServicio';
+                        setOptionId('idSubseccionServicio');
                         break;
                     case 'Multiproceso':
                         endpoint = 'http://localhost:8080/procesosAtencion';
+                        setOptionId('idProcesoAtencion');
                         break;
                     default:
                         break;
@@ -57,8 +64,14 @@ export default function SiguientePaso() {
         }
     }, [categoria]);
 
+    // const handleChange = (e) => {
+    //     setSelectedOption(e.target.value);
+    // };
+
     const handleChange = (e) => {
-        setSelectedOption(e.target.value);
+        const selectedId = e.target.value;
+        const selectedObj = options.find(option => option[optionId]?.toString() === selectedId);
+        setSelectedOption(selectedObj);
     };
 
     return (
@@ -82,21 +95,21 @@ export default function SiguientePaso() {
                     ) : (
                         <select
                             id="select"
-                            value={selectedOption}
+                            value={selectedOption ? selectedOption[optionId] : ''}
                             onChange={handleChange}
                             className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         >
                             <option value="">-- Selecciona --</option>
                             {options.map((option) => (
-                                <option key={option.nombre} value={option.nombre}>
-                                    {option.nombre} {/* Asume que cada opción tiene un campo 'nombre' */}
+                                <option key={option[optionId]} value={option[optionId]}>
+                                    {option.nombre}
                                 </option>
                             ))}
                         </select>
                     )}
 
                     {selectedOption && (
-                        <p className="mt-2 text-xs text-gray-600">Seleccionaste: {selectedOption}</p>
+                        <p className="mt-2 text-xs text-gray-600">Seleccionaste: {selectedOption?.nombre}</p>
                     )}
                 </div>
 
@@ -104,8 +117,8 @@ export default function SiguientePaso() {
                     <Link
                         to={selectedOption ?
                             (categoria === 'Multiproceso' ?
-                                `/crearCuadro4?categoria=${encodeURIComponent(categoria)}&seleccion=${encodeURIComponent(selectedOption)}` :
-                                `/crearCuadro3?categoria=${encodeURIComponent(categoria)}&seleccion=${encodeURIComponent(selectedOption)}`) :
+                                `/crearCuadro4?categoria=${encodeURIComponent(categoria)}&seleccion=${encodeURIComponent(selectedOption.nombre)}&seleccionId=${encodeURIComponent(selectedOption[optionId])}` :
+                                `/crearCuadro3?categoria=${encodeURIComponent(categoria)}&seleccion=${encodeURIComponent(selectedOption.nombre)}&seleccionId=${encodeURIComponent(selectedOption[optionId])}`) :
                             "#"}
                     >
                         <button

@@ -1,54 +1,48 @@
 import React, { useState, useEffect } from 'react';
-import { useSearchParams, Link } from 'react-router-dom';
+import { useSearchParams, Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Save, CircleXIcon, User } from 'lucide-react';
 import axios from 'axios';
 
-export default function CrearCuadro5() {
+export default function CrearCuadro4() {
+    const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const categoria = searchParams.get('categoria');
     const seleccion = searchParams.get('seleccion');
-    const equipo = searchParams.get('equipoID');
-    const equipoTalento = searchParams.get('equipoTalento');
-
-    const [equipoData, setEquipoData] = useState([]);
+    const seleccionIdNum = searchParams.get('seleccionId');
+    const equipoId = searchParams.get("equipoId");
+    const equipoNombre = searchParams.get("equipoNombre");
+    const [miembros, setMiembros] = useState([]);
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState(null);
+    //console.log("seleccionId:", seleccionId);
 
-    // Generar el nombre del cuadro de turno
-    const generateCuadroName = () => {
-        const prefix = "CT";
-        const categoriaShort = categoria ? categoria.substring(0, 3) : "Cat";
-        const seleccionShort = seleccion ? seleccion.replace(/\s+/g, '_') : "Sel";
-        const equipoShort = equipo ? equipo.replace(/\s+/g, '_') : "Eq";
-        const equipoTalentoShort = equipoTalento ? equipoTalento.replace(/\s+/g, '_') : "ET";
-
-        return `${prefix}_${categoriaShort}_${seleccionShort}_${equipoShort}_${equipoTalentoShort}_01`;
+    const generaNombreCuadro = () => {
+        let nombreBase = '';
+        nombreBase += categoria + '_';
+        nombreBase += seleccion;
+        //nombreBase += seleccionId;
+        nombreBase += '_' + equipoNombre;
+        return `CT_01_${nombreBase}`;
     };
 
     useEffect(() => {
-        // Simular datos del equipo de talento humano
-        // En un caso real, estos datos vendrían de una API
-        const mockEquipoData = [
-            {
-                id: 1,
-                perfil: "Cardiólogo",
-                nombre: "Pedro Muñoz"
-            },
-            {
-                id: 2,
-                perfil: "Cardiólogo",
-                nombre: "Jose Flores"
-            },
-            {
-                id: 3,
-                perfil: "Cardiólogo",
-                nombre: "Sofia Navia"
+        const fetchMiembros = async () => {
+            try {
+                const response = await axios.get(`http://localhost:8080/equipo/${equipoId}/miembros-perfil`);
+                setMiembros(response.data);
+            } catch (error) {
+                console.error("Error al obtener miembros del equipo:", error);
+                setMiembros([]);
+            } finally {
+                setLoading(false);
             }
-        ];
+        };
 
-        setEquipoData(mockEquipoData);
-    }, []);
+        if (equipoId) {
+            fetchMiembros();
+        }
+    }, [equipoId]);
 
     const handleGuardarCuadro = async () => {
         setSaving(true);
@@ -56,22 +50,32 @@ export default function CrearCuadro5() {
 
         try {
             const cuadroData = {
-                nombre: generateCuadroName(),
-                categoria,
-                seleccion,
-                equipo,
-                equipoTalento,
-                equipoTalentoHumano: equipoData
+                categoria: categoria.toLowerCase(), // El backend espera en minúsculas
+                anio: "2025",
+                mes: "07",
+                turnoExcepcion: false,
+                idEquipo: parseInt(equipoId),
             };
 
-            // Simulación de guardado - reemplazar con llamada real a la API
-            await new Promise(resolve => setTimeout(resolve, 1500));
+            // Establecer el ID correcto según la categoría
+            const idSeleccion = parseInt(seleccion);
+            if (categoria === 'Macroproceso') {
+                cuadroData.idMacroproceso = seleccionIdNum;
+            } else if (categoria === 'Proceso') {
+                cuadroData.idProceso = seleccionIdNum;
+            } else if (categoria === 'Servicio') {
+                cuadroData.idServicio = seleccionIdNum;
+            } else if (categoria === 'Sección') {
+                cuadroData.idSeccionServicio = seleccionIdNum;
+            } else if (categoria === 'Subsección') {
+                cuadroData.idSubseccionServicio = seleccionIdNum;
+            }
 
-            console.log('Cuadro guardado:', cuadroData);
+            const response = await axios.post('http://localhost:8080/cuadro-turnos/crear-total', cuadroData);
 
-            // Redirigir o mostrar mensaje de éxito
+            console.log('Cuadro guardado:', response.data);
             alert('Cuadro de turno guardado exitosamente');
-
+            navigate('/CrearCuadro');
         } catch (err) {
             setError('Error al guardar el cuadro de turno');
             console.error('Error:', err);
@@ -84,7 +88,7 @@ export default function CrearCuadro5() {
         const params = new URLSearchParams({
             categoria: categoria || '',
             seleccion: seleccion || '',
-            equipo: equipo || ''
+            equipo: equipoNombre || ''
         });
 
         return categoria === 'Multiproceso'
@@ -97,47 +101,48 @@ export default function CrearCuadro5() {
             <div className='bg-white p-8 rounded-lg flex flex-col justify-center items-center gap-6 max-w-4xl w-full mx-4'>
 
                 {/* Header */}
-                <div className='text-center space-y-2'>
-                    <div className='text-3xl font-bold text-gray-800'>Gestión de Turnos:</div>
-
-
+                <div className='text-3xl font-bold text-gray-800 text-center'>
+                    Gestión de Turnos:
                 </div>
 
                 {/* Cuadro de Turno Info */}
-                <div className='text-center space-y-2'>
-                    <div className='text-3xl font-bold text-gray-800'>Cuadro de Turno:</div>
-                    <div className='text-lg font-semibold text-blue-600 bg-gray-50 px-4 py-2 rounded'>
-                        {generateCuadroName()}
+                <div className='text-center'>
+                    <div className='text-2xl font-bold text-gray-800'>Cuadro de Turno:</div>
+                    <div className='text-lg font-semibold text-blue-600 bg-gray-50 px-4 py-2 rounded mt-1'>
+                        {generaNombreCuadro()}
                     </div>
                 </div>
 
-                {/* Resumen de selecciones previas */}
-                <div className='text-center space-y-1 text-sm text-gray-600'>
+                {/* Resumen */}
+                <div className='text-center text-sm text-gray-600 space-y-1'>
                     <div><strong>Categoría:</strong> {categoria}</div>
                     <div><strong>{categoria}:</strong> {seleccion}</div>
-                    <div><strong>Equipo:</strong> {equipo}</div>
+                    <div><strong>Equipo:</strong> {equipoNombre}</div>
                 </div>
 
-                {/* Equipo de Talento Humano Table */}
+                {/* Tabla */}
                 <div className='w-full'>
-                    <div className='text-center text-lg font-semibold mb-4 bg-blue-100 py-2 rounded'>
+                    <div className='text-center text-2xl font-bold bg-blue-300 py-2 border-black rounded'>
                         Equipo de Talento Humano:
                     </div>
 
-                    <div className='border border-gray-300 rounded-lg overflow-hidden'>
-                        <table className='w-full'>
+                    <div className='border rounded-lg overflow-hidden'>
+                        <table className='w-full text-left'>
+                            <thead className='bg-blue-100 text-gray-800'>
+                                <tr>
+                                    <th className='px-4 py-1 text-center'></th>
+                                    <th className='px-4 py-1'>Perfil</th>
+                                    <th className='px-4 py-1'>Nombre</th>
+                                </tr>
+                            </thead>
                             <tbody>
-                                {equipoData.map((persona, index) => (
-                                    <tr key={persona.id} className='border-b border-gray-200 hover:bg-gray-50'>
-                                        <td className='px-4 py-3 text-center border-r border-gray-200'>
-                                            <User size={24} className='text-gray-600 mx-auto' />
+                                {miembros.map((miembro, index) => (
+                                    <tr key={index} className='border-t border-gray-200 hover:bg-gray-50'>
+                                        <td className='px-4 py-3 text-center'>
+                                            <User size={22} className='text-gray-600 mx-auto' />
                                         </td>
-                                        <td className='px-4 py-3 font-medium text-gray-700 border-r border-gray-200'>
-                                            Perfil: {persona.perfil}
-                                        </td>
-                                        <td className='px-4 py-3 text-gray-700'>
-                                            Nombre: {persona.nombre}
-                                        </td>
+                                        <td className='px-4 py-3 text-gray-700'>{miembro.titulos?.join(', ')}</td>
+                                        <td className='px-4 py-3 text-gray-700'>{miembro.nombreCompleto}</td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -145,14 +150,14 @@ export default function CrearCuadro5() {
                     </div>
                 </div>
 
-                {/* Error Message */}
+                {/* Error */}
                 {error && (
                     <div className='w-full p-3 bg-red-100 border border-red-300 rounded-lg text-red-700 text-center'>
                         {error}
                     </div>
                 )}
 
-                {/* Action Buttons */}
+                {/* Botones */}
                 <div className='flex justify-center items-center gap-4 mt-6'>
                     <button
                         onClick={handleGuardarCuadro}
@@ -165,7 +170,12 @@ export default function CrearCuadro5() {
                         <Save size={20} color="white" strokeWidth={2} />
                         {saving ? 'Guardando...' : 'Guardar Cuadro'}
                     </button>
-
+                    <Link to={`/crearCuadro3?categoria=${encodeURIComponent(categoria)}&seleccion=${encodeURIComponent(seleccion)}`}>
+                        <button className="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 flex justify-center items-center gap-2 transition-colors">
+                            <ArrowLeft size={20} color="white" strokeWidth={2} />
+                            Volver
+                        </button>
+                    </Link>
                     <Link to="/">
                         <button className="px-6 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 flex justify-center items-center gap-2 transition-colors">
                             <CircleXIcon size={20} color="white" strokeWidth={2} />

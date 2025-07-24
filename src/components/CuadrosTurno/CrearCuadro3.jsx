@@ -7,6 +7,7 @@ export default function SiguientePaso() {
     const [searchParams] = useSearchParams();
     const categoria = searchParams.get('categoria');
     const seleccion = searchParams.get('seleccion');
+    const seleccionId = searchParams.get('seleccionId');
     const [selectedEquipo, setSelectedEquipo] = useState({ id: "", nombre: "" });
     const [equipos, setEquipos] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -63,11 +64,12 @@ export default function SiguientePaso() {
         const params = new URLSearchParams({
             categoria: categoria || '',
             seleccion: seleccion || '',
+            seleccionId: seleccionId || '',
             equipoId: selectedEquipo.id,
             equipoNombre: selectedEquipo.nombre
         });
-
-        const nextRoute = categoria === 'Multiproceso' ? '/crearCuadroMulti' : '/crearCuadro4';
+        //console.log("seleccionId:", seleccionId);
+        const nextRoute = categoria === 'Multiproceso' ? '/crearCuadroMulti' : '/CrearCuadro4';
         return `${nextRoute}?${params.toString()}`;
     };
 
