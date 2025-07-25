@@ -1,11 +1,51 @@
 import React, { useEffect, useState } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
-import { User2, CheckIcon, CircleXIcon, Save, User, ArrowLeft } from 'lucide-react';
+import { User2, CheckIcon, CircleXIcon, Save, User, ArrowLeft, Edit } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-export default function Pruebas() {
+export default function CrearCuadro() {
     const navigate = useNavigate();
+    const location = useLocation();
+    const [searchParams] = useSearchParams();
+
+    // Función mejorada para detectar modo edición y extraer ID
+    const detectEditMode = () => {
+        const pathname = location.pathname;
+        console.log('Pathname actual:', pathname); // Debug
+
+        // Buscar el patrón /editar/ID en cualquier parte de la URL
+        const editMatch = pathname.match(/\/editar\/(\d+)/);
+
+        if (editMatch) {
+            console.log('Modo edición detectado. ID:', editMatch[1]); // Debug
+            return {
+                isEditMode: true,
+                cuadroId: editMatch[1]
+            };
+        }
+
+        // Fallback: buscar parámetro de query
+        const editFromQuery = searchParams.get('edit') === 'true';
+        const idFromQuery = searchParams.get('id');
+
+        if (editFromQuery && idFromQuery) {
+            console.log('Modo edición desde query params. ID:', idFromQuery); // Debug
+            return {
+                isEditMode: true,
+                cuadroId: idFromQuery
+            };
+        }
+
+        console.log('Modo creación detectado'); // Debug
+        return {
+            isEditMode: false,
+            cuadroId: null
+        };
+    };
+
+    const { isEditMode, cuadroId } = detectEditMode();
+    const cuadroIdToEdit = cuadroId;
 
     // Estados para la categoría (primer select)
     const [selectedCategory, setSelectedCategory] = useState("");
@@ -30,16 +70,73 @@ export default function Pruebas() {
     const [saving, setSaving] = useState(false);
     const [errorCuadro, setErrorCuadro] = useState(null);
 
+    // Estados específicos para edición
+    const [loadingCuadroData, setLoadingCuadroData] = useState(false);
+    const [cuadroOriginal, setCuadroOriginal] = useState(null);
+
+    // useEffect para cargar datos del cuadro si estamos en modo edición
+    useEffect(() => {
+        const loadCuadroForEdit = async () => {
+            if (!isEditMode || !cuadroIdToEdit) {
+                console.log('No es modo edición o no hay ID'); // Debug
+                return;
+            }
+
+            console.log('Cargando cuadro para editar. ID:', cuadroIdToEdit); // Debug
+
+            try {
+                setLoadingCuadroData(true);
+                const response = await axios.get(`http://localhost:8080/cuadro-turnos/${cuadroIdToEdit}`);
+                const cuadroData = response.data;
+
+                console.log('Datos del cuadro cargados:', cuadroData); // Debug
+                setCuadroOriginal(cuadroData);
+
+                // Precargar los datos del cuadro
+                setSelectedCategory(cuadroData.categoria.charAt(0).toUpperCase() + cuadroData.categoria.slice(1));
+                setSelectedEquipo({
+                    id: cuadroData.idEquipo.toString(),
+                    nombre: cuadroData.equipoNombre || "" // Asumiendo que el backend devuelve el nombre
+                });
+
+                // Precargar la opción seleccionada basada en la categoría
+                const categoryMapping = {
+                    'macroproceso': { key: 'idMacroproceso', value: cuadroData.idMacroproceso },
+                    'proceso': { key: 'idProceso', value: cuadroData.idProceso },
+                    'servicio': { key: 'idServicio', value: cuadroData.idServicio },
+                    'seccion': { key: 'idSeccionServicio', value: cuadroData.idSeccionesServicio },
+                    'subseccion': { key: 'idSubseccionServicio', value: cuadroData.idSubseccionServicio }
+                };
+
+                const mapping = categoryMapping[cuadroData.categoria.toLowerCase()];
+                if (mapping && mapping.value) {
+                    // Necesitaremos cargar las opciones primero para encontrar el objeto completo
+                    setOptionId(mapping.key);
+                }
+
+            } catch (err) {
+                console.error('Error al cargar cuadro para editar:', err);
+                setError('Error al cargar los datos del cuadro');
+            } finally {
+                setLoadingCuadroData(false);
+            }
+        };
+
+        loadCuadroForEdit();
+    }, [isEditMode, cuadroIdToEdit]);
+
     // Función para manejar el cambio de categoría
     const handleCategoryChange = (e) => {
         const newCategory = e.target.value;
         setSelectedCategory(newCategory);
-        setSelectedOption(""); // Resetear la opción seleccionada
-        setOptions([]); // Limpiar las opciones anteriores
-        setError(""); // Limpiar errores
 
-        // Resetear equipos también
-        setSelectedEquipo({ id: "", nombre: "" });
+        // Solo resetear si no estamos cargando datos iniciales en modo edición
+        if (!loadingCuadroData) {
+            setSelectedOption("");
+            setOptions([]);
+            setError("");
+            setSelectedEquipo({ id: "", nombre: "" });
+        }
     };
 
     // useEffect para cargar datos cuando cambia la categoría
@@ -92,6 +189,27 @@ export default function Pruebas() {
                 const response = await axios.get(endpoint);
                 setOptions(response.data);
 
+                // Si estamos en modo edición y tenemos datos originales, preseleccionar la opción
+                if (isEditMode && cuadroOriginal && response.data.length > 0) {
+                    const categoryMapping = {
+                        'Macroproceso': cuadroOriginal.idMacroproceso,
+                        'Proceso': cuadroOriginal.idProceso,
+                        'Servicio': cuadroOriginal.idServicio,
+                        'Seccion': cuadroOriginal.idSeccionServicio,
+                        'Subseccion': cuadroOriginal.idSubseccionServicio
+                    };
+
+                    const valueToFind = categoryMapping[selectedCategory];
+                    if (valueToFind) {
+                        const foundOption = response.data.find(option =>
+                            option[idField] === valueToFind
+                        );
+                        if (foundOption) {
+                            setSelectedOption(foundOption);
+                        }
+                    }
+                }
+
             } catch (err) {
                 setError(err.message);
                 console.error('Error al cargar opciones:', err);
@@ -101,7 +219,7 @@ export default function Pruebas() {
         };
 
         fetchOptions();
-    }, [selectedCategory]); // Se ejecuta cuando cambia selectedCategory
+    }, [selectedCategory, cuadroOriginal]); // Agregar cuadroOriginal como dependencia
 
     // useEffect para cargar equipos cuando se selecciona una categoría
     useEffect(() => {
@@ -117,12 +235,24 @@ export default function Pruebas() {
                 const response = await axios.get('http://localhost:8080/equipo');
 
                 if (response.data && Array.isArray(response.data)) {
-                    // Asegurarnos de que los equipos tienen idEquipo y nombre
                     const equiposFormateados = response.data.map(equipo => ({
                         idEquipo: equipo.idEquipo || equipo.id || "",
                         nombre: equipo.nombre || equipo.descripcion || "Sin nombre"
                     }));
                     setEquipos(equiposFormateados);
+
+                    // Si estamos en modo edición, preseleccionar el equipo
+                    if (isEditMode && cuadroOriginal && equiposFormateados.length > 0) {
+                        const equipoEncontrado = equiposFormateados.find(equipo =>
+                            equipo.idEquipo.toString() === cuadroOriginal.idEquipo.toString()
+                        );
+                        if (equipoEncontrado) {
+                            setSelectedEquipo({
+                                id: equipoEncontrado.idEquipo,
+                                nombre: equipoEncontrado.nombre
+                            });
+                        }
+                    }
                 } else {
                     setEquipos([]);
                     console.warn('La respuesta no contiene un array de equipos');
@@ -138,7 +268,7 @@ export default function Pruebas() {
         };
 
         fetchEquipos();
-    }, [selectedCategory]); // Se ejecuta cuando cambia selectedCategory
+    }, [selectedCategory, cuadroOriginal]);
 
     // Función para manejar el cambio en el segundo select
     const handleOptionChange = (e) => {
@@ -168,13 +298,28 @@ export default function Pruebas() {
 
     // Función para generar el nombre del cuadro
     const generaNombreCuadro = () => {
+        // Si estamos en modo edición y tenemos un nombre original, mostrarlo primero
+        if (isEditMode && cuadroOriginal?.nombre) {
+            return (
+                <div>
+                    <div className='text-sm text-gray-500 mb-1'>Nombre actual:</div>
+                    <div className='font-medium'>{cuadroOriginal.nombre}</div>
+                    {selectedCategory && selectedOption && selectedEquipo.nombre && (
+                        <>
+                            <div className='text-sm text-gray-500 mt-2 mb-1'>Nuevo nombre al guardar:</div>
+                            <div className='font-medium'>
+                                {`CT_${selectedCategory}_${selectedOption.nombre}_${selectedEquipo.nombre}`}
+                            </div>
+                        </>
+                    )}
+                </div>
+            );
+        }
+
+        // Para modo creación
         if (!selectedCategory || !selectedOption || !selectedEquipo.nombre) return '';
 
-        let nombreBase = '';
-        nombreBase += selectedCategory + '_';
-        nombreBase += selectedOption.nombre;
-        nombreBase += '_' + selectedEquipo.nombre;
-        return `CT_01_${nombreBase}`;
+        return `CT_${selectedCategory}_${selectedOption.nombre}_${selectedEquipo.nombre}`;
     };
 
     // Función para mostrar el cuadro de turno
@@ -195,7 +340,7 @@ export default function Pruebas() {
         }
     };
 
-    // Función para guardar el cuadro
+    // Función para guardar el cuadro (crear o actualizar)
     const handleGuardarCuadro = async () => {
         setSaving(true);
         setErrorCuadro(null);
@@ -203,9 +348,9 @@ export default function Pruebas() {
         try {
             const cuadroData = {
                 categoria: selectedCategory.toLowerCase(),
-                anio: "2025",
-                mes: "07",
-                turnoExcepcion: false,
+                anio: isEditMode ? cuadroOriginal.anio : "2025",
+                mes: isEditMode ? cuadroOriginal.mes : "07",
+                turnoExcepcion: isEditMode ? cuadroOriginal.turnoExcepcion : false,
                 idEquipo: parseInt(selectedEquipo.id),
             };
 
@@ -216,22 +361,28 @@ export default function Pruebas() {
                 cuadroData.idProceso = selectedOption[optionId];
             } else if (selectedCategory === 'Servicio') {
                 cuadroData.idServicio = selectedOption[optionId];
-            } else if (selectedCategory === 'Sección') {
+            } else if (selectedCategory === 'Seccion') {
                 cuadroData.idSeccionServicio = selectedOption[optionId];
-            } else if (selectedCategory === 'Subsección') {
+            } else if (selectedCategory === 'Subseccion') {
                 cuadroData.idSubseccionServicio = selectedOption[optionId];
             }
 
-            const response = await axios.post('http://localhost:8080/cuadro-turnos/crear-total', cuadroData);
+            let response;
+            if (isEditMode) {
+                // Actualizar cuadro existente
+                response = await axios.put(`http://localhost:8080/cuadro-turnos/${cuadroIdToEdit}/editar-total`, cuadroData);
+                alert('Cuadro de turno actualizado exitosamente');
+            } else {
+                // Crear nuevo cuadro
+                response = await axios.post('http://localhost:8080/cuadro-turnos/crear-total', cuadroData);
+                alert('Cuadro de turno guardado exitosamente');
+            }
 
-            console.log('Cuadro guardado:', response.data);
-            alert('Cuadro de turno guardado exitosamente');
-
-            // Resetear todo para crear un nuevo cuadro
-            handleVolver();
+            console.log('Cuadro guardado/actualizado:', response.data);
+            navigate('/');
 
         } catch (err) {
-            setErrorCuadro('Error al guardar el cuadro de turno');
+            setErrorCuadro(`Error al ${isEditMode ? 'actualizar' : 'guardar'} el cuadro de turno`);
             console.error('Error:', err);
         } finally {
             setSaving(false);
@@ -245,13 +396,48 @@ export default function Pruebas() {
         setErrorCuadro(null);
     };
 
+    // Mostrar loading si estamos cargando datos para editar
+    if (isEditMode && loadingCuadroData) {
+        return (
+            <div className='absolute inset-0 bg-opacity-30 backdrop-blur-sm flex justify-center items-center'>
+                <div className='bg-white p-8 rounded-lg flex flex-col justify-center items-center gap-5 max-w-lg w-full mx-4'>
+                    <div className='text-2xl font-bold'>Cargando datos del cuadro...</div>
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className='absolute inset-0 bg-opacity-30 backdrop-blur-sm flex justify-center items-center'>
             {!showCuadro ? (
                 // Vista de selecciones
-                <div className='bg-white p-8 rounded-lg flex flex-col justify-center items-center gap-5 max-w-lg w-full mx-4'>
-                    <div className='text-3xl text-center font-bold'>Gestión Cuadros de Turno</div>
-                    <div className='text-lg text-center font-semibold'>Seleccione una categoría para Cuadros de Turno</div>
+                <div className='bg-white p-4 rounded-lg flex flex-col justify-center items-center gap-4 max-w-xl w-full mx-4'>
+                    <div className='text-3xl text-center font-bold'>
+                        {isEditMode ? 'Editar Cuadro de Turno' : 'Gestión Cuadros de Turno'}
+                    </div>
+                    <div className='text-lg text-center font-semibold'>
+                        {isEditMode ? 'Modifica los datos del cuadro' : 'Seleccione una categoría para Cuadros de Turno'}
+                    </div>
+
+                    {/* Mostrar ID y nombre en modo edición - MEJORADO */}
+                    {isEditMode && cuadroIdToEdit && (
+                        <div className='text-xs bg-blue-50 border border-blue-200 rounded px-1 py-2 w-full'>
+                            <div className='flex items-center gap-2 mb-2'>
+                                <Edit size={16} className="text-blue-600" />
+                                <span className='font-semibold text-blue-800'>Modo Edición Cuadro de Turno</span>
+                            </div>
+                            <div className='text-xs  text-gray-700'>
+                                <div><span className='text-xs'>ID:</span> {cuadroIdToEdit}</div>
+                                <div>
+                                    <span className='text-xs'>Nombre:</span>
+                                    <span className='font-mono text-xs py-1 rounded'>
+                                        {cuadroOriginal?.nombre || 'Cargando...'}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     {/* Primer select - Categorías */}
                     <div className="w-full">
@@ -365,8 +551,8 @@ export default function Pruebas() {
                                 }`}
                             disabled={!selectedOption || !selectedEquipo.id}
                         >
-                            <CheckIcon size={20} color="white" strokeWidth={2} />
-                            Crear Cuadro
+                            {isEditMode ? <Edit size={20} color="white" strokeWidth={2} /> : <CheckIcon size={20} color="white" strokeWidth={2} />}
+                            {isEditMode ? 'Editar Cuadro' : 'Crear Cuadro'}
                         </button>
                         <Link to="/">
                             <button className="px-6 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 flex justify-center items-center gap-2 transition-colors">
@@ -381,15 +567,30 @@ export default function Pruebas() {
                 <div className='bg-white p-8 rounded-lg flex flex-col justify-center items-center gap-6 max-w-4xl w-full mx-4'>
                     {/* Header */}
                     <div className='text-3xl font-bold text-gray-800 text-center'>
-                        Gestión de Turnos:
+                        {isEditMode ? 'Editando Cuadro de Turno' : 'Gestión de Turnos'}:
                     </div>
 
                     {/* Cuadro de Turno Info */}
                     <div className='text-center'>
                         <div className='text-2xl font-bold text-gray-800'>Cuadro de Turno:</div>
-                        <div className='text-lg font-semibold text-blue-600 bg-gray-50 px-4 py-2 rounded mt-1'>
-                            {generaNombreCuadro()}
-                        </div>
+                        {/* Información de edición*/}
+                        {isEditMode && (
+                            <div className='text-sm bg-orange-50 border border-orange-200 px-4 py-2 rounded-lg mt-3'>
+                                <div className='flex items-center justify-center gap-2 mb-1'>
+                                    <Edit size={14} className="text-orange-600" />
+                                    <span className='font-semibold text-orange-800'>Modificando cuadro existente</span>
+                                </div>
+                                <div className='space-y-1 text-gray-700'>
+                                    <div><span className='font-medium'>ID:</span> {cuadroIdToEdit}</div>
+                                    <div>
+                                        <span className='font-medium'>Nombre:</span>
+                                        <span className='ml-1 font-mono text-xs bg-white px-2 py-1 rounded border'>
+                                            {cuadroOriginal?.nombre || 'No disponible'}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {/* Resumen */}
@@ -453,7 +654,7 @@ export default function Pruebas() {
                                 }`}
                         >
                             <Save size={20} color="white" strokeWidth={2} />
-                            {saving ? 'Guardando...' : 'Guardar Cuadro'}
+                            {saving ? (isEditMode ? 'Actualizando...' : 'Guardando...') : (isEditMode ? 'Actualizar Cuadro' : 'Guardar Cuadro')}
                         </button>
                         <button
                             onClick={handleVolver}

@@ -1,70 +1,677 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
+import axios from 'axios';
+import { User2, CheckIcon, CircleXIcon, Save, User, ArrowLeft, Edit } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { CheckIcon, CircleXIcon } from 'lucide-react';
 
 export default function CrearCuadro() {
-    const [selectedOption, setSelectedOption] = useState("");
+    const navigate = useNavigate();
+    const location = useLocation();
+    const [searchParams] = useSearchParams();
 
-    const handleChange = (e) => {
-        setSelectedOption(e.target.value);
+    // Función mejorada para detectar modo edición y extraer ID
+    const detectEditMode = () => {
+        const pathname = location.pathname;
+        console.log('Pathname actual:', pathname); // Debug
+
+        // Buscar el patrón /editar/ID en cualquier parte de la URL
+        const editMatch = pathname.match(/\/editar\/(\d+)/);
+
+        if (editMatch) {
+            console.log('Modo edición detectado. ID:', editMatch[1]); // Debug
+            return {
+                isEditMode: true,
+                cuadroId: editMatch[1]
+            };
+        }
+
+        // Fallback: buscar parámetro de query
+        const editFromQuery = searchParams.get('edit') === 'true';
+        const idFromQuery = searchParams.get('id');
+
+        if (editFromQuery && idFromQuery) {
+            console.log('Modo edición desde query params. ID:', idFromQuery); // Debug
+            return {
+                isEditMode: true,
+                cuadroId: idFromQuery
+            };
+        }
+
+        console.log('Modo creación detectado'); // Debug
+        return {
+            isEditMode: false,
+            cuadroId: null
+        };
     };
 
-    return (
-        <div className='absolute inset-0  bg-opacity-30 backdrop-blur-sm flex justify-center items-center'>
-            <div className='bg-white p-8 rounded-lg flex flex-col justify-center items-center gap-5 max-w-lg w-full mx-4'>
-                <div className='text-3xl text-center font-bold'>Gestión Cuadros de Turno</div>
-                <div className='text-lg text-center font-semibold'>Seleccione una categoría para Cuadros de Turno</div>
+    const { isEditMode, cuadroId } = detectEditMode();
+    const cuadroIdToEdit = cuadroId;
 
-                <div className="w-full">
-                    <label htmlFor="select" className="block text-sm font-medium text-gray-700 mb-2">
-                        Selecciona una opción
-                    </label>
-                    <select
-                        id="select"
-                        value={selectedOption}
-                        onChange={handleChange}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    >
-                        <option value="">-- Selecciona --</option>
-                        <option value="Macroproceso">Macroproceso</option>
-                        <option value="Proceso">Proceso</option>
-                        <option value="Servicio">Servicio</option>
-                        <option value="Seccion">Sección</option>
-                        <option value="Subseccion">Subsección</option>
-                        <option value="Multiproceso">Multiproceso</option>
-                    </select>
-                    {selectedOption && (
-                        <p className="mt-2 text-xs text-gray-600">Seleccionaste: {selectedOption}</p>
+    // Estados para la categoría (primer select)
+    const [selectedCategory, setSelectedCategory] = useState("");
+
+    // Estados para las opciones del segundo select
+    const [options, setOptions] = useState([]);
+    const [selectedOption, setSelectedOption] = useState("");
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState("");
+    const [optionId, setOptionId] = useState("");
+
+    // Estados para los equipos (tercer select)
+    const [equipos, setEquipos] = useState([]);
+    const [selectedEquipo, setSelectedEquipo] = useState({ id: "", nombre: "" });
+    const [loadingEquipos, setLoadingEquipos] = useState(false);
+    const [errorEquipos, setErrorEquipos] = useState("");
+
+    // Estados para el cuadro de turno
+    const [showCuadro, setShowCuadro] = useState(false);
+    const [miembros, setMiembros] = useState([]);
+    const [loadingMiembros, setLoadingMiembros] = useState(false);
+    const [saving, setSaving] = useState(false);
+    const [errorCuadro, setErrorCuadro] = useState(null);
+
+    // Estados específicos para edición
+    const [loadingCuadroData, setLoadingCuadroData] = useState(false);
+    const [cuadroOriginal, setCuadroOriginal] = useState(null);
+
+    // useEffect para cargar datos del cuadro si estamos en modo edición
+    useEffect(() => {
+        const loadCuadroForEdit = async () => {
+            if (!isEditMode || !cuadroIdToEdit) {
+                console.log('No es modo edición o no hay ID'); // Debug
+                return;
+            }
+
+            console.log('Cargando cuadro para editar. ID:', cuadroIdToEdit); // Debug
+
+            try {
+                setLoadingCuadroData(true);
+                const response = await axios.get(`http://localhost:8080/cuadro-turnos/${cuadroIdToEdit}`);
+                const cuadroData = response.data;
+
+                console.log('Datos del cuadro cargados:', cuadroData); // Debug
+                setCuadroOriginal(cuadroData);
+
+                // Precargar los datos del cuadro
+                setSelectedCategory(cuadroData.categoria.charAt(0).toUpperCase() + cuadroData.categoria.slice(1));
+                setSelectedEquipo({
+                    id: cuadroData.idEquipo.toString(),
+                    nombre: cuadroData.equipoNombre || "" // Asumiendo que el backend devuelve el nombre
+                });
+
+                // Precargar la opción seleccionada basada en la categoría
+                const categoryMapping = {
+                    'macroproceso': { key: 'idMacroproceso', value: cuadroData.idMacroproceso },
+                    'proceso': { key: 'idProceso', value: cuadroData.idProceso },
+                    'servicio': { key: 'idServicio', value: cuadroData.idServicio },
+                    'seccion': { key: 'idSeccionServicio', value: cuadroData.idSeccionesServicio },
+                    'subseccion': { key: 'idSubseccionServicio', value: cuadroData.idSubseccionServicio }
+                };
+
+                const mapping = categoryMapping[cuadroData.categoria.toLowerCase()];
+                if (mapping && mapping.value) {
+                    // Necesitaremos cargar las opciones primero para encontrar el objeto completo
+                    setOptionId(mapping.key);
+                }
+
+            } catch (err) {
+                console.error('Error al cargar cuadro para editar:', err);
+                setError('Error al cargar los datos del cuadro');
+            } finally {
+                setLoadingCuadroData(false);
+            }
+        };
+
+        loadCuadroForEdit();
+    }, [isEditMode, cuadroIdToEdit]);
+
+    // Función para manejar el cambio de categoría
+    const handleCategoryChange = (e) => {
+        const newCategory = e.target.value;
+        setSelectedCategory(newCategory);
+
+        // Solo resetear si no estamos cargando datos iniciales en modo edición
+        if (!loadingCuadroData) {
+            setSelectedOption("");
+            setOptions([]);
+            setError("");
+            setSelectedEquipo({ id: "", nombre: "" });
+        }
+    };
+
+    // useEffect para cargar datos cuando cambia la categoría
+    useEffect(() => {
+        const fetchOptions = async () => {
+            if (!selectedCategory) {
+                setOptions([]);
+                return;
+            }
+
+            try {
+                setLoading(true);
+                setError("");
+
+                // Determinar qué endpoint llamar según la categoría
+                let endpoint = '';
+                let idField = '';
+
+                switch (selectedCategory) {
+                    case 'Macroproceso':
+                        endpoint = 'http://localhost:8080/macroprocesos';
+                        idField = 'idMacroproceso';
+                        break;
+                    case 'Proceso':
+                        endpoint = 'http://localhost:8080/procesos';
+                        idField = 'idProceso';
+                        break;
+                    case 'Servicio':
+                        endpoint = 'http://localhost:8080/servicio';
+                        idField = 'idServicio';
+                        break;
+                    case 'Seccion':
+                        endpoint = 'http://localhost:8080/seccionesServicio';
+                        idField = 'idSeccionServicio';
+                        break;
+                    case 'Subseccion':
+                        endpoint = 'http://localhost:8080/subseccionesServicio';
+                        idField = 'idSubseccionServicio';
+                        break;
+                    case 'Multiproceso':
+                        endpoint = 'http://localhost:8080/procesosAtencion';
+                        idField = 'idProcesoAtencion';
+                        break;
+                    default:
+                        setLoading(false);
+                        return;
+                }
+
+                setOptionId(idField);
+                const response = await axios.get(endpoint);
+                setOptions(response.data);
+
+                // Si estamos en modo edición y tenemos datos originales, preseleccionar la opción
+                if (isEditMode && cuadroOriginal && response.data.length > 0) {
+                    const categoryMapping = {
+                        'Macroproceso': cuadroOriginal.idMacroproceso,
+                        'Proceso': cuadroOriginal.idProceso,
+                        'Servicio': cuadroOriginal.idServicio,
+                        'Seccion': cuadroOriginal.idSeccionServicio,
+                        'Subseccion': cuadroOriginal.idSubseccionServicio
+                    };
+
+                    const valueToFind = categoryMapping[selectedCategory];
+                    if (valueToFind) {
+                        const foundOption = response.data.find(option =>
+                            option[idField] === valueToFind
+                        );
+                        if (foundOption) {
+                            setSelectedOption(foundOption);
+                        }
+                    }
+                }
+
+            } catch (err) {
+                setError(err.message);
+                console.error('Error al cargar opciones:', err);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchOptions();
+    }, [selectedCategory, cuadroOriginal]); // Agregar cuadroOriginal como dependencia
+
+    // useEffect para cargar equipos cuando se selecciona una categoría
+    useEffect(() => {
+        const fetchEquipos = async () => {
+            if (!selectedCategory) {
+                setEquipos([]);
+                return;
+            }
+
+            try {
+                setLoadingEquipos(true);
+                setErrorEquipos("");
+                const response = await axios.get('http://localhost:8080/equipo');
+
+                if (response.data && Array.isArray(response.data)) {
+                    const equiposFormateados = response.data.map(equipo => ({
+                        idEquipo: equipo.idEquipo || equipo.id || "",
+                        nombre: equipo.nombre || equipo.descripcion || "Sin nombre"
+                    }));
+                    setEquipos(equiposFormateados);
+
+                    // Si estamos en modo edición, preseleccionar el equipo
+                    if (isEditMode && cuadroOriginal && equiposFormateados.length > 0) {
+                        const equipoEncontrado = equiposFormateados.find(equipo =>
+                            equipo.idEquipo.toString() === cuadroOriginal.idEquipo.toString()
+                        );
+                        if (equipoEncontrado) {
+                            setSelectedEquipo({
+                                id: equipoEncontrado.idEquipo,
+                                nombre: equipoEncontrado.nombre
+                            });
+                        }
+                    }
+                } else {
+                    setEquipos([]);
+                    console.warn('La respuesta no contiene un array de equipos');
+                }
+
+            } catch (err) {
+                setErrorEquipos('Error al cargar los equipos');
+                console.error('Error al cargar equipos:', err);
+                setEquipos([]);
+            } finally {
+                setLoadingEquipos(false);
+            }
+        };
+
+        fetchEquipos();
+    }, [selectedCategory, cuadroOriginal]);
+
+    // Función para manejar el cambio en el segundo select
+    const handleOptionChange = (e) => {
+        const selectedId = e.target.value;
+        const selectedObj = options.find(option =>
+            option[optionId]?.toString() === selectedId
+        );
+        setSelectedOption(selectedObj || "");
+    };
+
+    // Función para manejar el cambio en el select de equipos
+    const handleEquipoChange = (e) => {
+        const equipoId = e.target.value;
+        const equipoSeleccionado = equipos.find(equipo =>
+            equipo.idEquipo.toString() === equipoId.toString()
+        );
+
+        if (equipoSeleccionado) {
+            setSelectedEquipo({
+                id: equipoSeleccionado.idEquipo,
+                nombre: equipoSeleccionado.nombre
+            });
+        } else {
+            setSelectedEquipo({ id: "", nombre: "" });
+        }
+    };
+
+    // Función para generar el nombre del cuadro
+    const generaNombreCuadro = () => {
+        // Si estamos en modo edición y tenemos un nombre original, mostrarlo primero
+        if (isEditMode && cuadroOriginal?.nombre) {
+            return (
+                <div>
+                    <div className='text-sm text-gray-500 mb-1'>Nombre actual:</div>
+                    <div className='font-medium'>{cuadroOriginal.nombre}</div>
+                    {selectedCategory && selectedOption && selectedEquipo.nombre && (
+                        <>
+                            <div className='text-sm text-gray-500 mt-2 mb-1'>Nuevo nombre al guardar:</div>
+                            <div className='font-medium'>
+                                {`CT_${selectedCategory}_${selectedOption.nombre}_${selectedEquipo.nombre}`}
+                            </div>
+                        </>
                     )}
                 </div>
+            );
+        }
 
-                <div className='flex justify-center items-center gap-4 mt-4'>
-                    <Link
-                        to={selectedOption ?
-                            (selectedOption === 'Multiproceso' ?
-                                `/crearCuadroMulti?categoria=${encodeURIComponent(selectedOption)}` :
-                                `/crearCuadro2?categoria=${encodeURIComponent(selectedOption)}`) :
-                            "#"}
-                    >
+        // Para modo creación
+        if (!selectedCategory || !selectedOption || !selectedEquipo.nombre) return '';
+
+        return `CT_${selectedCategory}_${selectedOption.nombre}_${selectedEquipo.nombre}`;
+    };
+
+    // Función para mostrar el cuadro de turno
+    const handleMostrarCuadro = async () => {
+        setShowCuadro(true);
+        setLoadingMiembros(true);
+        setErrorCuadro(null);
+
+        try {
+            const response = await axios.get(`http://localhost:8080/equipo/${selectedEquipo.id}/miembros-perfil`);
+            setMiembros(response.data);
+        } catch (error) {
+            console.error("Error al obtener miembros del equipo:", error);
+            setErrorCuadro("Error al cargar los miembros del equipo");
+            setMiembros([]);
+        } finally {
+            setLoadingMiembros(false);
+        }
+    };
+
+    // Función para guardar el cuadro (crear o actualizar)
+    const handleGuardarCuadro = async () => {
+        setSaving(true);
+        setErrorCuadro(null);
+
+        try {
+            const cuadroData = {
+                categoria: selectedCategory.toLowerCase(),
+                anio: isEditMode ? cuadroOriginal.anio : "2025",
+                mes: isEditMode ? cuadroOriginal.mes : "07",
+                turnoExcepcion: isEditMode ? cuadroOriginal.turnoExcepcion : false,
+                idEquipo: parseInt(selectedEquipo.id),
+            };
+
+            // Establecer el ID correcto según la categoría
+            if (selectedCategory === 'Macroproceso') {
+                cuadroData.idMacroproceso = selectedOption[optionId];
+            } else if (selectedCategory === 'Proceso') {
+                cuadroData.idProceso = selectedOption[optionId];
+            } else if (selectedCategory === 'Servicio') {
+                cuadroData.idServicio = selectedOption[optionId];
+            } else if (selectedCategory === 'Seccion') {
+                cuadroData.idSeccionServicio = selectedOption[optionId];
+            } else if (selectedCategory === 'Subseccion') {
+                cuadroData.idSubseccionServicio = selectedOption[optionId];
+            }
+
+            let response;
+            if (isEditMode) {
+                // Actualizar cuadro existente
+                response = await axios.put(`http://localhost:8080/cuadro-turnos/${cuadroIdToEdit}/editar-total`, cuadroData);
+                alert('Cuadro de turno actualizado exitosamente');
+            } else {
+                // Crear nuevo cuadro
+                response = await axios.post('http://localhost:8080/cuadro-turnos/crear-total', cuadroData);
+                alert('Cuadro de turno guardado exitosamente');
+            }
+
+            console.log('Cuadro guardado/actualizado:', response.data);
+            navigate('/');
+
+        } catch (err) {
+            setErrorCuadro(`Error al ${isEditMode ? 'actualizar' : 'guardar'} el cuadro de turno`);
+            console.error('Error:', err);
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    // Función para volver a las selecciones
+    const handleVolver = () => {
+        setShowCuadro(false);
+        setMiembros([]);
+        setErrorCuadro(null);
+    };
+
+    // Mostrar loading si estamos cargando datos para editar
+    if (isEditMode && loadingCuadroData) {
+        return (
+            <div className='absolute inset-0 bg-opacity-30 backdrop-blur-sm flex justify-center items-center'>
+                <div className='bg-white p-8 rounded-lg flex flex-col justify-center items-center gap-5 max-w-lg w-full mx-4'>
+                    <div className='text-2xl font-bold'>Cargando datos del cuadro...</div>
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div className='absolute inset-0 bg-opacity-30 backdrop-blur-sm flex justify-center items-center'>
+            {!showCuadro ? (
+                // Vista de selecciones
+                <div className='bg-white p-4 rounded-lg flex flex-col justify-center items-center gap-4 max-w-xl w-full mx-4'>
+                    <div className='text-3xl text-center font-bold'>
+                        {isEditMode ? 'Editar Cuadro de Turno' : 'Gestión Cuadros de Turno'}
+                    </div>
+                    <div className='text-lg text-center font-semibold'>
+                        {isEditMode ? 'Modifica los datos del cuadro' : 'Seleccione una categoría para Cuadros de Turno'}
+                    </div>
+
+                    {/* Mostrar ID y nombre en modo edición - MEJORADO */}
+                    {isEditMode && cuadroIdToEdit && (
+                        <div className='text-xs bg-blue-50 border border-blue-200 rounded px-1 py-2 w-full'>
+                            <div className='flex items-center gap-2 mb-2'>
+                                <Edit size={16} className="text-blue-600" />
+                                <span className='font-semibold text-blue-800'>Modo Edición Cuadro de Turno</span>
+                            </div>
+                            <div className='text-xs  text-gray-700'>
+                                <div><span className='text-xs'>ID:</span> {cuadroIdToEdit}</div>
+                                <div>
+                                    <span className='text-xs'>Nombre:</span>
+                                    <span className='font-mono text-xs py-1 rounded'>
+                                        {cuadroOriginal?.nombre || 'Cargando...'}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Primer select - Categorías */}
+                    <div className="w-full">
+                        <label htmlFor="category-select" className="block text-sm font-medium text-gray-700 mb-2">
+                            Selecciona una categoría
+                        </label>
+                        <select
+                            id="category-select"
+                            value={selectedCategory}
+                            onChange={handleCategoryChange}
+                            className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        >
+                            <option value="">-- Selecciona una categoría --</option>
+                            <option value="Macroproceso">Macroproceso</option>
+                            <option value="Proceso">Proceso</option>
+                            <option value="Servicio">Servicio</option>
+                            <option value="Seccion">Sección</option>
+                            <option value="Subseccion">Subsección</option>
+                            <option value="Multiproceso">Multiproceso</option>
+                        </select>
+                        {selectedCategory && (
+                            <p className="mt-2 text-xs text-gray-600">Categoría seleccionada: {selectedCategory}</p>
+                        )}
+                    </div>
+
+                    {/* Segundo select - Opciones dinámicas */}
+                    {selectedCategory && (
+                        <div className="w-full">
+                            <label htmlFor="option-select" className="block text-sm font-medium text-gray-700 mb-2">
+                                Selecciona un {selectedCategory}
+                            </label>
+
+                            {loading ? (
+                                <div className="w-full px-4 py-2 border border-gray-300 rounded-md bg-gray-50">
+                                    <p className="text-gray-500">Cargando opciones...</p>
+                                </div>
+                            ) : error ? (
+                                <div className="w-full px-4 py-2 border border-red-300 rounded-md bg-red-50">
+                                    <p className="text-red-500">Error al cargar opciones: {error}</p>
+                                </div>
+                            ) : (
+                                <select
+                                    id="option-select"
+                                    value={selectedOption ? selectedOption[optionId] || '' : ''}
+                                    onChange={handleOptionChange}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                >
+                                    <option value="">-- Selecciona un {selectedCategory} --</option>
+                                    {options.map((option) => (
+                                        <option key={option[optionId]} value={option[optionId]}>
+                                            {option.nombre}
+                                        </option>
+                                    ))}
+                                </select>
+                            )}
+
+                            {selectedOption && (
+                                <p className="mt-2 text-xs text-gray-600">
+                                    Seleccionaste: {selectedOption.nombre}
+                                </p>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Tercer select - Equipos */}
+                    {selectedCategory && (
+                        <div className="w-full">
+                            <label htmlFor="equipo-select" className="block text-sm font-medium text-gray-700 mb-2">
+                                Selecciona un Equipo
+                            </label>
+
+                            {loadingEquipos ? (
+                                <div className="w-full px-4 py-2 border border-gray-300 rounded-md bg-gray-50">
+                                    <p className="text-gray-500">Cargando equipos...</p>
+                                </div>
+                            ) : errorEquipos ? (
+                                <div className="w-full px-4 py-2 border border-red-300 rounded-md bg-red-50">
+                                    <p className="text-red-500">{errorEquipos}</p>
+                                </div>
+                            ) : (
+                                <select
+                                    id="equipo-select"
+                                    value={selectedEquipo.id}
+                                    onChange={handleEquipoChange}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                >
+                                    <option value="">-- Selecciona un equipo --</option>
+                                    {equipos.map((equipo, index) => (
+                                        <option key={equipo.idEquipo || index} value={equipo.idEquipo}>
+                                            {equipo.nombre}
+                                        </option>
+                                    ))}
+                                </select>
+                            )}
+
+                            {selectedEquipo.id && (
+                                <p className="mt-2 text-xs text-gray-600">
+                                    Equipo seleccionado: {selectedEquipo.nombre}
+                                </p>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Botones de acción */}
+                    <div className='flex justify-center items-center gap-4 mt-4'>
                         <button
-                            className={`px-6 py-2 text-white rounded-lg flex justify-center items-center gap-2 transition-colors ${selectedOption
+                            onClick={handleMostrarCuadro}
+                            className={`px-6 py-2 text-white rounded-lg flex justify-center items-center gap-2 transition-colors ${selectedOption && selectedEquipo.id
                                 ? 'bg-green-500 hover:bg-green-600'
                                 : 'bg-gray-400 cursor-not-allowed'
                                 }`}
-                            disabled={!selectedOption}
+                            disabled={!selectedOption || !selectedEquipo.id}
                         >
-                            <CheckIcon size={20} color="white" strokeWidth={2} />
-                            Aceptar
+                            {isEditMode ? <Edit size={20} color="white" strokeWidth={2} /> : <CheckIcon size={20} color="white" strokeWidth={2} />}
+                            {isEditMode ? 'Editar Cuadro' : 'Crear Cuadro'}
                         </button>
-                    </Link>
-                    <Link to="/">
-                        <button className="px-6 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 flex justify-center items-center gap-2 transition-colors">
-                            <CircleXIcon size={20} color="white" strokeWidth={2} />
-                            Cancelar
-                        </button>
-                    </Link>
+                        <Link to="/">
+                            <button className="px-6 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 flex justify-center items-center gap-2 transition-colors">
+                                <CircleXIcon size={20} color="white" strokeWidth={2} />
+                                Cancelar
+                            </button>
+                        </Link>
+                    </div>
                 </div>
-            </div>
+            ) : (
+                // Vista del cuadro de turno
+                <div className='bg-white p-8 rounded-lg flex flex-col justify-center items-center gap-6 max-w-4xl w-full mx-4'>
+                    {/* Header */}
+                    <div className='text-3xl font-bold text-gray-800 text-center'>
+                        {isEditMode ? 'Editando Cuadro de Turno' : 'Gestión de Turnos'}:
+                    </div>
+
+                    {/* Cuadro de Turno Info */}
+                    <div className='text-center'>
+                        <div className='text-2xl font-bold text-gray-800'>Cuadro de Turno:</div>
+                        {/* Información de edición*/}
+                        {isEditMode && (
+                            <div className='text-sm bg-orange-50 border border-orange-200 px-4 py-2 rounded-lg mt-3'>
+                                <div className='flex items-center justify-center gap-2 mb-1'>
+                                    <Edit size={14} className="text-orange-600" />
+                                    <span className='font-semibold text-orange-800'>Modificando cuadro existente</span>
+                                </div>
+                                <div className='space-y-1 text-gray-700'>
+                                    <div><span className='font-medium'>ID:</span> {cuadroIdToEdit}</div>
+                                    <div>
+                                        <span className='font-medium'>Nombre:</span>
+                                        <span className='ml-1 font-mono text-xs bg-white px-2 py-1 rounded border'>
+                                            {cuadroOriginal?.nombre || 'No disponible'}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Resumen */}
+                    <div className='text-center text-sm text-gray-600 space-y-1'>
+                        <div><strong>Categoría:</strong> {selectedCategory}</div>
+                        <div><strong>{selectedCategory}:</strong> {selectedOption.nombre}</div>
+                        <div><strong>Equipo:</strong> {selectedEquipo.nombre}</div>
+                    </div>
+
+                    {/* Tabla */}
+                    <div className='w-full'>
+                        <div className='text-center text-2xl font-bold bg-blue-300 py-2 border-black rounded'>
+                            Equipo de Talento Humano:
+                        </div>
+
+                        {loadingMiembros ? (
+                            <div className="w-full p-8 text-center">
+                                <p className="text-gray-500 text-lg">Cargando miembros del equipo...</p>
+                            </div>
+                        ) : (
+                            <div className='border rounded-lg overflow-hidden'>
+                                <table className='w-full text-left'>
+                                    <thead className='bg-blue-100 text-gray-800'>
+                                        <tr>
+                                            <th className='px-4 py-1 text-center'></th>
+                                            <th className='px-4 py-1'>Perfil</th>
+                                            <th className='px-4 py-1'>Nombre</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {miembros.map((miembro, index) => (
+                                            <tr key={index} className='border-t border-gray-200 hover:bg-gray-50'>
+                                                <td className='px-4 py-3 text-center'>
+                                                    <User size={22} className='text-gray-600 mx-auto' />
+                                                </td>
+                                                <td className='px-4 py-3 text-gray-700'>{miembro.titulos?.join(', ')}</td>
+                                                <td className='px-4 py-3 text-gray-700'>{miembro.nombreCompleto}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Error */}
+                    {errorCuadro && (
+                        <div className='w-full p-3 bg-red-100 border border-red-300 rounded-lg text-red-700 text-center'>
+                            {errorCuadro}
+                        </div>
+                    )}
+
+                    {/* Botones */}
+                    <div className='flex justify-center items-center gap-4 mt-6'>
+                        <button
+                            onClick={handleGuardarCuadro}
+                            disabled={saving || loadingMiembros}
+                            className={`px-6 py-2 text-white rounded-lg flex justify-center items-center gap-2 transition-colors ${saving || loadingMiembros
+                                ? 'bg-gray-400 cursor-not-allowed'
+                                : 'bg-blue-500 hover:bg-blue-600'
+                                }`}
+                        >
+                            <Save size={20} color="white" strokeWidth={2} />
+                            {saving ? (isEditMode ? 'Actualizando...' : 'Guardando...') : (isEditMode ? 'Actualizar Cuadro' : 'Guardar Cuadro')}
+                        </button>
+                        <button
+                            onClick={handleVolver}
+                            className="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 flex justify-center items-center gap-2 transition-colors"
+                        >
+                            <ArrowLeft size={20} color="white" strokeWidth={2} />
+                            Volver
+                        </button>
+                        <Link to="/">
+                            <button className="px-6 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 flex justify-center items-center gap-2 transition-colors">
+                                <CircleXIcon size={20} color="white" strokeWidth={2} />
+                                Cancelar
+                            </button>
+                        </Link>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

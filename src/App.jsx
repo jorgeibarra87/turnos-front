@@ -21,12 +21,22 @@ const App = () => (
         <Routes>
           <Route exact path="/" element={<TurnosTable />} />
           <Route exact path="/editarCuadro/" element={<EditarCuadro />} />
+
           <Route exact path="/crearCuadro/" element={<CrearCuadro />} />
+          {/* Nueva ruta para manejar edición con parámetro ID */}
+          <Route exact path="/crearCuadro/editar/:id" element={<Pruebas />} />
+          {/* Ruta para crear desde /crearCuadro */}
+          <Route exact path="crearCuadro/crear" element={<Pruebas />} />
+
           <Route exact path="/crearCuadro2/" element={<CrearCuadro2 />} />
           <Route exact path="/crearCuadro3/" element={<CrearCuadro3 />} />
           <Route exact path="/crearCuadro4/" element={<CrearCuadro4 />} />
           <Route exact path="/CrearCuadroMulti/" element={<CrearCuadroMulti />} />
           <Route exact path="/Pruebas/" element={<Pruebas />} />
+          {/* Nueva ruta para manejar edición con parámetro ID */}
+          <Route exact path="/Pruebas/editar/:id" element={<Pruebas />} />
+          {/* Ruta para crear desde /Pruebas */}
+          <Route exact path="/Pruebas/crear" element={<Pruebas />} />
         </Routes>
       </main>
     </div>
