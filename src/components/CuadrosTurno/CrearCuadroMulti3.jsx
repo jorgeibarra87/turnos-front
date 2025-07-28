@@ -169,7 +169,7 @@ export default function CrearCuadro4() {
                         <Save size={20} color="white" strokeWidth={2} />
                         {saving ? 'Guardando...' : 'Guardar Cuadro'}
                     </button>
-                    <Link to={`/crearCuadro3?categoria=${encodeURIComponent(categoria)}&procesos=${encodeURIComponent(procesos)}`}>
+                    <Link to={`/crearCuadroMulti2?categoria=${encodeURIComponent(categoria)}&procesos=${encodeURIComponent(procesos)}`}>
                         <button className="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 flex justify-center items-center gap-2 transition-colors">
                             <ArrowLeft size={20} color="white" strokeWidth={2} />
                             Volver

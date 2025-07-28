@@ -3,7 +3,7 @@ import { useSearchParams, Link } from 'react-router-dom';
 import { ArrowLeft, CheckIcon, CircleXIcon, Plus, X } from 'lucide-react';
 import axios from 'axios';
 
-export default function CrearCuadro3() {
+export default function CrearCuadroMulti() {
     const [searchParams] = useSearchParams();
     const categoria = searchParams.get('categoria');
     const seleccion = searchParams.get('seleccion');
@@ -40,7 +40,7 @@ export default function CrearCuadro3() {
     const handleRemoveProceso = (procesoToRemove) => {
         setProcesos(procesos.filter(p => p !== procesoToRemove));
     };
-
+    //console.log("procesos: ", { procesos });
     return (
         <div className='absolute inset-0 bg-opacity-30 backdrop-blur-sm flex justify-center items-center'>
             <div className='bg-white p-8 rounded-lg flex flex-col justify-center items-center gap-2 max-w-3xl w-full mx-4'>
@@ -63,7 +63,7 @@ export default function CrearCuadro3() {
                                 >
                                     <option value="">Seleccione un proceso</option>
                                     {procesosDisponibles.map((proceso) => (
-                                        <option key={proceso.id} value={proceso.id}>
+                                        <option key={proceso.idProceso} value={proceso.id}>
                                             {proceso.nombre}
                                         </option>
                                     ))}
@@ -108,8 +108,8 @@ export default function CrearCuadro3() {
                 <div className='flex justify-center items-center gap-4 mt-4'>
                     <Link
                         to={{
-                            pathname: "/crearCuadro4",
-                            search: `?categoria=${encodeURIComponent(categoria)}&seleccion=${encodeURIComponent(seleccion)}&procesos=${encodeURIComponent(JSON.stringify(procesos))}`
+                            pathname: "/crearCuadroMulti2",
+                            search: `?procesos=${encodeURIComponent(JSON.stringify(procesos))}`
                         }}
                     >
                         <button

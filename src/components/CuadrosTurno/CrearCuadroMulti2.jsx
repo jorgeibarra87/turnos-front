@@ -7,7 +7,7 @@ export default function SiguientePaso() {
     const [searchParams] = useSearchParams();
     const procesos = searchParams.get('procesos');
     const seleccion = searchParams.get('seleccion');
-    const seleccionId = searchParams.get('seleccionId');
+    const categoria = "Multiproceso";
     const [selectedEquipo, setSelectedEquipo] = useState({ id: "", nombre: "" });
     const [equipos, setEquipos] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -63,13 +63,13 @@ export default function SiguientePaso() {
 
         const params = new URLSearchParams({
             categoria: categoria || '',
-            seleccion: seleccion || '',
-            seleccionId: seleccionId || '',
+            procesos: procesos || '',
+            //seleccionId: seleccionId || '',
             equipoId: selectedEquipo.id,
             equipoNombre: selectedEquipo.nombre
         });
         //console.log("seleccionId:", seleccionId);
-        const nextRoute = categoria === 'Multiproceso' ? '/crearCuadroMulti' : '/CrearCuadro4';
+        const nextRoute = categoria === 'Multiproceso' ? '/crearCuadroMulti3' : '/crearCuadroMulti3';
         return `${nextRoute}?${params.toString()}`;
     };
 
@@ -82,9 +82,10 @@ export default function SiguientePaso() {
                     <div className='text-lg font-semibold text-blue-600'>
                         Categoría: {categoria || 'No especificada'}
                     </div>
-                    <div className='text-md font-medium text-gray-700'>
-                        {categoria} seleccionado: <span className="font-bold">{seleccion || 'No especificado'}</span>
+                    <div className='text-lg font-bold text-gray-700'>
+                        Procesos seleccionados:
                     </div>
+                    <div className=" text-xs">{JSON.parse(procesos).join(', ')}</div>
                 </div>
 
                 <div className="w-full">
@@ -135,7 +136,7 @@ export default function SiguientePaso() {
                         </button>
                     </Link>
 
-                    <Link to={`/crearCuadro2?categoria=${encodeURIComponent(categoria || '')}`}>
+                    <Link to={`/crearCuadroMulti?categoria=${encodeURIComponent(categoria || '')}`}>
                         <button className="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 flex justify-center items-center gap-2 transition-colors">
                             <ArrowLeft size={20} color="white" strokeWidth={2} />
                             Volver

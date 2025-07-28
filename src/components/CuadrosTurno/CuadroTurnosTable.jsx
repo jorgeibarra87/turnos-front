@@ -58,7 +58,7 @@ export default function TurnosTable() {
                             <td className="p-3 space-x-3">
                                 {/* Botón Ver - Link a vista detallada */}
                                 <Link
-                                    to={`/cuadro/${cuadro.idCuadroTurno}`}
+                                    to={`/VerCuadro/${cuadro.idCuadroTurno}`}
                                     title={`Ver cuadro: ${cuadro.nombre}`}
                                     className="inline-block"
                                 >

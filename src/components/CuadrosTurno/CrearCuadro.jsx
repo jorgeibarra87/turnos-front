@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
-import { User2, CheckIcon, CircleXIcon, Save, User, ArrowLeft, Edit } from 'lucide-react';
+import { CheckIcon, CircleXIcon, Save, User, ArrowLeft, Edit } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export default function CrearCuadro() {
@@ -130,6 +130,12 @@ export default function CrearCuadro() {
         const newCategory = e.target.value;
         setSelectedCategory(newCategory);
 
+        // Si se selecciona Multiproceso, redirigir a la nueva ruta
+        if (newCategory === 'Multiproceso') {
+            navigate('/crearCuadroMulti');
+            return;
+        }
+
         // Solo resetear si no estamos cargando datos iniciales en modo edición
         if (!loadingCuadroData) {
             setSelectedOption("");
@@ -142,7 +148,7 @@ export default function CrearCuadro() {
     // useEffect para cargar datos cuando cambia la categoría
     useEffect(() => {
         const fetchOptions = async () => {
-            if (!selectedCategory) {
+            if (!selectedCategory || selectedCategory === 'Multiproceso') {
                 setOptions([]);
                 return;
             }
@@ -175,10 +181,6 @@ export default function CrearCuadro() {
                     case 'Subseccion':
                         endpoint = 'http://localhost:8080/subseccionesServicio';
                         idField = 'idSubseccionServicio';
-                        break;
-                    case 'Multiproceso':
-                        endpoint = 'http://localhost:8080/procesosAtencion';
-                        idField = 'idProcesoAtencion';
                         break;
                     default:
                         setLoading(false);
@@ -224,7 +226,7 @@ export default function CrearCuadro() {
     // useEffect para cargar equipos cuando se selecciona una categoría
     useEffect(() => {
         const fetchEquipos = async () => {
-            if (!selectedCategory) {
+            if (!selectedCategory || selectedCategory === 'Multiproceso') {
                 setEquipos([]);
                 return;
             }
@@ -458,13 +460,13 @@ export default function CrearCuadro() {
                             <option value="Subseccion">Subsección</option>
                             <option value="Multiproceso">Multiproceso</option>
                         </select>
-                        {selectedCategory && (
+                        {selectedCategory && selectedCategory !== 'Multiproceso' && (
                             <p className="mt-2 text-xs text-gray-600">Categoría seleccionada: {selectedCategory}</p>
                         )}
                     </div>
 
-                    {/* Segundo select - Opciones dinámicas */}
-                    {selectedCategory && (
+                    {/* Segundo select - Opciones dinámicas (no mostrar si es Multiproceso) */}
+                    {selectedCategory && selectedCategory !== 'Multiproceso' && (
                         <div className="w-full">
                             <label htmlFor="option-select" className="block text-sm font-medium text-gray-700 mb-2">
                                 Selecciona un {selectedCategory}
@@ -502,8 +504,8 @@ export default function CrearCuadro() {
                         </div>
                     )}
 
-                    {/* Tercer select - Equipos */}
-                    {selectedCategory && (
+                    {/* Tercer select - Equipos (no mostrar si es Multiproceso) */}
+                    {selectedCategory && selectedCategory !== 'Multiproceso' && (
                         <div className="w-full">
                             <label htmlFor="equipo-select" className="block text-sm font-medium text-gray-700 mb-2">
                                 Selecciona un Equipo
@@ -541,26 +543,28 @@ export default function CrearCuadro() {
                         </div>
                     )}
 
-                    {/* Botones de acción */}
-                    <div className='flex justify-center items-center gap-4 mt-4'>
-                        <button
-                            onClick={handleMostrarCuadro}
-                            className={`px-6 py-2 text-white rounded-lg flex justify-center items-center gap-2 transition-colors ${selectedOption && selectedEquipo.id
-                                ? 'bg-green-500 hover:bg-green-600'
-                                : 'bg-gray-400 cursor-not-allowed'
-                                }`}
-                            disabled={!selectedOption || !selectedEquipo.id}
-                        >
-                            {isEditMode ? <Edit size={20} color="white" strokeWidth={2} /> : <CheckIcon size={20} color="white" strokeWidth={2} />}
-                            {isEditMode ? 'Editar Cuadro' : 'Crear Cuadro'}
-                        </button>
-                        <Link to="/">
-                            <button className="px-6 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 flex justify-center items-center gap-2 transition-colors">
-                                <CircleXIcon size={20} color="white" strokeWidth={2} />
-                                Cancelar
+                    {/* Botones de acción (no mostrar si es Multiproceso ya que redirige automáticamente) */}
+                    {selectedCategory !== 'Multiproceso' && (
+                        <div className='flex justify-center items-center gap-4 mt-4'>
+                            <button
+                                onClick={handleMostrarCuadro}
+                                className={`px-6 py-2 text-white rounded-lg flex justify-center items-center gap-2 transition-colors ${selectedOption && selectedEquipo.id
+                                    ? 'bg-green-500 hover:bg-green-600'
+                                    : 'bg-gray-400 cursor-not-allowed'
+                                    }`}
+                                disabled={!selectedOption || !selectedEquipo.id}
+                            >
+                                {isEditMode ? <Edit size={20} color="white" strokeWidth={2} /> : <CheckIcon size={20} color="white" strokeWidth={2} />}
+                                {isEditMode ? 'Editar Cuadro' : 'Crear Cuadro'}
                             </button>
-                        </Link>
-                    </div>
+                            <Link to="/">
+                                <button className="px-6 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 flex justify-center items-center gap-2 transition-colors">
+                                    <CircleXIcon size={20} color="white" strokeWidth={2} />
+                                    Cancelar
+                                </button>
+                            </Link>
+                        </div>
+                    )}
                 </div>
             ) : (
                 // Vista del cuadro de turno
@@ -572,7 +576,7 @@ export default function CrearCuadro() {
 
                     {/* Cuadro de Turno Info */}
                     <div className='text-center'>
-                        <div className='text-2xl font-bold text-gray-800'>Cuadro de Turno:</div>
+                        <div className='text-2xl font-bold text-gray-800'>Crear Cuadro de Turno:</div>
                         {/* Información de edición*/}
                         {isEditMode && (
                             <div className='text-sm bg-orange-50 border border-orange-200 px-4 py-2 rounded-lg mt-3'>
