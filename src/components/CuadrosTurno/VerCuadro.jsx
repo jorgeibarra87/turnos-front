@@ -16,6 +16,10 @@ export default function VerCuadro() {
     const [error, setError] = useState(null);
     const [errorMiembros, setErrorMiembros] = useState(null);
 
+    const [procesos, setProcesos] = useState([]);
+    const [loadingProcesos, setLoadingProcesos] = useState(false);
+    const [errorProcesos, setErrorProcesos] = useState(null);
+
     // Cargar datos del cuadro
     useEffect(() => {
         const loadCuadroData = async () => {
@@ -47,7 +51,41 @@ export default function VerCuadro() {
 
         loadCuadroData();
     }, [id]);
-    //console.log("cuadro:", cuadroData);
+    // Efecto para cargar los procesos de atención si la categoría es 'multiproceso'
+    useEffect(() => {
+        const fetchProcesos = async () => {
+            if (cuadroData?.categoria === 'multiproceso' && cuadroData?.idCuadroTurno) {
+                try {
+                    setLoadingProcesos(true);
+                    setErrorProcesos(null);
+                    const response = await axios.get(`http://localhost:8080/procesosAtencion/cuadro/${cuadroData.idCuadroTurno}`);
+
+                    if (response.data && Array.isArray(response.data)) {
+                        const procesosFormateados = response.data.map(proceso => ({
+                            idProcesoAtencion: proceso.id || proceso.idProcesoAtencion || "",
+                            nombre: proceso.detalle || "Sin nombre"
+                        }));
+                        setProcesos(procesosFormateados);
+                    } else {
+                        setProcesos([]);
+                        console.warn('La respuesta no contiene un array de procesos de atención');
+                    }
+                } catch (err) {
+                    setErrorProcesos('Error al cargar los procesos de atención.');
+                    console.error('Error al cargar procesos:', err);
+                    setProcesos([]);
+                } finally {
+                    setLoadingProcesos(false);
+                }
+            } else if (cuadroData && cuadroData.categoria !== 'multiproceso') {
+                // Si no es multiproceso, aseguramos que los procesos estén vacíos
+                setProcesos([]);
+                setLoadingProcesos(false);
+            }
+        };
+
+        fetchProcesos();
+    }, [cuadroData]);
 
     // Cargar miembros del equipo
     const loadMiembrosEquipo = async (equipoId) => {
@@ -70,14 +108,6 @@ export default function VerCuadro() {
         return categoria ? categoria.charAt(0).toUpperCase() + categoria.slice(1) : '';
     };
 
-    /* // Función para formatear fecha
-    const formatearFecha = (anio, mes) => {
-        const meses = [
-            'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-            'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
-        ];
-        return `${meses[mes]} ${anio}`;
-    }; */
 
     if (loading) {
         return (
@@ -142,7 +172,7 @@ export default function VerCuadro() {
 
                         <div className='bg-white p-4 rounded-lg border'>
                             <div className='text-sm text-gray-500 mb-1'>Categoría</div>
-                            <div className=' text-gray-800 text-xs'>
+                            <div className=' text-gray-800 text-sm font-bold'>
                                 {formatearCategoria(cuadroData?.categoria)}
                             </div>
                         </div>
@@ -151,7 +181,7 @@ export default function VerCuadro() {
                             <div className='text-sm text-gray-500 mb-1'>Período</div>
                             <div className=' text-gray-800 flex items-center gap-2 text-xs'>
                                 <Calendar size={16} />
-                                Mes:{cuadroData?.mes} Año:{cuadroData?.anio}
+                                Mes: {cuadroData?.mes} Año: {cuadroData?.anio}
                             </div>
                         </div>
 
@@ -185,6 +215,85 @@ export default function VerCuadro() {
                     </div>
                 </div>
 
+                {/* Sección de Procesos de Atención (solo si es 'multiproceso') */}
+                {cuadroData.categoria === 'multiproceso' && (
+                    <div className='bg-white rounded-lg border'>
+                        <div className='bg-blue-50 px-6 py-2 border-b'>
+                            <h2 className='text-xl font-semibold flex items-center gap-2'>
+                                <Tag size={20} className="text-blue-600" />
+                                Procesos de Atención
+                            </h2>
+                        </div>
+
+                        {loadingProcesos ? (
+                            <div className="p-8 text-center">
+                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
+                                <p className="text-gray-500">Cargando procesos...</p>
+                            </div>
+                        ) : errorProcesos ? (
+                            <div className="p-6 text-center text-red-600 bg-red-50 m-4 rounded-lg">
+                                {errorProcesos}
+                            </div>
+                        ) : procesos.length === 0 ? (
+                            <div className="p-6 text-center text-gray-500">
+                                No se encontraron procesos de atención para este cuadro.
+                            </div>
+                        ) : (
+                            <div className='overflow-x-auto'>
+                                <table className='w-full'>
+                                    <thead className='bg-gray-50'>
+                                    </thead>
+                                    <tbody className='divide-y divide-gray-200'>
+                                        {procesos.map((proceso, index) => (
+                                            <tr key={proceso.idProceso || index} className='hover:bg-gray-50 transition-colors'>
+                                                <td className='px-2 py-2 whitespace-nowrap text-xs font-medium text-gray-900'>
+                                                    {proceso.nombre}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* Sección de Procesos individuales (solo no es 'multiproceso') */}
+                {cuadroData.categoria !== 'multiproceso' && (
+                    <div className='bg-white rounded-lg border'>
+                        <div className='bg-blue-50 px-6 py-2 border-b'>
+                            <h2 className='text-xl font-semibold flex items-center gap-2'>
+                                <Tag size={20} className="text-blue-600" />
+                                {cuadroData.nombreMacroproceso && <div>Macroproceso</div>}
+                                {cuadroData.nombreProceso && <div>Proceso</div>}
+                                {cuadroData.nombreServicio && <div>Servicio</div>}
+                                {cuadroData.nombreSeccionServicio && <div>Sección Servicio</div>}
+                                {cuadroData.nombreSubseccionServicio && <div>Subsección Servicio</div>}
+                            </h2>
+                        </div>
+
+
+                        <div className='overflow-x-auto'>
+                            <table className='w-full'>
+                                <thead className='bg-gray-50'>
+                                </thead>
+                                <tbody className='divide-y divide-gray-200'>
+                                    <tr className='hover:bg-gray-50 transition-colors'>
+                                        <td className='px-2 py-2 whitespace-nowrap text-xs font-medium text-gray-900'>
+                                            {cuadroData.nombreMacroproceso && <div>{cuadroData.nombreMacroproceso}</div>}
+                                            {cuadroData.nombreProceso && <div>{cuadroData.nombreProceso}</div>}
+                                            {cuadroData.nombreServicio && <div>{cuadroData.nombreServicio}</div>}
+                                            {cuadroData.nombreSeccionServicio && <div>{cuadroData.nombreSeccionServicio}</div>}
+                                            {cuadroData.nombreSubseccionServicio && <div>{cuadroData.nombreSubseccionServicio}</div>}
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                )}
+
+
                 {/* Equipo de Trabajo */}
                 <div className='bg-white rounded-lg border'>
                     <div className='bg-blue-50 px-6 py-2 border-b'>
@@ -212,13 +321,13 @@ export default function VerCuadro() {
                             <table className='w-full'>
                                 <thead className='bg-gray-50'>
                                     <tr>
-                                        <th className='px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
-                                            #
+                                        <th className='px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
+
                                         </th>
-                                        <th className='px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
+                                        <th className='px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
                                             Perfil
                                         </th>
-                                        <th className='px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
+                                        <th className='px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
                                             Nombre Completo
                                         </th>
                                     </tr>
@@ -226,15 +335,15 @@ export default function VerCuadro() {
                                 <tbody className='divide-y divide-gray-200'>
                                     {miembros.map((miembro, index) => (
                                         <tr key={index} className='hover:bg-gray-50 transition-colors'>
-                                            <td className='px-6 py-4 whitespace-nowrap text-center'>
+                                            <td className='px-2 py-2 whitespace-nowrap text-center'>
                                                 <div className='flex justify-center'>
                                                     <User size={20} className='text-gray-400' />
                                                 </div>
                                             </td>
-                                            <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-700'>
+                                            <td className='px-2 py-2 whitespace-nowrap text-sm text-gray-700'>
                                                 {miembro.titulos?.join(', ') || 'Sin perfil definido'}
                                             </td>
-                                            <td className='px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900'>
+                                            <td className='px-2 py-2 whitespace-nowrap text-sm font-medium text-gray-900'>
                                                 {miembro.nombreCompleto || 'Nombre no disponible'}
                                             </td>
                                         </tr>
