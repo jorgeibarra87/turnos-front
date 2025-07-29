@@ -47,6 +47,10 @@ export default function CrearCuadro() {
     const { isEditMode, cuadroId } = detectEditMode();
     const cuadroIdToEdit = cuadroId;
 
+    const isMultiprocesoEdit = () => {
+        return isEditMode && cuadroOriginal?.categoria?.toLowerCase() === 'multiproceso';
+    };
+
     // Estados para la categoría (primer select)
     const [selectedCategory, setSelectedCategory] = useState("");
 
@@ -73,33 +77,59 @@ export default function CrearCuadro() {
     // Estados específicos para edición
     const [loadingCuadroData, setLoadingCuadroData] = useState(false);
     const [cuadroOriginal, setCuadroOriginal] = useState(null);
+    const [procesosMultiples, setProcesosMultiples] = useState([]);
 
     // useEffect para cargar datos del cuadro si estamos en modo edición
     useEffect(() => {
         const loadCuadroForEdit = async () => {
             if (!isEditMode || !cuadroIdToEdit) {
-                console.log('No es modo edición o no hay ID'); // Debug
+                console.log('No es modo edición o no hay ID');
                 return;
             }
 
-            console.log('Cargando cuadro para editar. ID:', cuadroIdToEdit); // Debug
+            console.log('Cargando cuadro para editar. ID:', cuadroIdToEdit);
 
             try {
                 setLoadingCuadroData(true);
                 const response = await axios.get(`http://localhost:8080/cuadro-turnos/${cuadroIdToEdit}`);
                 const cuadroData = response.data;
 
-                console.log('Datos del cuadro cargados:', cuadroData); // Debug
+                console.log('Datos del cuadro cargados:', cuadroData);
                 setCuadroOriginal(cuadroData);
 
-                // Precargar los datos del cuadro
+                // Si es un cuadro multiproceso, redirigir al flujo correcto
+                if (cuadroData.categoria?.toLowerCase() === 'multiproceso') {
+                    console.log('Detectado cuadro multiproceso, redirigiendo...');
+
+                    // Pequeño delay para asegurar que el estado se actualice
+                    setTimeout(async () => {
+                        try {
+                            // Obtener los procesos del cuadro multiproceso
+                            const procesosResponse = await axios.get(`http://localhost:8080/cuadro-turnos/${cuadroIdToEdit}/procesos`);
+                            const procesosIds = procesosResponse.data.map(p => p.idProceso || p.id);
+
+                            console.log('Procesos encontrados:', procesosIds);
+
+                            // Redirigir con los procesos
+                            navigate(`/crearCuadroMulti?edit=true&id=${cuadroIdToEdit}&procesos=${encodeURIComponent(JSON.stringify(procesosIds))}`);
+
+                        } catch (procesosError) {
+                            console.error('Error al cargar procesos del cuadro multiproceso:', procesosError);
+                            // Si no se pueden cargar los procesos, al menos redirigir con la info básica
+                            navigate(`/crearCuadroMulti?edit=true&id=${cuadroIdToEdit}`);
+                        }
+                    }, 100);
+
+                    return; // Salir de la función para evitar continuar con la lógica normal
+                }
+
+                // Resto de la lógica para cuadros normales...
                 setSelectedCategory(cuadroData.categoria.charAt(0).toUpperCase() + cuadroData.categoria.slice(1));
                 setSelectedEquipo({
                     id: cuadroData.idEquipo.toString(),
-                    nombre: cuadroData.equipoNombre || "" // Asumiendo que el backend devuelve el nombre
+                    nombre: cuadroData.equipoNombre || ""
                 });
 
-                // Precargar la opción seleccionada basada en la categoría
                 const categoryMapping = {
                     'macroproceso': { key: 'idMacroproceso', value: cuadroData.idMacroproceso },
                     'proceso': { key: 'idProceso', value: cuadroData.idProceso },
@@ -110,7 +140,6 @@ export default function CrearCuadro() {
 
                 const mapping = categoryMapping[cuadroData.categoria.toLowerCase()];
                 if (mapping && mapping.value) {
-                    // Necesitaremos cargar las opciones primero para encontrar el objeto completo
                     setOptionId(mapping.key);
                 }
 
@@ -123,7 +152,7 @@ export default function CrearCuadro() {
         };
 
         loadCuadroForEdit();
-    }, [isEditMode, cuadroIdToEdit]);
+    }, [isEditMode, cuadroIdToEdit, navigate]);
 
     // Función para manejar el cambio de categoría
     const handleCategoryChange = (e) => {
@@ -405,6 +434,19 @@ export default function CrearCuadro() {
                 <div className='bg-white p-8 rounded-lg flex flex-col justify-center items-center gap-5 max-w-lg w-full mx-4'>
                     <div className='text-2xl font-bold'>Cargando datos del cuadro...</div>
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+                </div>
+            </div>
+        );
+    }
+
+    // Mostrar loading específico para multiproceso mientras se redirige
+    if (isEditMode && cuadroOriginal?.categoria?.toLowerCase() === 'multiproceso') {
+        return (
+            <div className='absolute inset-0 bg-opacity-30 backdrop-blur-sm flex justify-center items-center'>
+                <div className='bg-white p-8 rounded-lg flex flex-col justify-center items-center gap-5 max-w-lg w-full mx-4'>
+                    <div className='text-2xl font-bold'>Redirigiendo a edición multiproceso...</div>
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500"></div>
+                    <div className='text-sm text-gray-600'>Cargando procesos del cuadro</div>
                 </div>
             </div>
         );

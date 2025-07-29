@@ -1,17 +1,88 @@
 import React, { useState, useEffect } from 'react';
-import { useSearchParams, Link } from 'react-router-dom';
-import { ArrowLeft, CheckIcon, CircleXIcon, Plus, X } from 'lucide-react';
+import { useSearchParams, Link, useNavigate } from 'react-router-dom';
+import { ArrowLeft, CheckIcon, CircleXIcon, Plus, X, Edit } from 'lucide-react';
 import axios from 'axios';
 
 export default function CrearCuadroMulti() {
     const [searchParams] = useSearchParams();
-    const categoria = searchParams.get('categoria');
-    const seleccion = searchParams.get('seleccion');
+    const navigate = useNavigate();
+
+    // Detectar modo edición
+    const isEditMode = searchParams.get('edit') === 'true';
+    const cuadroId = searchParams.get('id');
+    const procesosFromUrl = searchParams.get('procesos');
+
     const [procesos, setProcesos] = useState([]);
     const [procesosDisponibles, setProcesosDisponibles] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [selectedProceso, setSelectedProceso] = useState("");
+    const [cuadroOriginal, setCuadroOriginal] = useState(null);
+    const [loadingCuadro, setLoadingCuadro] = useState(false);
+
+    // Cargar datos del cuadro si estamos editando
+    useEffect(() => {
+        const loadCuadroData = async () => {
+            if (!isEditMode || !cuadroId) return;
+
+            try {
+                setLoadingCuadro(true);
+                console.log('Cargando datos del cuadro multiproceso:', cuadroId);
+
+                const response = await axios.get(`http://localhost:8080/cuadro-turnos/${cuadroId}`);
+                const cuadroData = response.data;
+                console.log('Datos del cuadro cargados:', cuadroData);
+
+                setCuadroOriginal(cuadroData);
+
+                // Verificar que sea multiproceso
+                // if (cuadroData.categoria?.toLowerCase() !== 'multiproceso') {
+                //     console.warn('El cuadro no es multiproceso, redirigiendo...');
+                //     navigate(`/crearCuadro/editar/${cuadroId}`);
+                //     return;
+                // }
+
+                // Cargar procesos del cuadro
+                try {
+                    const procesosResponse = await axios.get(`http://localhost:8080/cuadro-turnos/${cuadroId}/procesos`);
+                    console.log('Procesos cargados:', procesosResponse.data);
+
+                    const procesosIds = procesosResponse.data.map(p => {
+                        // Intentar diferentes nombres de campo para el ID
+                        return (p.idProceso || p.id || p.procesoId || p.idProcesoAtencion)?.toString();
+                    }).filter(id => id); // Filtrar valores undefined/null
+
+                    console.log('IDs de procesos extraídos:', procesosIds);
+                    setProcesos(procesosIds);
+
+                } catch (procesosError) {
+                    console.error('Error al cargar procesos del cuadro:', procesosError);
+                    setError('Error al cargar los procesos del cuadro');
+                    // No establecer procesos vacíos, mantener el estado actual
+                }
+
+            } catch (err) {
+                console.error('Error al cargar datos del cuadro:', err);
+                setError('Error al cargar datos del cuadro');
+            } finally {
+                setLoadingCuadro(false);
+            }
+        };
+
+        loadCuadroData();
+    }, [isEditMode, cuadroId, navigate]);
+
+    // Cargar procesos desde URL si están disponibles
+    useEffect(() => {
+        if (procesosFromUrl && !isEditMode) {
+            try {
+                const procesosArray = JSON.parse(decodeURIComponent(procesosFromUrl));
+                setProcesos(procesosArray);
+            } catch (err) {
+                console.error('Error al parsear procesos desde URL:', err);
+            }
+        }
+    }, [procesosFromUrl, isEditMode]);
 
     useEffect(() => {
         const fetchProcesos = async () => {
@@ -40,11 +111,61 @@ export default function CrearCuadroMulti() {
     const handleRemoveProceso = (procesoToRemove) => {
         setProcesos(procesos.filter(p => p !== procesoToRemove));
     };
-    //console.log("procesos: ", { procesos });
+
+    const getContinueUrl = () => {
+        const params = new URLSearchParams({
+            procesos: JSON.stringify(procesos)
+        });
+
+        if (isEditMode) {
+            params.append('edit', 'true');
+            params.append('id', cuadroId);
+        }
+
+        return `/crearCuadroMulti2?${params.toString()}`;
+    };
+
+
+    const getBackUrl = () => {
+        if (isEditMode) {
+            return `/crearCuadro/editar/${cuadroId}`;
+        }
+        return "/crearCuadro";
+    };
+
+
+
+    if (loadingCuadro) {
+        return (
+            <div className='absolute inset-0 bg-opacity-30 backdrop-blur-sm flex justify-center items-center'>
+                <div className='bg-white p-8 rounded-lg flex flex-col justify-center items-center gap-5 max-w-lg w-full mx-4'>
+                    <div className='text-2xl font-bold'>Cargando datos del cuadro...</div>
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className='absolute inset-0 bg-opacity-30 backdrop-blur-sm flex justify-center items-center'>
             <div className='bg-white p-8 rounded-lg flex flex-col justify-center items-center gap-2 max-w-3xl w-full mx-4'>
-                <div className='text-3xl text-center font-bold'>Configurar Multiprocesos Cuadro de Turno</div>
+                <div className='text-3xl text-center font-bold'>
+                    {isEditMode ? 'Editar Multiprocesos Cuadro de Turno' : 'Configurar Multiprocesos Cuadro de Turno'}
+                </div>
+
+                {/* Información de edición */}
+                {isEditMode && cuadroOriginal && (
+                    <div className='text-sm bg-blue-50 border border-blue-200 rounded px-4 py-2 w-full mb-4'>
+                        <div className='flex items-center gap-2 mb-2'>
+                            <Edit size={16} className="text-blue-600" />
+                            <span className='font-semibold text-blue-800'>Editando Cuadro Multiproceso</span>
+                        </div>
+                        <div className='text-xs text-gray-700'>
+                            <div><span className='font-medium'>ID:</span> {cuadroId}</div>
+                            <div><span className='font-medium'>Nombre:</span> {cuadroOriginal.nombre}</div>
+                        </div>
+                    </div>
+                )}
 
                 <div className='w-full space-y-2'>
                     <div className="p-4 border rounded-lg">
@@ -62,11 +183,13 @@ export default function CrearCuadroMulti() {
                                     className="flex-1 px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 >
                                     <option value="">Seleccione un proceso</option>
-                                    {procesosDisponibles.map((proceso) => (
-                                        <option key={proceso.idProceso} value={proceso.id}>
-                                            {proceso.nombre}
-                                        </option>
-                                    ))}
+                                    {procesosDisponibles
+                                        .filter(proceso => !procesos.includes(proceso.idProceso.toString()))
+                                        .map((proceso) => (
+                                            <option key={proceso.idProceso} value={proceso.idProceso.toString()}>
+                                                {proceso.nombre}
+                                            </option>
+                                        ))}
                                 </select>
                                 <button
                                     onClick={handleAddProceso}
@@ -87,7 +210,7 @@ export default function CrearCuadroMulti() {
                         ) : (
                             <ul className="space-y-2">
                                 {procesos.map((procesoId) => {
-                                    const proceso = procesosDisponibles.find(p => p.id === procesoId);
+                                    const proceso = procesosDisponibles.find(p => p.idProceso.toString() === procesoId.toString());
                                     return (
                                         <li key={procesoId} className="flex justify-between items-center p-2 bg-gray-50 rounded">
                                             <span>{proceso?.nombre || `Proceso ID: ${procesoId}`}</span>
@@ -106,12 +229,7 @@ export default function CrearCuadroMulti() {
                 </div>
 
                 <div className='flex justify-center items-center gap-4 mt-4'>
-                    <Link
-                        to={{
-                            pathname: "/crearCuadroMulti2",
-                            search: `?procesos=${encodeURIComponent(JSON.stringify(procesos))}`
-                        }}
-                    >
+                    <Link to={getContinueUrl()}>
                         <button
                             className={`px-6 py-2 text-white rounded-lg flex justify-center items-center gap-2 transition-colors ${procesos.length > 0
                                 ? 'bg-green-500 hover:bg-green-600'
@@ -124,7 +242,7 @@ export default function CrearCuadroMulti() {
                         </button>
                     </Link>
 
-                    <Link to="/crearCuadro">
+                    <Link to={getBackUrl()}>
                         <button className="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 flex justify-center items-center gap-2 transition-colors">
                             <ArrowLeft size={20} color="white" strokeWidth={2} />
                             Volver

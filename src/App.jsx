@@ -25,9 +25,9 @@ const App = () => (
 
           <Route exact path="/crearCuadro/" element={<CrearCuadro />} />
           {/* Nueva ruta para manejar edición con parámetro ID */}
-          <Route exact path="/crearCuadro/editar/:id" element={<Pruebas />} />
+          <Route exact path="/crearCuadro/editar/:id" element={<CrearCuadro />} />
           {/* Ruta para crear desde /crearCuadro */}
-          <Route exact path="crearCuadro/crear" element={<Pruebas />} />
+          <Route exact path="crearCuadro/crear" element={<CrearCuadro />} />
 
           <Route exact path="/crearCuadro2/" element={<CrearCuadro2 />} />
           <Route exact path="/crearCuadro3/" element={<CrearCuadro3 />} />
