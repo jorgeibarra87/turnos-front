@@ -15,20 +15,27 @@ export default function TurnosTable() {
     const loadCuadros = async () => {
         const result = await axios.get("http://localhost:8080/cuadro-turnos");
         //console.log(result.data);
-        setCuadros(result.data);
+        const cuadrosAbiertos = result.data.filter(cuadro => cuadro.estadoCuadro === 'abierto');
+        setCuadros(cuadrosAbiertos);
     };
 
     // Función para manejar la eliminación
     const handleDelete = async (id, nombre) => {
-        if (window.confirm(`¿Estás seguro de que quieres eliminar el cuadro "${nombre}"?`)) {
+        if (window.confirm(`¿Estás seguro de que quieres cerrar el cuadro "${nombre}"?`)) {
             try {
-                await axios.delete(`http://localhost:8080/cuadro-turnos/${id}`);
-                // Recargar la lista después de eliminar
+                const response = await axios.put('http://localhost:8080/cuadro-turnos/cambiar-estado', {
+                    estadoActual: 'abierto',   // o el estado actual que aplique
+                    nuevoEstado: 'cerrado',
+                    idsCuadros: [id]
+                });
+
+                // Recargar la lista después del cambio de estado
                 loadCuadros();
-                alert('Cuadro eliminado exitosamente');
+                alert('Cuadro cerrado exitosamente');
+                console.log('Respuesta:', response.data);
             } catch (error) {
-                console.error('Error al eliminar:', error);
-                alert('Error al eliminar el cuadro');
+                console.error('Error al cerrar el cuadro:', error.response?.data || error.message);
+                alert('Error al cerrar el cuadro');
             }
         }
     };

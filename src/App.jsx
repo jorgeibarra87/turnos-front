@@ -11,6 +11,9 @@ import VerCuadro from './components/CuadrosTurno/VerCuadro';
 import CrearCuadroMulti from './components/CuadrosTurno/CrearCuadroMulti';
 import CrearCuadroMulti2 from './components/CuadrosTurno/CrearCuadroMulti2';
 import CrearCuadroMulti3 from './components/CuadrosTurno/CrearCuadroMulti3';
+import CrearEquipo from './components/Equipos/CrearEquipos';
+import EquiposTable from './components/Equipos/EquiposTable';
+import VerEquipo from './components/Equipos/VerEquipo';
 import Pruebas from './components/CuadrosTurno/Pruebas';
 
 const App = () => (
@@ -41,6 +44,15 @@ const App = () => (
           {/* Ruta para crear desde /Pruebas */}
           <Route exact path="/Pruebas/crear" element={<Pruebas />} />
           <Route exact path="/VerCuadro/:id" element={<VerCuadro />} />
+
+
+          <Route exact path="/equipos" element={<EquiposTable />} />
+          <Route exact path="/crearEquipo/" element={<CrearEquipo />} />
+          {/* Nueva ruta para manejar edición con parámetro ID */}
+          <Route exact path="/crearEquipo/editar/:id" element={<CrearEquipo />} />
+          {/* Ruta para crear desde /crearCuadro */}
+          <Route exact path="crearEquipo/crear" element={<CrearEquipo />} />
+          <Route exact path="/VerEquipo/:id" element={<VerEquipo />} />
         </Routes>
       </main>
     </div>

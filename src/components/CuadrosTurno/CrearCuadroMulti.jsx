@@ -242,12 +242,12 @@ export default function CrearCuadroMulti() {
                         </button>
                     </Link>
 
-                    <Link to={getBackUrl()}>
+                    {/* <Link to={getBackUrl()}>
                         <button className="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 flex justify-center items-center gap-2 transition-colors">
                             <ArrowLeft size={20} color="white" strokeWidth={2} />
                             Volver
                         </button>
-                    </Link>
+                    </Link> */}
 
                     <Link to="/">
                         <button className="px-6 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 flex justify-center items-center gap-2 transition-colors">

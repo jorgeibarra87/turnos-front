@@ -208,7 +208,7 @@ export default function VerCuadro() {
                             <div className='text-sm text-gray-500 mb-1'>Estado</div>
                             <div className='font-semibold text-gray-800'>
                                 <span className='px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800'>
-                                    Activo
+                                    {cuadroData?.estadoCuadro || `No especificado`}
                                 </span>
                             </div>
                         </div>

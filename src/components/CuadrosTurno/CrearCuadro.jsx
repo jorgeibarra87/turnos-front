@@ -375,12 +375,12 @@ export default function CrearCuadro() {
     const handleGuardarCuadro = async () => {
         setSaving(true);
         setErrorCuadro(null);
-
+        const fechaActual = new Date();
         try {
             const cuadroData = {
                 categoria: selectedCategory.toLowerCase(),
-                anio: isEditMode ? cuadroOriginal.anio : "2025",
-                mes: isEditMode ? cuadroOriginal.mes : "07",
+                anio: isEditMode ? cuadroOriginal.anio : fechaActual.getFullYear(),
+                mes: isEditMode ? cuadroOriginal.mes : fechaActual.getMonth() + 1,
                 turnoExcepcion: isEditMode ? cuadroOriginal.turnoExcepcion : false,
                 idEquipo: parseInt(selectedEquipo.id),
             };
