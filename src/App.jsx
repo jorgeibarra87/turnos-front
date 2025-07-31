@@ -16,7 +16,8 @@ import EquiposTable from './components/Equipos/EquiposTable';
 import VerEquipo from './components/Equipos/VerEquipo';
 import VerContrato from './components/Contratos/VerContratos';
 import Pruebas from './components/CuadrosTurno/Pruebas';
-import CrearContrato from './components/Contratos/VerContratos';
+import CrearContrato from './components/Contratos/CrearContratos';
+import ContratosTable from './components/Contratos/ContratosTable';
 
 const App = () => (
   <div className="flex h-screen bg-primary-blue-backwround">
@@ -56,11 +57,13 @@ const App = () => (
           <Route exact path="crearEquipo/crear" element={<CrearEquipo />} />
           <Route exact path="/VerEquipo/:id" element={<VerEquipo />} />
 
+          <Route exact path="/contratos" element={<ContratosTable />} />
           <Route exact path="/crearContrato/" element={<CrearContrato />} />
           {/* Nueva ruta para manejar edición con parámetro ID */}
           <Route exact path="/crearContrato/editar/:id" element={<CrearContrato />} />
           {/* Ruta para crear desde /crearCuadro */}
           <Route exact path="crearContrato/crear" element={<CrearContrato />} />
+          <Route exact path="/VerContrato/:id" element={<VerContrato />} />
         </Routes>
       </main>
     </div>

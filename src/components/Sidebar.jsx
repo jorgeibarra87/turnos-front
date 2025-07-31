@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { ChevronDown, ChevronRight, Calendar } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
-import SvgUrl from '../assets/solutions.svg';
 
 const Sidebar = () => {
     const location = useLocation();
@@ -30,7 +29,7 @@ const Sidebar = () => {
             id: 'supervision',
             title: 'Supervision',
             subItems: [
-                { name: 'Gestionar Contrato', route: '/crearContrato' },
+                { name: 'Gestionar Contrato', route: '/contratos' },
                 { name: 'Gestionar Reportes', route: '#' }
             ]
         },
@@ -68,14 +67,14 @@ const Sidebar = () => {
         <aside className="bg-slate-800 text-white w-80 h-screen overflow-y-auto">
             {/* Header */}
             <div className="text-white p-4 flex items-center border-b border-slate-700">
-                <img src={SvgUrl} alt="Icono S" className="p-3" />
+                <img src="/solutions.svg" alt="Icono S" className="p-3" />
                 <span className="font-semibold text-sm-900">Solutions HUSJP</span>
             </div>
 
             {/* APP TURNOS Button */}
             <div className="p-4 border-b border-slate-700">
                 <Link to="/">
-                    <button className="w-full bg-blue-600 hover:bg-blue-700 text-white p-3 rounded flex items-center justify-center gap-2 transition-colors">
+                    <button className="w-full bg-slate-700 hover:bg-slate-600 text-white p-3 rounded flex items-center justify-center gap-2 transition-colors">
                         <Calendar size={20} />
                         <span className="font-medium">APP TURNOS</span>
                     </button>
@@ -89,7 +88,7 @@ const Sidebar = () => {
                         {/* Main Menu Item */}
                         <button
                             onClick={() => toggleSection(item.id)}
-                            className={`w-full flex items-center justify-between p-4 text-left hover:bg-slate-700 transition-colors ${expandedSections[item.id] ? 'bg-yellow-500 text-slate-800 font-medium hover:bg-yellow-500' : 'text-white'
+                            className={`w-full flex items-center justify-between p-4 text-left hover:bg-slate-700 transition-colors ${expandedSections[item.id] ? 'bg-yellow-500 text-white font-medium hover:bg-yellow-500' : 'text-white'
                                 }`}
                         >
                             <span>{item.title}</span>

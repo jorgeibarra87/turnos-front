@@ -155,7 +155,7 @@ export default function CrearEquipo() {
             setLoadingUsuarios(false);
         }
     };
-    console.log('usuarios disponibles', usuariosDisponibles);
+    //console.log('usuarios disponibles', usuariosDisponibles);
 
     // Función para manejar el cambio de categoría
     const handleCategoryChange = (e) => {
