@@ -14,7 +14,9 @@ import CrearCuadroMulti3 from './components/CuadrosTurno/CrearCuadroMulti3';
 import CrearEquipo from './components/Equipos/CrearEquipos';
 import EquiposTable from './components/Equipos/EquiposTable';
 import VerEquipo from './components/Equipos/VerEquipo';
+import VerContrato from './components/Contratos/VerContratos';
 import Pruebas from './components/CuadrosTurno/Pruebas';
+import CrearContrato from './components/Contratos/VerContratos';
 
 const App = () => (
   <div className="flex h-screen bg-primary-blue-backwround">
@@ -53,6 +55,12 @@ const App = () => (
           {/* Ruta para crear desde /crearCuadro */}
           <Route exact path="crearEquipo/crear" element={<CrearEquipo />} />
           <Route exact path="/VerEquipo/:id" element={<VerEquipo />} />
+
+          <Route exact path="/crearContrato/" element={<CrearContrato />} />
+          {/* Nueva ruta para manejar edición con parámetro ID */}
+          <Route exact path="/crearContrato/editar/:id" element={<CrearContrato />} />
+          {/* Ruta para crear desde /crearCuadro */}
+          <Route exact path="crearContrato/crear" element={<CrearContrato />} />
         </Routes>
       </main>
     </div>

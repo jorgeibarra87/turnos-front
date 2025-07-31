@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
-import { CheckIcon, CircleXIcon, Save, User, ArrowLeft, Edit, Plus, Trash2, UserPlus } from 'lucide-react';
+import { CheckIcon, CircleXIcon, Save, User, ArrowLeft, Edit, Plus, Trash2, UserPlus, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export default function CrearEquipo() {
@@ -116,7 +116,7 @@ export default function CrearEquipo() {
     // **FUNCIÓN PARA CARGAR PERSONAS DEL EQUIPO**
     const loadPersonasEquipo = async (idEquipo) => {
         try {
-            const response = await axios.get(`http://localhost:8080/usuarios/equipo/${idEquipo}`);
+            const response = await axios.get(`http://localhost:8080/usuario/equipo/${idEquipo}/usuarios`);
             setPersonasEquipo(response.data || []);
         } catch (err) {
             console.error('Error al cargar personas del equipo:', err);
@@ -141,7 +141,7 @@ export default function CrearEquipo() {
     const loadUsuariosPorPerfil = async (idTitulo) => {
         try {
             setLoadingUsuarios(true);
-            const response = await axios.get(`http://localhost:8080/usuarios/titulo/${idTitulo}`);
+            const response = await axios.get(`http://localhost:8080/usuario/titulo/${idTitulo}/usuarios`);
             // Filtrar usuarios que ya están en el equipo
             const usuariosYaEnEquipo = personasEquipo.map(p => p.idPersona);
             const usuariosFiltered = (response.data || []).filter(
@@ -155,6 +155,7 @@ export default function CrearEquipo() {
             setLoadingUsuarios(false);
         }
     };
+    console.log('usuarios disponibles', usuariosDisponibles);
 
     // Función para manejar el cambio de categoría
     const handleCategoryChange = (e) => {
@@ -340,11 +341,12 @@ export default function CrearEquipo() {
                 response = await axios.post('http://localhost:8080/equipo/equipoNombre', equipoData);
                 equipoIdFinal = response.data.idEquipo;
             }
-
+            const personasIds = personasEquipo.map(p => p.idPersona);
+            console.log('personas id: ', personasIds);
             // **ACTUALIZAR PERSONAS DEL EQUIPO**
             if (personasEquipo.length > 0) {
                 const personasIds = personasEquipo.map(p => p.idPersona);
-                await axios.put(`http://localhost:8080/equipo/${equipoIdFinal}/usuarios`, personasIds);
+                await axios.put(`http://localhost:8080/usuario/equipo/${equipoIdFinal}`, personasIds);
             }
 
             alert(`Equipo ${isEditMode ? 'actualizado' : 'creado'} exitosamente`);
@@ -568,7 +570,7 @@ export default function CrearEquipo() {
                                                         onClick={() => handleRemoverPersonaDelEquipo(persona.idPersona)}
                                                         className="p-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded transition-colors"
                                                     >
-                                                        <Trash2 size={16} />
+                                                        <X size={18} />
                                                     </button>
                                                 </div>
                                             </div>
