@@ -18,6 +18,11 @@ import VerContrato from './components/Contratos/VerContratos';
 import Pruebas from './components/CuadrosTurno/Pruebas';
 import CrearContrato from './components/Contratos/CrearContratos';
 import ContratosTable from './components/Contratos/ContratosTable';
+import CrearTurnos from './components/Turnos/CrearTurnos';
+import GestionTurnos from './components/Turnos/GestionTurnos';
+
+//import EquiposTable from './components/Turnos/TurnosTable';
+//import VerEquipo from './components/Turnos/VerTurnos';
 
 const App = () => (
   <div className="flex h-screen bg-primary-blue-backwround">
@@ -64,6 +69,16 @@ const App = () => (
           {/* Ruta para crear desde /crearCuadro */}
           <Route exact path="crearContrato/crear" element={<CrearContrato />} />
           <Route exact path="/VerContrato/:id" element={<VerContrato />} />
+
+          {/* <Route exact path="/turnos" element={<TurnosTable />} /> */}
+          <Route exact path="/crearTurnos/" element={<CrearTurnos />} />
+          {/* Nueva ruta para manejar edición con parámetro ID */}
+          <Route exact path="/crearTurnos/editar/:id" element={<CrearTurnos />} />
+          {/* Ruta para crear desde /crearTurnos */}
+          <Route exact path="crearTurnos/crear" element={<CrearTurnos />} />
+          <Route exact path="/gestionTurnos/" element={<GestionTurnos />} />
+          {/* <Route exact path="/VerTurnos/:id" element={<VerTurnos />} /> */}
+
         </Routes>
       </main>
     </div>

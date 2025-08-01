@@ -4,7 +4,7 @@ import axios from 'axios';
 import { CheckIcon, CircleXIcon, Save, User, ArrowLeft, Edit } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-export default function Pruebas() {
+export default function CrearTurnos() {
 
     const [searchParams] = useSearchParams();
     //const procesos = searchParams.get('procesos');

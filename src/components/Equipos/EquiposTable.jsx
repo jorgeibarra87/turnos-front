@@ -147,7 +147,7 @@ export default function EquiposTable() {
                     <tr>
                         <th className="p-3">ID</th>
                         <th className="p-3">Nombre del Equipo</th>
-                        <th className="p-3">Área/Proceso</th>
+                        {/* <th className="p-3">Área/Proceso</th> */}
                         <th className="p-3 flex items-center gap-2">
                             <Settings size={16} />
                             Acciones
@@ -163,9 +163,9 @@ export default function EquiposTable() {
                             <td className="p-3 text-xs font-medium">
                                 {equipo.nombre || 'Sin nombre'}
                             </td>
-                            <td className="p-3 text-xs">
+                            {/* <td className="p-3 text-xs">
                                 {extractArea(equipo.nombre)}
-                            </td>
+                            </td> */}
                             <td className="p-3 space-x-3">
                                 {/* Botón Ver - Link a vista detallada de equipo */}
                                 <Link
@@ -187,12 +187,12 @@ export default function EquiposTable() {
                                 >
                                     <Edit
                                         size={18}
-                                        className="text-yellow-600 hover:text-yellow-800 cursor-pointer transition-colors"
+                                        className="text-blue-600 hover:text-blue-800 cursor-pointer transition-colors"
                                     />
                                 </Link>
 
                                 {/* Botón Eliminar - Mantiene la funcionalidad de botón */}
-                                <button
+                                {/* <button
                                     onClick={() => handleDelete(equipo.idEquipo || equipo.id, equipo.nombre)}
                                     title={`Eliminar equipo: ${equipo.nombre}`}
                                     className="inline-block"
@@ -201,7 +201,7 @@ export default function EquiposTable() {
                                         size={18}
                                         className="text-red-600 hover:text-red-800 cursor-pointer transition-colors"
                                     />
-                                </button>
+                                </button> */}
                             </td>
                         </tr>
                     ))}

@@ -39,7 +39,7 @@ const Sidebar = () => {
             subItems: [
                 { name: 'Equipos Talento Humano', route: '/equipos' },
                 { name: 'Cuadros de Turno', route: '/' },
-                { name: 'Turnos', route: '#' },
+                { name: 'Turnos', route: '/CrearTurnos' },
                 { name: 'Calendario Turnos', route: '#' }
             ]
         },
