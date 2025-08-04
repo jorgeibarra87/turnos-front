@@ -21,6 +21,10 @@ import ContratosTable from './components/Contratos/ContratosTable';
 import CrearTurnos from './components/Turnos/CrearTurnos';
 import GestionTurnos from './components/Turnos/GestionTurnos';
 
+import { SelectorCuadroTurno } from './components/Turnos/SelectorCuadroTurno';
+import { FormularioTurno } from './components/Turnos/FormularioTurno';
+import { VerTurno } from './components/Turnos/VerTurno';
+
 //import EquiposTable from './components/Turnos/TurnosTable';
 //import VerEquipo from './components/Turnos/VerTurnos';
 
@@ -77,6 +81,12 @@ const App = () => (
           {/* Ruta para crear desde /crearTurnos */}
           <Route exact path="crearTurnos/crear" element={<CrearTurnos />} />
           <Route exact path="/gestionTurnos/" element={<GestionTurnos />} />
+
+          <Route path="/selector-cuadro-turno" element={<SelectorCuadroTurno />} />
+          <Route path="/gestionar-turnos" element={<GestionTurnos />} />
+          <Route path="/crear-turno" element={<FormularioTurno />} />
+          <Route path="/editar-turno/:turnoId" element={<FormularioTurno />} />
+          <Route path="/ver-turno/:turnoId" element={<VerTurno />} />
           {/* <Route exact path="/VerTurnos/:id" element={<VerTurnos />} /> */}
 
         </Routes>

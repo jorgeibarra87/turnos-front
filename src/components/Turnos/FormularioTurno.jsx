@@ -1,48 +1,19 @@
 import React, { useEffect, useState } from 'react';
-import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
+import { useSearchParams, useNavigate, useLocation, useParams } from 'react-router-dom';
 import axios from 'axios';
 import { Save, User, ArrowLeft, Edit, CircleXIcon, Clock } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-export default function Pruebas() {
+export function FormularioTurno() {
     const navigate = useNavigate();
     const location = useLocation();
     const [searchParams] = useSearchParams();
+    const cuadroNombre = searchParams.get('cuadroNombre');
+    const equipoNombre = searchParams.get('equipoNombre');
+    const { turnoId } = useParams(); // Para modo edición desde URL /editar-turno/:id
 
-    // Función para detectar modo edición y extraer ID
-    const detectEditMode = () => {
-        const pathname = location.pathname;
-        console.log('Pathname actual:', pathname);
-
-        const editMatch = pathname.match(/\/editar-turno\/(\d+)/);
-
-        if (editMatch) {
-            console.log('Modo edición detectado. ID:', editMatch[1]);
-            return {
-                isEditMode: true,
-                turnoId: editMatch[1]
-            };
-        }
-
-        const editFromQuery = searchParams.get('edit') === 'true';
-        const idFromQuery = searchParams.get('id');
-
-        if (editFromQuery && idFromQuery) {
-            console.log('Modo edición desde query params. ID:', idFromQuery);
-            return {
-                isEditMode: true,
-                turnoId: idFromQuery
-            };
-        }
-
-        console.log('Modo creación detectado');
-        return {
-            isEditMode: false,
-            turnoId: null
-        };
-    };
-
-    const { isEditMode, turnoId } = detectEditMode();
+    // Detectar modo edición
+    const isEditMode = !!turnoId;
 
     // Estados principales del formulario
     const [cuadroTurno, setCuadroTurno] = useState("");
@@ -60,7 +31,7 @@ export default function Pruebas() {
     const [error, setError] = useState("");
     const [saving, setSaving] = useState(false);
 
-    // Estados para datos del cuadro y equipo desde URL
+    // Estados para datos del cuadro y equipo
     const [cuadroData, setCuadroData] = useState({
         id: "",
         nombre: "",
@@ -82,46 +53,41 @@ export default function Pruebas() {
 
         const diffMs = fin - inicio;
         const diffHours = diffMs / (1000 * 60 * 60);
-        return Math.round(diffHours * 100) / 100; // Redondear a 2 decimales
+        return Math.round(diffHours * 100) / 100;
     };
 
-    // useEffect para obtener datos de la URL
+    // useEffect para obtener datos de la URL (modo creación)
     useEffect(() => {
-        const cuadroId = searchParams.get('cuadroId');
-        const cuadroNombre = searchParams.get('cuadroNombre');
-        const equipoId = searchParams.get('equipoId');
+        if (!isEditMode) {
+            const cuadroId = searchParams.get('cuadroId');
+            const cuadroNombre = searchParams.get('cuadroNombre');
+            const equipoId = searchParams.get('equipoId');
 
-        if (cuadroId && cuadroNombre && equipoId) {
-            setCuadroData({
-                id: cuadroId,
-                nombre: cuadroNombre,
-                equipoId: equipoId
-            });
+            if (cuadroId && cuadroNombre && equipoId) {
+                setCuadroData({
+                    id: cuadroId,
+                    nombre: cuadroNombre,
+                    equipoId: equipoId
+                });
 
-            // Cargar personas del equipo
-            loadPersonasEquipo(equipoId);
+                setCuadroTurno(cuadroNombre);
+                loadPersonasEquipo(equipoId);
+                loadEquipoInfo(equipoId);
+            }
         }
-    }, [searchParams]);
+    }, [searchParams, isEditMode]);
 
-    // useEffect para cargar datos del turno si estamos en modo edición
+    // useEffect para cargar datos del turno en modo edición
     useEffect(() => {
         const loadTurnoForEdit = async () => {
-            if (!isEditMode || !turnoId) {
-                console.log('No es modo edición o no hay ID');
-                return;
-            }
-
-            console.log('Cargando turno para editar. ID:', turnoId);
+            if (!isEditMode || !turnoId) return;
 
             try {
                 setLoadingTurnoData(true);
-                const response = await axios.get(`http://localhost:8080/turno/${turnoId}`);
+                const response = await axios.get(`http://localhost:8080/turnos/${turnoId}`);
                 const turnoData = response.data;
-
-                console.log('Datos del turno cargados:', turnoData);
+                console.log("turnoData", turnoData);
                 setTurnoOriginal(turnoData);
-
-                // Poblar el formulario con los datos del turno
                 setCuadroTurno(turnoData.cuadroTurno || "");
                 setEquipo(turnoData.equipo || "");
                 setFechaHoraInicio(turnoData.fechaHoraInicio || "");
@@ -130,13 +96,15 @@ export default function Pruebas() {
                 setJornada(turnoData.jornada || "Mañana (M)");
                 setTipoTurno(turnoData.tipoTurno || "Presencial");
 
-                // Si tenemos equipoId del turno, cargar personas
-                if (turnoData.equipoId) {
+                // Cargar datos relacionados
+                if (turnoData.idEquipo) {
                     setCuadroData(prev => ({
                         ...prev,
-                        equipoId: turnoData.equipoId
+                        equipoId: turnoData.idEquipo,
+                        id: turnoData.idCuadroTurno,
+                        nombre: turnoData.cuadroTurno
                     }));
-                    loadPersonasEquipo(turnoData.equipoId);
+                    loadPersonasEquipo(turnoData.idEquipo);
                 }
 
             } catch (err) {
@@ -156,18 +124,21 @@ export default function Pruebas() {
             setLoadingPersonas(true);
             const response = await axios.get(`http://localhost:8080/usuario/equipo/${equipoId}/usuarios`);
             setPersonasEquipo(response.data || []);
-
-            // Establecer nombre del equipo
-            if (response.data && response.data.length > 0) {
-                // Asumiendo que el nombre del equipo viene en la respuesta o podemos obtenerlo
-                const equipoResponse = await axios.get(`http://localhost:8080/equipo/${equipoId}`);
-                setEquipo(equipoResponse.data.nombre || `Equipo_${equipoId}`);
-            }
         } catch (err) {
             console.error('Error al cargar personas del equipo:', err);
             setError('Error al cargar las personas del equipo');
         } finally {
             setLoadingPersonas(false);
+        }
+    };
+
+    // Función para cargar info del equipo
+    const loadEquipoInfo = async (equipoId) => {
+        try {
+            const response = await axios.get(`http://localhost:8080/equipo/${equipoId}`);
+            setEquipo(response.data.nombre || `Equipo_${equipoId}`);
+        } catch (err) {
+            console.error('Error al cargar info del equipo:', err);
         }
     };
 
@@ -184,7 +155,6 @@ export default function Pruebas() {
         setError("");
 
         try {
-            // Validaciones
             if (!fechaHoraInicio || !fechaHoraFin || !selectedPersona) {
                 throw new Error('Todos los campos son requeridos');
             }
@@ -209,15 +179,20 @@ export default function Pruebas() {
             let response;
 
             if (isEditMode) {
-                // Actualizar turno existente
-                response = await axios.put(`http://localhost:8080/turno/${turnoId}`, turnoData);
+                response = await axios.put(`http://localhost:8080/turnos/${turnoId}`, turnoData);
             } else {
-                // Crear nuevo turno
-                response = await axios.post('http://localhost:8080/turno', turnoData);
+                response = await axios.post('http://localhost:8080/turnos', turnoData);
             }
 
             alert(`Turno ${isEditMode ? 'actualizado' : 'creado'} exitosamente`);
-            navigate('/turnos'); // Ajusta la ruta según tu aplicación
+
+            // Regresar a la gestión de turnos
+            const params = new URLSearchParams({
+                cuadroId: cuadroData.id,
+                cuadroNombre: cuadroData.nombre,
+                equipoId: cuadroData.equipoId
+            });
+            navigate(`/gestionar-turnos?${params.toString()}`);
 
         } catch (err) {
             setError(err.response?.data?.message || err.message || `Error al ${isEditMode ? 'actualizar' : 'crear'} el turno`);
@@ -227,7 +202,6 @@ export default function Pruebas() {
         }
     };
 
-    // Mostrar loading si estamos cargando datos para editar
     if (isEditMode && loadingTurnoData) {
         return (
             <div className='absolute inset-0 bg-opacity-30 backdrop-blur-sm flex justify-center items-center'>
@@ -259,24 +233,23 @@ export default function Pruebas() {
                 )}
 
                 <div className='w-full space-y-4'>
-                    {/* Cuadro de Turno */}
-                    <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                    {/* Cuadro de Turno y Equipo */}
+                    <div className='grid grid-cols-1 md:grid-cols-1 gap-4'>
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
                                 Cuadro de Turno:
                             </label>
                             <div className="px-3 py-2 bg-gray-50 border border-gray-300 rounded-md text-sm">
-                                {cuadroData.nombre || 'No especificado'}
+                                {cuadroNombre || 'No especificado'}
                             </div>
                         </div>
 
-                        {/* Equipo */}
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
                                 Equipo:
                             </label>
                             <div className="px-3 py-2 bg-gray-50 border border-gray-300 rounded-md text-sm">
-                                {equipo || 'Cargando...'}
+                                {equipoNombre || 'Cargando...'}
                             </div>
                         </div>
                     </div>
@@ -411,7 +384,7 @@ export default function Pruebas() {
                         Volver
                     </button>
 
-                    <Link to="/turnos">
+                    <Link to="/selector-cuadro-turno">
                         <button className="px-6 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 flex justify-center items-center gap-2 transition-colors">
                             <CircleXIcon size={20} color="white" strokeWidth={2} />
                             Cancelar
@@ -421,4 +394,4 @@ export default function Pruebas() {
             </div>
         </div>
     );
-};
+}

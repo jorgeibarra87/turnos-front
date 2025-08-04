@@ -163,9 +163,6 @@ export default function EquiposTable() {
                             <td className="p-3 text-xs font-medium">
                                 {equipo.nombre || 'Sin nombre'}
                             </td>
-                            {/* <td className="p-3 text-xs">
-                                {extractArea(equipo.nombre)}
-                            </td> */}
                             <td className="p-3 space-x-3">
                                 {/* Botón Ver - Link a vista detallada de equipo */}
                                 <Link
@@ -190,7 +187,6 @@ export default function EquiposTable() {
                                         className="text-blue-600 hover:text-blue-800 cursor-pointer transition-colors"
                                     />
                                 </Link>
-
                                 {/* Botón Eliminar - Mantiene la funcionalidad de botón */}
                                 {/* <button
                                     onClick={() => handleDelete(equipo.idEquipo || equipo.id, equipo.nombre)}
