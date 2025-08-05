@@ -164,16 +164,22 @@ export function FormularioTurno() {
             }
 
             const turnoData = {
-                cuadroTurno: cuadroData.nombre,
+                //cuadroTurno: cuadroData.nombre,
                 idCuadroTurno: cuadroData.id,
-                equipo: equipo,
-                idEquipo: cuadroData.equipoId,
-                fechaHoraInicio: fechaHoraInicio,
-                fechaHoraFin: fechaHoraFin,
                 idPersona: selectedPersona,
-                jornada: jornada,
+                fechaInicio: fechaHoraInicio,
+                fechaFin: fechaHoraFin,
+                totalHoras: calcularTotalHoras(),
                 tipoTurno: tipoTurno,
-                totalHoras: calcularTotalHoras()
+                jornada: jornada,
+                //equipo: equipo,
+                //idEquipo: cuadroData.equipoId,
+
+
+
+
+
+
             };
 
             let response;

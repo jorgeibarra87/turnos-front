@@ -176,12 +176,12 @@ export function VerTurno() {
 
                 {/* Botones de Acción */}
                 <div className='flex justify-center items-center gap-4 mt-8'>
-                    <Link to={`/editar-turno/${turnoId}`}>
+                    {/* <Link to={`/editar-turno/${turnoId}`}>
                         <button className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 flex justify-center items-center gap-2 transition-colors">
                             <Edit size={20} color="white" strokeWidth={2} />
                             Editar Turno
                         </button>
-                    </Link>
+                    </Link> */}
 
                     <button
                         onClick={() => navigate(-1)}

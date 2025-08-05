@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
-import { User, ArrowLeft, Eye, Users, CalendarPlus, Calendar, Edit, CalendarSearch, CalendarSync } from 'lucide-react';
+import { User, ArrowLeft, Eye, Users, CalendarPlus, Calendar, Edit, CalendarSearch, CalendarSync, ChevronLeft, ChevronRight } from 'lucide-react';
 //import { turnosData } from '../../data/turnosData';
 
 export default function GestionTurnos() {
@@ -9,6 +9,8 @@ export default function GestionTurnos() {
     const equipoId = searchParams.get('equipoId');
     const cuadroId = searchParams.get('cuadroId');
     const cuadroNombre = searchParams.get('cuadroNombre');
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage, setItemsPerPage] = useState(10);
     const navigate = useNavigate();
 
 
@@ -93,10 +95,17 @@ export default function GestionTurnos() {
             try {
                 setLoading(true);
                 setError(null);
-                const response = await axios.get(`http://localhost:8080/turnos/cuadro/${cuadroId}`);
+                const result = await axios.get(`http://localhost:8080/turnos/cuadro/${cuadroId}`);
 
-                if (response.data) {
-                    setTurnos(response.data);
+                if (result.data) {
+                    const turnosAbiertos = result.data.filter(turno => turno.estadoTurno === "abierto");
+                    setTurnos(turnosAbiertos);
+                    // Resetear página si nos quedamos sin elementos en la página actual
+                    const totalPages = Math.ceil(turnosAbiertos.length / itemsPerPage);
+                    console.log("totalpages", totalPages);
+                    if (currentPage > totalPages && totalPages > 0) {
+                        setCurrentPage(totalPages);
+                    }
                 } else {
                     setTurnos(null);
                     console.warn('No se recibió turnos');
@@ -112,6 +121,64 @@ export default function GestionTurnos() {
 
         fetchTurnos();
     }, [cuadroId]);
+
+
+
+    // Lógica de paginación
+    const totalPages = Math.ceil(turnos.length / itemsPerPage);
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const currentTurnos = turnos.slice(startIndex, endIndex);
+
+    // Funciones para cambiar página
+    const goToPage = (page) => {
+        setCurrentPage(page);
+    };
+
+    const goToPrevious = () => {
+        if (currentPage > 1) {
+            setCurrentPage(currentPage - 1);
+        }
+    };
+
+    const goToNext = () => {
+        if (currentPage < totalPages) {
+            setCurrentPage(currentPage + 1);
+        }
+    };
+
+    // Función para generar números de página visibles
+    const getVisiblePageNumbers = () => {
+        const delta = 2; // Número de páginas a mostrar a cada lado de la página actual
+        const range = [];
+        const rangeWithDots = [];
+
+        // Calcular el rango de páginas a mostrar
+        for (let i = Math.max(2, currentPage - delta);
+            i <= Math.min(totalPages - 1, currentPage + delta);
+            i++) {
+            range.push(i);
+        }
+
+        // Agregar primera página
+        if (currentPage - delta > 2) {
+            rangeWithDots.push(1, '...');
+        } else {
+            rangeWithDots.push(1);
+        }
+
+        // Agregar páginas del rango
+        rangeWithDots.push(...range);
+
+        // Agregar última página
+        if (currentPage + delta < totalPages - 1) {
+            rangeWithDots.push('...', totalPages);
+        } else if (totalPages > 1) {
+            rangeWithDots.push(totalPages);
+        }
+
+        return rangeWithDots;
+    };
 
 
     return (
@@ -200,6 +267,27 @@ export default function GestionTurnos() {
                     />
                 </div>
 
+
+                {/* Selector de elementos por página */}
+                <div className="flex items-center justify-end gap-2">
+                    <span className="text-sm text-gray-600">Mostrar:</span>
+                    <select
+                        value={itemsPerPage}
+                        onChange={(e) => {
+                            setItemsPerPage(Number(e.target.value));
+                            setCurrentPage(1); // Resetear a primera página
+                        }}
+                        className="border border-gray-300 rounded px-2 py-1 text-sm"
+                    >
+                        <option value={5}>5</option>
+                        <option value={10}>10</option>
+                        <option value={25}>25</option>
+                        <option value={50}>50</option>
+                    </select>
+                    <span className="text-sm text-gray-600">por página</span>
+                </div>
+
+
                 {/* Datos de Turnos */}
                 <div className='bg-white rounded-lg border'>
                     {/* <div className='bg-blue-50 px-6 py-2 border-b'>
@@ -251,7 +339,7 @@ export default function GestionTurnos() {
                                     </tr>
                                 </thead>
                                 <tbody className='divide-y divide-gray-200'>
-                                    {turnos.map((turno, index) => (
+                                    {currentTurnos.map((turno, index) => (
                                         <tr key={index} className='hover:bg-gray-50 transition-colors'>
                                             <td className='px-2 py-2 text-sm text-gray-700'>
                                                 {turno.idTurno || 'Sin perfil definido'}
@@ -302,6 +390,62 @@ export default function GestionTurnos() {
                         </div>
                     )}
                 </div>
+
+                {/* Información de paginación y controles */}
+                {turnos.length > 0 && (
+                    <div className="mt-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+                        {/* Información de registros */}
+                        <div className="text-sm text-gray-600">
+                            Mostrando {startIndex + 1} a {Math.min(endIndex, turnos.length)} de {turnos.length} registros
+                        </div>
+
+                        {/* Controles de paginación */}
+                        {totalPages > 1 && (
+                            <div className="flex items-center gap-2">
+                                {/* Botón anterior */}
+                                <button
+                                    onClick={goToPrevious}
+                                    disabled={currentPage === 1}
+                                    className={`p-2 rounded ${currentPage === 1
+                                        ? 'text-gray-400 cursor-not-allowed'
+                                        : 'text-gray-600 hover:bg-gray-100'
+                                        }`}
+                                >
+                                    <ChevronLeft size={20} />
+                                </button>
+
+                                {/* Números de página */}
+                                {getVisiblePageNumbers().map((pageNumber, index) => (
+                                    <button
+                                        key={index}
+                                        onClick={() => pageNumber !== '...' && goToPage(pageNumber)}
+                                        disabled={pageNumber === '...'}
+                                        className={`px-3 py-1 rounded text-sm ${pageNumber === currentPage
+                                            ? 'bg-blue-500 text-white'
+                                            : pageNumber === '...'
+                                                ? 'text-gray-400 cursor-default'
+                                                : 'text-gray-600 hover:bg-gray-100'
+                                            }`}
+                                    >
+                                        {pageNumber}
+                                    </button>
+                                ))}
+
+                                {/* Botón siguiente */}
+                                <button
+                                    onClick={goToNext}
+                                    disabled={currentPage === totalPages}
+                                    className={`p-2 rounded ${currentPage === totalPages
+                                        ? 'text-gray-400 cursor-not-allowed'
+                                        : 'text-gray-600 hover:bg-gray-100'
+                                        }`}
+                                >
+                                    <ChevronRight size={20} />
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                )}
 
                 {/* Botón de volver */}
                 <div className='flex justify-center gap-4 pt-4 '>

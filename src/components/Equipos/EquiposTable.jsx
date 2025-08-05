@@ -1,5 +1,5 @@
 import React from 'react';
-import { Eye, Edit, Trash2, CopyPlusIcon, CopyPlus, UsersIcon, BoxesIcon, Users, Settings } from 'lucide-react';
+import { Eye, Edit, Trash2, CopyPlusIcon, CopyPlus, UsersIcon, BoxesIcon, Users, Settings, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
@@ -8,6 +8,8 @@ export default function EquiposTable() {
     const [equipos, setEquipos] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage, setItemsPerPage] = useState(10);
 
     useEffect(() => {
         loadEquipos();
@@ -22,7 +24,14 @@ export default function EquiposTable() {
 
             // Si la respuesta es un array directamente
             if (Array.isArray(result.data)) {
-                setEquipos(result.data);
+                const equiposAbiertos = result.data.filter(equipo => equipo.estado === true);
+                setEquipos(equiposAbiertos);
+                // Resetear página si nos quedamos sin elementos en la página actual
+                const totalPages = Math.ceil(equiposAbiertos.length / itemsPerPage);
+                console.log("totalpages", totalPages);
+                if (currentPage > totalPages && totalPages > 0) {
+                    setCurrentPage(totalPages);
+                }
             } else {
                 // Si hay alguna estructura diferente, ajustar aquí
                 setEquipos(result.data.equipos || []);
@@ -115,6 +124,63 @@ export default function EquiposTable() {
         );
     }
 
+
+    // Lógica de paginación
+    const totalPages = Math.ceil(equipos.length / itemsPerPage);
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const currentEquipos = equipos.slice(startIndex, endIndex);
+
+    // Funciones para cambiar página
+    const goToPage = (page) => {
+        setCurrentPage(page);
+    };
+
+    const goToPrevious = () => {
+        if (currentPage > 1) {
+            setCurrentPage(currentPage - 1);
+        }
+    };
+
+    const goToNext = () => {
+        if (currentPage < totalPages) {
+            setCurrentPage(currentPage + 1);
+        }
+    };
+
+    // Función para generar números de página visibles
+    const getVisiblePageNumbers = () => {
+        const delta = 2; // Número de páginas a mostrar a cada lado de la página actual
+        const range = [];
+        const rangeWithDots = [];
+
+        // Calcular el rango de páginas a mostrar
+        for (let i = Math.max(2, currentPage - delta);
+            i <= Math.min(totalPages - 1, currentPage + delta);
+            i++) {
+            range.push(i);
+        }
+
+        // Agregar primera página
+        if (currentPage - delta > 2) {
+            rangeWithDots.push(1, '...');
+        } else {
+            rangeWithDots.push(1);
+        }
+
+        // Agregar páginas del rango
+        rangeWithDots.push(...range);
+
+        // Agregar última página
+        if (currentPage + delta < totalPages - 1) {
+            rangeWithDots.push('...', totalPages);
+        } else if (totalPages > 1) {
+            rangeWithDots.push(totalPages);
+        }
+
+        return rangeWithDots;
+    };
+
     return (
         <div className="m-8 p-6 bg-white shadow rounded">
             <div className='m-10 text-5xl text-center font-bold'>Gestión de Equipos</div>
@@ -129,9 +195,29 @@ export default function EquiposTable() {
                 </Link>
 
                 {/* Información adicional */}
-                <div className="text-sm text-gray-600">
+                {/* <div className="text-sm text-gray-600">
                     Total equipos: {equipos.length}
+                </div> */}
+
+                {/* Selector de elementos por página */}
+                <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-600">Mostrar:</span>
+                    <select
+                        value={itemsPerPage}
+                        onChange={(e) => {
+                            setItemsPerPage(Number(e.target.value));
+                            setCurrentPage(1); // Resetear a primera página
+                        }}
+                        className="border border-gray-300 rounded px-2 py-1 text-sm"
+                    >
+                        <option value={5}>5</option>
+                        <option value={10}>10</option>
+                        <option value={25}>25</option>
+                        <option value={50}>50</option>
+                    </select>
+                    <span className="text-sm text-gray-600">por página</span>
                 </div>
+
             </div>
 
             {/* Mostrar error si existe */}
@@ -140,6 +226,7 @@ export default function EquiposTable() {
                     {error}
                 </div>
             )}
+
 
             {/* Tabla de equipos */}
             <table className="w-full text-left text-sm">
@@ -155,7 +242,7 @@ export default function EquiposTable() {
                     </tr>
                 </thead>
                 <tbody>
-                    {equipos.map((equipo) => (
+                    {currentEquipos.map((equipo) => (
                         <tr key={equipo.idEquipo || equipo.id} className="border-b hover:bg-gray-50">
                             <td className="p-3 text-xs font-mono">
                                 {equipo.idEquipo || equipo.id}
@@ -203,6 +290,62 @@ export default function EquiposTable() {
                     ))}
                 </tbody>
             </table>
+
+            {/* Información de paginación y controles */}
+            {equipos.length > 0 && (
+                <div className="mt-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+                    {/* Información de registros */}
+                    <div className="text-sm text-gray-600">
+                        Mostrando {startIndex + 1} a {Math.min(endIndex, equipos.length)} de {equipos.length} registros
+                    </div>
+
+                    {/* Controles de paginación */}
+                    {totalPages > 1 && (
+                        <div className="flex items-center gap-2">
+                            {/* Botón anterior */}
+                            <button
+                                onClick={goToPrevious}
+                                disabled={currentPage === 1}
+                                className={`p-2 rounded ${currentPage === 1
+                                    ? 'text-gray-400 cursor-not-allowed'
+                                    : 'text-gray-600 hover:bg-gray-100'
+                                    }`}
+                            >
+                                <ChevronLeft size={20} />
+                            </button>
+
+                            {/* Números de página */}
+                            {getVisiblePageNumbers().map((pageNumber, index) => (
+                                <button
+                                    key={index}
+                                    onClick={() => pageNumber !== '...' && goToPage(pageNumber)}
+                                    disabled={pageNumber === '...'}
+                                    className={`px-3 py-1 rounded text-sm ${pageNumber === currentPage
+                                        ? 'bg-blue-500 text-white'
+                                        : pageNumber === '...'
+                                            ? 'text-gray-400 cursor-default'
+                                            : 'text-gray-600 hover:bg-gray-100'
+                                        }`}
+                                >
+                                    {pageNumber}
+                                </button>
+                            ))}
+
+                            {/* Botón siguiente */}
+                            <button
+                                onClick={goToNext}
+                                disabled={currentPage === totalPages}
+                                className={`p-2 rounded ${currentPage === totalPages
+                                    ? 'text-gray-400 cursor-not-allowed'
+                                    : 'text-gray-600 hover:bg-gray-100'
+                                    }`}
+                            >
+                                <ChevronRight size={20} />
+                            </button>
+                        </div>
+                    )}
+                </div>
+            )}
 
             {/* Mensaje cuando no hay equipos */}
             {equipos.length === 0 && !loading && (
