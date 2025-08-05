@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate, useLocation, useParams } from 'react-router-dom';
 import axios from 'axios';
-import { Save, User, ArrowLeft, Edit, CircleXIcon, Clock } from 'lucide-react';
+import { Save, User, ArrowLeft, Edit, CircleXIcon, Clock, FileText } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export function FormularioTurno() {
@@ -10,6 +10,8 @@ export function FormularioTurno() {
     const [searchParams] = useSearchParams();
     const cuadroNombre = searchParams.get('cuadroNombre');
     const equipoNombre = searchParams.get('equipoNombre');
+    const equipoId = searchParams.get('equipoId');
+    console.log("equipoId", equipoId);
     const { turnoId } = useParams(); // Para modo edición desde URL /editar-turno/:id
 
     // Detectar modo edición
@@ -23,6 +25,7 @@ export function FormularioTurno() {
     const [selectedPersona, setSelectedPersona] = useState("");
     const [jornada, setJornada] = useState("Mañana (M)");
     const [tipoTurno, setTipoTurno] = useState("Presencial");
+    const [comentarios, setComentarios] = useState("");
 
     // Estados para cargar datos
     const [personasEquipo, setPersonasEquipo] = useState([]);
@@ -51,7 +54,8 @@ export function FormularioTurno() {
 
         if (fin <= inicio) return 0;
 
-        const diffMs = fin - inicio;
+        // Usar UTC para evitar problemas de zona horaria
+        const diffMs = fin.getTime() - inicio.getTime();
         const diffHours = diffMs / (1000 * 60 * 60);
         return Math.round(diffHours * 100) / 100;
     };
@@ -89,22 +93,23 @@ export function FormularioTurno() {
                 console.log("turnoData", turnoData);
                 setTurnoOriginal(turnoData);
                 setCuadroTurno(turnoData.cuadroTurno || "");
-                setEquipo(turnoData.equipo || "");
-                setFechaHoraInicio(turnoData.fechaHoraInicio || "");
-                setFechaHoraFin(turnoData.fechaHoraFin || "");
+                setEquipo(equipoId);
+                setFechaHoraInicio(turnoData.fechaInicio || "");
+                setFechaHoraFin(turnoData.fechaFin || "");
                 setSelectedPersona(turnoData.idPersona || "");
                 setJornada(turnoData.jornada || "Mañana (M)");
                 setTipoTurno(turnoData.tipoTurno || "Presencial");
+                setComentarios(turnoData.comentarios || "");
 
                 // Cargar datos relacionados
-                if (turnoData.idEquipo) {
+                if (equipoId) {
                     setCuadroData(prev => ({
                         ...prev,
-                        equipoId: turnoData.idEquipo,
+                        equipoId: equipoId,
                         id: turnoData.idCuadroTurno,
                         nombre: turnoData.cuadroTurno
                     }));
-                    loadPersonasEquipo(turnoData.idEquipo);
+                    loadPersonasEquipo(equipoId);
                 }
 
             } catch (err) {
@@ -131,7 +136,7 @@ export function FormularioTurno() {
             setLoadingPersonas(false);
         }
     };
-
+    console.log("PersonasEquipo: ", personasEquipo);
     // Función para cargar info del equipo
     const loadEquipoInfo = async (equipoId) => {
         try {
@@ -146,7 +151,10 @@ export function FormularioTurno() {
     const formatDateForInput = (dateTimeString) => {
         if (!dateTimeString) return "";
         const date = new Date(dateTimeString);
-        return date.toISOString().slice(0, 16);
+
+        // Ajustar para hora local
+        const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+        return localDate.toISOString().slice(0, 16);
     };
 
     // Función para guardar el turno
@@ -172,8 +180,9 @@ export function FormularioTurno() {
                 totalHoras: calcularTotalHoras(),
                 tipoTurno: tipoTurno,
                 jornada: jornada,
+                comentarios: comentarios,
                 //equipo: equipo,
-                //idEquipo: cuadroData.equipoId,
+                idEquipo: equipoId,
 
 
 
@@ -361,6 +370,21 @@ export function FormularioTurno() {
                             {calcularTotalHoras()} horas
                         </div>
                     </div>
+                </div>
+
+                {/* Comentarios */}
+                <div className='w-full'>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                        {/* <FileText size={16} className="inline mr-2" /> */}
+                        Comentarios
+                    </label>
+                    <textarea
+                        value={comentarios}
+                        onChange={(e) => setComentarios(e.target.value)}
+                        rows={3}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="comentarios"
+                    />
                 </div>
 
                 {error && (

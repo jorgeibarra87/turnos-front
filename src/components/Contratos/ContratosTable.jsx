@@ -145,7 +145,7 @@ export default function ContratosTable() {
 
             {/* Tabla de contratos */}
             <table className="w-full text-left text-sm border-collapse">
-                <thead className="bg-gray-800 text-white">
+                <thead className="bg-black text-white">
                     <tr>
                         <th className="p-3 ">Número Contrato</th>
                         <th className="p-3 ">Especialidades</th>

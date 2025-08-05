@@ -94,7 +94,7 @@ export function VerTurno() {
                 <div className='space-y-6'>
 
                     {/* Información General */}
-                    <div className='bg-blue-50 border border-blue-200 rounded-lg p-4'>
+                    <div className='bg-blue-50 border border-blue-200 rounded-lg p-2'>
                         <h3 className='text-lg font-semibold text-blue-800 mb-4 flex items-center gap-2'>
                             <Calendar size={20} />
                             Información General
@@ -112,21 +112,21 @@ export function VerTurno() {
                     </div>
 
                     {/* Información de la Persona */}
-                    <div className='bg-blue-50 border border-blue-200 rounded-lg p-4'>
+                    <div className='bg-blue-50 border border-blue-200 rounded-lg p-2'>
                         <h3 className='text-lg font-semibold text-blue-800 mb-4 flex items-center gap-2'>
                             <User size={20} />
                             Persona Asignada
                         </h3>
                         <div className='text-sm'>
                             <div>
-                                <span className='font-medium text-gray-700'>Nombre:</span>
+                                {/* <span className='font-medium text-gray-700'>Nombre:</span> */}
                                 <div className='mt-1 text-gray-900 text-lg'>{turno.nombrePersona || 'No asignado'}</div>
                             </div>
                         </div>
                     </div>
 
                     {/* Horarios */}
-                    <div className='bg-blue-50 border border-blue-200 rounded-lg p-4'>
+                    <div className='bg-blue-50 border border-blue-200 rounded-lg p-2'>
                         <h3 className='text-lg font-semibold text-blue-800 mb-4 flex items-center gap-2'>
                             <Clock size={20} />
                             Horarios
@@ -167,6 +167,14 @@ export function VerTurno() {
                                 <div className='mt-1'>
                                     <span className='inline-block bg-green-100 text-green-800 text-sm px-3 py-1 rounded-full'>
                                         {turno.tipoTurno || 'N/A'}
+                                    </span>
+                                </div>
+                            </div>
+                            <div>
+                                <span className='font-medium text-gray-700'>Comentarios:</span>
+                                <div className='mt-1'>
+                                    <span className='inline-block  bg-gray-200 text-gray-800 text-sm px-3 py-1 rounded-full'>
+                                        {turno.comentarios || 'N/A'}
                                     </span>
                                 </div>
                             </div>

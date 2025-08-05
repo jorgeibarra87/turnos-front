@@ -665,6 +665,13 @@ export default function CrearEquipo() {
                             ) : usuariosDisponibles.length === 0 ? (
                                 <div className='bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg p-6 text-center'>
                                     <User size={32} className="mx-auto text-gray-400 mb-2" />
+                                    <button
+                                        onClick="/#"
+                                        className="mx-auto px-4 py-2 my-2 bg-green-500 text-white rounded-lg hover:bg-green-600 flex items-center gap-2 transition-colors"
+                                    >
+                                        <UserPlus size={16} />
+                                        Sincronizar Persona
+                                    </button>
                                     <p className='text-gray-500'>No hay usuarios disponibles con este perfil</p>
                                     <p className='text-sm text-gray-400'>O todos los usuarios ya están en el equipo</p>
                                 </div>

@@ -4,18 +4,18 @@ import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
 
-export default function EquiposTable() {
-    const [equipos, setEquipos] = useState([]);
+export default function ProcesosTable() {
+    const [equipos, setProcesos] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(10);
 
     useEffect(() => {
-        loadEquipos();
+        loadProcesos();
     }, []);
 
-    const loadEquipos = async () => {
+    const loadProcesos = async () => {
         try {
             setLoading(true);
             setError(null);

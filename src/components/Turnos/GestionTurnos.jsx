@@ -50,9 +50,6 @@ export default function GestionTurnos() {
                         nombre: equipoData.nombre || "Sin nombre"
                     };
                     setEquipo(equipoFormateado);
-                } else {
-                    setEquipo(null);
-                    console.warn('No se recibió equipo');
                 }
 
             } catch (err) {
@@ -106,9 +103,6 @@ export default function GestionTurnos() {
                     if (currentPage > totalPages && totalPages > 0) {
                         setCurrentPage(totalPages);
                     }
-                } else {
-                    setTurnos(null);
-                    console.warn('No se recibió turnos');
                 }
             } catch (err) {
                 setError('Error al cargar turnos');
@@ -373,7 +367,7 @@ export default function GestionTurnos() {
 
                                                 {/* Botón Editar - Link dinámico con ID */}
                                                 <Link
-                                                    to={`/editar-turno/${turno.idTurno}?cuadroNombre=${cuadroNombre}&equipoNombre=${equipo.nombre}`}
+                                                    to={`/editar-turno/${turno.idTurno}?cuadroNombre=${cuadroNombre}&equipoNombre=${equipo.nombre}&equipoId=${equipoId}`}
                                                     title={`Editar turno: ${turno.nombrePersona}`}
                                                     className="inline-block"
                                                 >

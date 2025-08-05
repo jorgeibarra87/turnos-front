@@ -135,7 +135,7 @@ export default function TurnosTable() {
             </div>
 
             <table className="w-full text-left text-sm">
-                <thead className="bg-gray-800 text-white">
+                <thead className="bg-black text-white">
                     <tr>
                         <th className="p-3">Cuadro</th>
                         <th className="p-3 flex items-center gap-2"><UsersIcon />Equipo</th>
