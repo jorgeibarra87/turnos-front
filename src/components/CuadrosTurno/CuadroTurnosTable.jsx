@@ -1,5 +1,5 @@
 import React from 'react';
-import { Eye, Edit, Trash2, CopyPlusIcon, CopyPlus, UsersIcon, BoxesIcon, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Eye, Edit, Trash2, CopyPlus, UsersIcon, BoxesIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
@@ -166,7 +166,7 @@ export default function TurnosTable() {
                                 >
                                     <Edit
                                         size={18}
-                                        className="text-yellow-600 hover:text-yellow-800 cursor-pointer transition-colors"
+                                        className="text-blue-600 hover:text-blue-800 cursor-pointer transition-colors"
                                     />
                                 </Link>
 

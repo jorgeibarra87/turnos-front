@@ -25,8 +25,9 @@ import { SelectorCuadroTurno } from './components/Turnos/SelectorCuadroTurno';
 import { FormularioTurno } from './components/Turnos/FormularioTurno';
 import { VerTurno } from './components/Turnos/VerTurno';
 
-//import EquiposTable from './components/Turnos/TurnosTable';
-//import VerEquipo from './components/Turnos/VerTurnos';
+import ProcesosTable from './components/Administrador/Procesos/ProcesosTable';
+import MacroprocesosTable from './components/Administrador/Macroprocesos/MacroprocesosTable';
+import ServiciosTable from './components/Administrador/Servicios/ServiciosTable';
 
 const App = () => (
   <div className="flex h-screen bg-primary-blue-backwround">
@@ -71,7 +72,7 @@ const App = () => (
           {/* Nueva ruta para manejar edición con parámetro ID */}
           <Route exact path="/crearContrato/editar/:id" element={<CrearContrato />} />
           {/* Ruta para crear desde /crearCuadro */}
-          <Route exact path="crearContrato/crear" element={<CrearContrato />} />
+          <Route exact path="/crearContrato/crear" element={<CrearContrato />} />
           <Route exact path="/VerContrato/:id" element={<VerContrato />} />
 
           {/* <Route exact path="/turnos" element={<TurnosTable />} /> */}
@@ -79,7 +80,7 @@ const App = () => (
           {/* Nueva ruta para manejar edición con parámetro ID */}
           <Route exact path="/crearTurnos/editar/:id" element={<CrearTurnos />} />
           {/* Ruta para crear desde /crearTurnos */}
-          <Route exact path="crearTurnos/crear" element={<CrearTurnos />} />
+          <Route exact path="/crearTurnos/crear" element={<CrearTurnos />} />
           <Route exact path="/gestionTurnos/" element={<GestionTurnos />} />
 
           <Route path="/selector-cuadro-turno" element={<SelectorCuadroTurno />} />
@@ -87,7 +88,10 @@ const App = () => (
           <Route path="/crear-turno" element={<FormularioTurno />} />
           <Route path="/editar-turno/:turnoId" element={<FormularioTurno />} />
           <Route path="/ver-turno/:turnoId" element={<VerTurno />} />
-          {/* <Route exact path="/VerTurnos/:id" element={<VerTurnos />} /> */}
+
+          <Route exact path="/procesos" element={<ProcesosTable />} />
+          <Route exact path="/macroprocesos" element={<MacroprocesosTable />} />
+          <Route exact path="/servicios" element={<ServiciosTable />} />
 
         </Routes>
       </main>
