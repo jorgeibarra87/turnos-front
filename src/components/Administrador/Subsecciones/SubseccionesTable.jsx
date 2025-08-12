@@ -3,119 +3,119 @@ import { Eye, Edit, Trash2, CopyPlus, Users, Settings, ChevronLeft, ChevronRight
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 
-export default function SeccionesTable() {
+export default function SubseccionesTable() {
+    const [subsecciones, setSubsecciones] = useState([]);
     const [secciones, setSecciones] = useState([]);
-    const [servicios, setServicios] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
-    const [showCrearSeccion, setShowCrearSeccion] = useState(false);
-    const [showVerSeccion, setShowVerSeccion] = useState(false);
-    const [seccionSeleccionada, setSeccionSeleccionada] = useState(null);
+    const [showCrearSubseccion, setShowCrearSubseccion] = useState(false);
+    const [showVerSubseccion, setShowVerSubseccion] = useState(false);
+    const [subseccionSeleccionada, setSubseccionSeleccionada] = useState(null);
     const [modoEdicion, setModoEdicion] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(10);
 
     useEffect(() => {
+        loadSubsecciones();
         loadSecciones();
-        loadServicios();
     }, []);
 
-    const loadSecciones = async () => {
+    const loadSubsecciones = async () => {
         try {
             setLoading(true);
             setError(null);
             // llamada a la API
-            const result = await axios.get("http://localhost:8080/seccionesServicio");
-            console.log('Secciones cargadas:', result.data);
-            let seccionesData = [];
+            const result = await axios.get("http://localhost:8080/subseccionesServicio");
+            console.log('Subsecciones cargadas:', result.data);
+            let subseccionesData = [];
             if (Array.isArray(result.data)) {
-                seccionesData = result.data;
+                subseccionesData = result.data;
             } else {
-                seccionesData = result.data.secciones || [];
+                subseccionesData = result.data.secciones || [];
             }
-            setSecciones(seccionesData);
+            setSubsecciones(subseccionesData);
         } catch (err) {
-            console.error('Error al cargar secciones:', err);
-            setError('Error al cargar las secciones');
-            setSecciones([]);
+            console.error('Error al cargar subsecciones:', err);
+            setError('Error al cargar las subsecciones');
+            setSubsecciones([]);
         } finally {
             setLoading(false);
         }
     };
 
-    const loadServicios = async () => {
+    const loadSecciones = async () => {
         try {
             //llamada a la API
-            const result = await axios.get("http://localhost:8080/servicio");
+            const result = await axios.get("http://localhost:8080/seccionesServicio");
 
 
-            setServicios(result.data || []);
+            setSecciones(result.data || []);
         } catch (err) {
-            console.warn('Error al cargar servicios:', err);
-            setServicios([]);
+            console.warn('Error al cargar secciones:', err);
+            setSecciones([]);
         }
     };
 
     // Función para manejar la eliminación
-    const handleDelete = async (id, nombreSeccionServicio) => {
-        if (window.confirm(`¿Estás seguro de que quieres eliminar la seccion "${nombreSeccionServicio}"?`)) {
+    const handleDelete = async (id, nombre) => {
+        if (window.confirm(`¿Estás seguro de que quieres eliminar la subseccion "${nombre}"?`)) {
             try {
-                const response = await axios.delete(`http://localhost:8080/seccionesServicio/${id}`);
+                const response = await axios.delete(`http://localhost:8080/subseccionesServicio/${id}`);
 
                 // eliminación exitosa
-                console.log(`Eliminando seccion con ID: ${id}`);
+                console.log(`Eliminando subseccion con ID: ${id}`);
 
                 // Actualizar la lista local
-                setSecciones(prev => prev.filter(p => p.idSeccionServicio !== id));
-                alert('seccion eliminada exitosamente');
+                setSubsecciones(prev => prev.filter(p => p.idSubseccionServicio !== id));
+                alert('subseccion eliminada exitosamente');
             } catch (error) {
-                console.error('Error al eliminar la seccion:', error.response?.data || error.message);
+                console.error('Error al eliminar la subseccion:', error.response?.data || error.message);
                 // Manejar diferentes tipos de errores
                 if (error.response?.status === 409) {
-                    alert('No se puede eliminar la seccion porque tiene dependencias asociadas');
+                    alert('No se puede eliminar la subseccion porque tiene dependencias asociadas');
                 } else if (error.response?.status === 404) {
-                    alert('La seccion no fue encontrado');
+                    alert('La subseccion no fue encontrado');
                 } else {
-                    alert('Error al eliminar la seccion');
+                    alert('Error al eliminar la subseccion');
                 }
             }
         }
     };
 
-    // Función para manejar ver seccion
-    const handleVerSeccion = (seccion) => {
-        setSeccionSeleccionada(seccion);
-        setShowVerSeccion(true);
+    // Función para manejar ver subseccion
+    const handleVerSubseccion = (subseccion) => {
+        setSubseccionSeleccionada(subseccion);
+        setShowVerSubseccion(true);
     };
 
-    // Función para manejar editar seccion
-    const handleEditarSeccion = (seccion) => {
-        setSeccionSeleccionada(seccion);
+    // Función para manejar editar subseccion
+    const handleEditarSubseccion = (subseccion) => {
+        setSubseccionSeleccionada(subseccion);
         setModoEdicion(true);
-        setShowCrearSeccion(true);
+        setShowCrearSubseccion(true);
     };
 
-    // Función para crear nuevo seccion
-    const handleNuevaSeccion = () => {
-        setSeccionSeleccionada(null);
+    // Función para crear nuevo subseccion
+    const handleNuevaSubseccion = () => {
+        setSubseccionSeleccionada(null);
         setModoEdicion(false);
-        setShowCrearSeccion(true);
+        setShowCrearSubseccion(true);
     };
 
     // Función para cerrar formularios
     const handleCerrarFormularios = () => {
-        setShowCrearSeccion(false);
-        setShowVerSeccion(false);
-        setSeccionSeleccionada(null);
+        setShowCrearSubseccion(false);
+        setShowVerSubseccion(false);
+        setSubseccionSeleccionada(null);
         setModoEdicion(false);
     };
 
-    // Función para obtener el nombre del servicio
-    const getSeccionNombre = (seccion) => {
-        if (seccion.nombreServicio) {
-            return seccion.nombreServicio;
+    // Función para obtener el nombre de la subseccion
+    const getSubseccionNombre = (subseccion) => {
+        if (subseccion.nombreSeccion) {
+            return subseccion.nombreSeccion;
         }
-        return 'Sin servicio';
+        return 'Sin seccion';
     };
 
     // Función para obtener el estado en texto
@@ -133,33 +133,33 @@ export default function SeccionesTable() {
     if (loading) {
         return (
             <div className="m-8 p-6 bg-white shadow rounded">
-                <div className='m-10 text-5xl text-center font-bold'>Ver Todas las Secciones:</div>
+                <div className='m-10 text-5xl text-center font-bold'>Ver Todas las Subsecciones:</div>
                 <div className="text-center py-8">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-                    <p className="text-lg text-gray-500">Cargando secciones...</p>
+                    <p className="text-lg text-gray-500">Cargando subsecciones...</p>
                 </div>
             </div>
         );
     }
 
-    // Mostrar componente de crear/editar seccion
-    if (showCrearSeccion) {
+    // Mostrar componente de crear/editar subseccion
+    if (showCrearSubseccion) {
         return (
-            <CrearEditarSeccion
-                seccion={seccionSeleccionada}
-                servicios={servicios}
+            <CrearEditarSubseccion
+                subseccion={subseccionSeleccionada}
+                secciones={secciones}
                 modoEdicion={modoEdicion}
                 onVolver={handleCerrarFormularios}
-                onActualizar={loadSecciones}
+                onActualizar={loadSubsecciones}
             />
         );
     }
 
-    // Mostrar componente de ver seccion
-    if (showVerSeccion && seccionSeleccionada) {
+    // Mostrar componente de ver subseccion
+    if (showVerSubseccion && subseccionSeleccionada) {
         return (
-            <VerSeccion
-                seccion={seccionSeleccionada}
+            <VerSubseccion
+                subseccion={subseccionSeleccionada}
                 onVolver={handleCerrarFormularios}
             />
         );
@@ -170,7 +170,7 @@ export default function SeccionesTable() {
     const totalPages = Math.ceil(secciones.length / itemsPerPage);
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
-    const currentSecciones = secciones.slice(startIndex, endIndex);
+    const currentSubsecciones = subsecciones.slice(startIndex, endIndex);
 
     // Funciones para cambiar página
     const goToPage = (page) => {
@@ -223,15 +223,15 @@ export default function SeccionesTable() {
     };
     return (
         <div className="m-8 p-6 bg-white shadow rounded">
-            <div className='m-10 text-5xl text-center font-bold'>Ver Todas las Secciones:</div>
+            <div className='m-10 text-5xl text-center font-bold'>Ver Todas las Subsecciones:</div>
 
-            {/* Botón para crear nueva seccion */}
+            {/* Botón para crear nueva subseccion */}
             <button
-                onClick={handleNuevaSeccion}
+                onClick={handleNuevaSubseccion}
                 className="mb-1 px-4 py-2 bg-green-500 text-white rounded-2xl hover:bg-green-600 flex items-center gap-2"
             >
                 <CopyPlus size={22} color="white" strokeWidth={2} />
-                Crear Seccion
+                Crear Subseccion
             </button>
 
             {/* Mostrar error si existe */}
@@ -266,7 +266,7 @@ export default function SeccionesTable() {
                     <tr>
                         <th className="p-3">ID</th>
                         <th className="p-3">Nombre</th>
-                        <th className="p-3">Servicio</th>
+                        <th className="p-3">Seccion</th>
                         <th className="p-3">Estado</th>
                         <th className="p-3 flex items-center justify-centers gap-2">
                             <Settings size={16} />
@@ -275,27 +275,27 @@ export default function SeccionesTable() {
                     </tr>
                 </thead>
                 <tbody>
-                    {currentSecciones.map((seccion) => (
-                        <tr key={seccion.idSeccionServicio} className="border-b hover:bg-gray-50">
+                    {currentSubsecciones.map((subseccion) => (
+                        <tr key={subseccion.idSubseccionServicio} className="border-b hover:bg-gray-50">
                             <td className="p-3 border border-gray-200 font-medium">
-                                {seccion.idSeccionServicio}
+                                {subseccion.idSubseccionServicio}
                             </td>
                             <td className="p-3 border border-gray-200">
-                                {seccion.nombre || 'Sin nombre'}
+                                {subseccion.nombre || 'Sin nombre'}
                             </td>
                             <td className="p-3 border border-gray-200 text-sm">
-                                {getSeccionNombre(seccion)}
+                                {getSubseccionNombre(subseccion)}
                             </td>
                             <td className="p-3 border border-gray-200">
-                                <span className={getEstadoColor(seccion.estado)}>
-                                    {getEstadoTexto(seccion.estado)}
+                                <span className={getEstadoColor(subseccion.estado)}>
+                                    {getEstadoTexto(subseccion.estado)}
                                 </span>
                             </td>
                             <td className="p-3 border border-gray-200 space-x-6">
                                 {/* Botón Ver */}
                                 <button
-                                    onClick={() => handleVerSeccion(seccion)}
-                                    title={`Ver seccion: ${seccion.nombre}`}
+                                    onClick={() => handleVerSubseccion(subseccion)}
+                                    title={`Ver subseccion: ${subseccion.nombre}`}
                                     className="inline-block"
                                 >
                                     <Eye
@@ -306,8 +306,8 @@ export default function SeccionesTable() {
 
                                 {/* Botón Editar */}
                                 <button
-                                    onClick={() => handleEditarSeccion(seccion)}
-                                    title={`Editar seccion: ${seccion.nombre}`}
+                                    onClick={() => handleEditarSubseccion(subseccion)}
+                                    title={`Editar subseccion: ${subseccion.nombre}`}
                                     className="inline-block"
                                 >
                                     <Edit
@@ -318,8 +318,8 @@ export default function SeccionesTable() {
 
                                 {/* Botón Eliminar */}
                                 <button
-                                    onClick={() => handleDelete(seccion.idSeccionServicio, seccion.nombre)}
-                                    title={`Eliminar seccion: ${seccion.nombre}`}
+                                    onClick={() => handleDelete(subseccion.idSeccionServicio, subseccion.nombre)}
+                                    title={`Eliminar subseccion: ${subseccion.nombre}`}
                                     className="inline-block"
                                 >
                                     <Trash2
@@ -338,7 +338,7 @@ export default function SeccionesTable() {
                 <div className="mt-4 flex flex-col sm:flex-row justify-between items-center gap-4">
                     {/* Información de registros */}
                     <div className="text-sm text-gray-600">
-                        Mostrando {startIndex + 1} a {Math.min(endIndex, secciones.length)} de {secciones.length} registros
+                        Mostrando {startIndex + 1} a {Math.min(endIndex, subsecciones.length)} de {subsecciones.length} registros
                     </div>
 
                     {/* Controles de paginación */}
@@ -389,12 +389,12 @@ export default function SeccionesTable() {
                 </div>
             )}
 
-            {/* Mensaje cuando no hay secciones */}
+            {/* Mensaje cuando no hay subsecciones */}
             {secciones.length === 0 && !loading && (
                 <div className="text-center py-8 text-gray-500">
                     <Users size={48} className="mx-auto mb-4 text-gray-300" />
-                    <p className="text-lg">No hay secciones disponibles</p>
-                    <p className="text-sm">Crea tu primer seccion usando el botón de arriba</p>
+                    <p className="text-lg">No hay subsecciones disponibles</p>
+                    <p className="text-sm">Crea tu primer subseccion usando el botón de arriba</p>
                 </div>
             )}
         </div>
@@ -402,12 +402,12 @@ export default function SeccionesTable() {
 }
 
 // Componente para Crear/Editar Secciones
-function CrearEditarSeccion({ seccion, servicios, modoEdicion, onVolver, onActualizar }) {
+function CrearEditarSubseccion({ subseccion, secciones, modoEdicion, onVolver, onActualizar }) {
     const [formData, setFormData] = useState({
-        idSeccionServicio: seccion?.idSeccionServicio || '',
-        nombre: seccion?.nombre || '',
-        idServicio: seccion?.servicios?.idServicio || '',
-        estado: seccion?.estado ?? true
+        idSubseccionServicio: subseccion?.idSubseccionServicio || '',
+        nombre: subseccion?.nombre || '',
+        idSeccion: subseccion?.secciones?.idSeccionServicio || '',
+        estado: subseccion?.estado ?? true
     });
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
@@ -421,7 +421,7 @@ function CrearEditarSeccion({ seccion, servicios, modoEdicion, onVolver, onActua
 
     const handleGuardar = async () => {
         if (!formData.nombre.trim()) {
-            setError('El nombre de la seccion es requerido');
+            setError('El nombre de la subseccion es requerido');
             return;
         }
 
@@ -429,30 +429,30 @@ function CrearEditarSeccion({ seccion, servicios, modoEdicion, onVolver, onActua
             setSaving(true);
             setError('');
 
-            const seccionData = {
-                idSeccionServicio: formData.idSeccionServicio || null,
+            const subseccionData = {
+                idSubseccionServicio: formData.idSubseccionServicio || null,
                 nombre: formData.nombre,
-                idServicio: formData.idServicio || null,
+                idSeccionServicio: formData.idSeccionServicio || null,
                 estado: formData.estado
             };
 
-            console.log('Datos a enviar:', seccionData);
+            console.log('Datos a enviar:', subseccionData);
 
             if (modoEdicion) {
-                await axios.put(`http://localhost:8080/seccionesServicio/${seccion.idSeccionServicio}`, seccionData);
-                console.log(`Actualizando seccion ID: ${seccion.idSeccionServicio}`);
-                alert('Seccion actualizada exitosamente');
+                await axios.put(`http://localhost:8080/seccionesServicio/${subseccion.idSeccionServicio}`, subseccionData);
+                console.log(`Actualizando subseccion ID: ${subseccion.idSeccionServicio}`);
+                alert('Subseccion actualizada exitosamente');
             } else {
-                await axios.post('http://localhost:8080/seccionesServicio', seccionData);
-                console.log('Creando nueva seccion');
-                alert('Seccion creada exitosamente');
+                await axios.post('http://localhost:8080/seccionesServicio', subseccionData);
+                console.log('Creando nueva subseccion');
+                alert('Subseccion creada exitosamente');
             }
 
             onActualizar();
             onVolver();
 
         } catch (err) {
-            setError(err.response?.data?.message || `Error al ${modoEdicion ? 'actualizar' : 'crear'} la seccion`);
+            setError(err.response?.data?.message || `Error al ${modoEdicion ? 'actualizar' : 'crear'} la subseccion`);
             console.error('Error:', err);
         } finally {
             setSaving(false);
@@ -463,50 +463,50 @@ function CrearEditarSeccion({ seccion, servicios, modoEdicion, onVolver, onActua
         <div className='absolute inset-0 bg-opacity-30 backdrop-blur-sm flex justify-center items-center'>
             <div className='bg-white p-6 rounded-lg flex flex-col justify-center items-center gap-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto'>
                 <div className='text-3xl font-bold text-gray-800 text-center'>
-                    {modoEdicion ? 'Editar Seccion' : 'Crear Nuevo Seccion'}
+                    {modoEdicion ? 'Editar Subseccion' : 'Crear Nuevo Subseccion'}
                 </div>
 
                 {modoEdicion && (
                     <div className='p-4 text-center bg-orange-50 border border-orange-200 rounded-lg w-full'>
                         <div className='flex items-center justify-center gap-2 mb-2'>
                             <Edit size={16} className="text-orange-600" />
-                            <span className='font-semibold text-orange-800'>Modificando seccion existente</span>
+                            <span className='font-semibold text-orange-800'>Modificando subseccion existente</span>
                         </div>
                         <div className='text-gray-700'>
-                            <div><span className='font-medium'>ID:</span> {seccion.idSeccionServicio}</div>
+                            <div><span className='font-medium'>ID:</span> {subseccion.idSeccionServicio}</div>
                         </div>
                     </div>
                 )}
 
                 <div className='w-full grid grid-cols-1 gap-6'>
-                    {/* Nombre de la Seccion */}
+                    {/* Nombre de la Subseccion */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Nombre de la Seccion *
+                            Nombre de la Subseccion *
                         </label>
                         <input
                             type="text"
                             value={formData.nombre}
                             onChange={(e) => handleInputChange('nombre', e.target.value)}
                             className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="Ingrese el nombre de la seccion"
+                            placeholder="Ingrese el nombre de la subseccion"
                         />
                     </div>
 
-                    {/* Servicio */}
+                    {/* Seccion */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Servicio
+                            Seccion
                         </label>
                         <select
-                            value={formData.idServicio}
-                            onChange={(e) => handleInputChange('idServicio', e.target.value)}
+                            value={formData.idSeccionServicio}
+                            onChange={(e) => handleInputChange('idSeccionServicio', e.target.value)}
                             className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                         >
-                            <option value="">Seleccionar servicio</option>
-                            {servicios.map(servicio => (
-                                <option key={servicio.idServicio} value={servicio.idServicio}>
-                                    {servicio.nombre}
+                            <option value="">Seleccionar seccion</option>
+                            {secciones.map(seccion => (
+                                <option key={seccion.idSeccionServicio} value={seccion.idSeccionServicio}>
+                                    {seccion.nombre}
                                 </option>
                             ))}
                         </select>
@@ -557,18 +557,18 @@ function CrearEditarSeccion({ seccion, servicios, modoEdicion, onVolver, onActua
     );
 }
 
-// Componente para Ver Seccion
-function VerSeccion({ seccion, onVolver }) {
-    const getServicioInfo = () => {
-        if (seccion.idServicio) {
+// Componente para Ver Subseccion
+function VerSubseccion({ subseccion, onVolver }) {
+    const getSeccionInfo = () => {
+        if (subseccion.idSeccionServicio) {
             return {
-                id: seccion.idServicio,
-                nombre: seccion.nombreServicio
+                id: subseccion.idSeccionServicio,
+                nombre: subseccion.nombreSeccion
             };
         }
         return {
             id: 'No asignado',
-            nombre: 'Sin servicio'
+            nombre: 'Sin seccion'
         };
     };
 
@@ -581,7 +581,7 @@ function VerSeccion({ seccion, onVolver }) {
             ? 'text-green-600 bg-green-50 px-3 py-1 rounded-full text-sm font-medium'
             : 'text-red-600 bg-red-50 px-3 py-1 rounded-full text-sm font-medium';
     };
-    const servicioInfo = getServicioInfo();
+    const seccionInfo = getSeccionInfo();
 
 
     return (
@@ -590,22 +590,22 @@ function VerSeccion({ seccion, onVolver }) {
 
                 {/* Header */}
                 <div className='text-center border-b pb-4'>
-                    <h1 className='text-2xl font-bold text-gray-800 mb-2'>Información de la Seccion</h1>
+                    <h1 className='text-2xl font-bold text-gray-800 mb-2'>Información de la Subseccion</h1>
                 </div>
 
-                {/* Información Principal de la seccion*/}
+                {/* Información Principal de la subseccion*/}
                 <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
 
                     {/* Columna Izquierda */}
                     <div className='space-y-4'>
                         <div className='flex items-start gap-3 border border-black rounded-xl p-3'>
                             <div className='w-32 font-semibold text-gray-700 text-sm'>ID:</div>
-                            <div className='text-gray-900 font-medium'>{seccion.idSeccionServicio}</div>
+                            <div className='text-gray-900 font-medium'>{subseccion.idSubseccionServicio}</div>
                         </div>
 
                         <div className='flex items-start gap-3 border border-black rounded-xl p-3'>
                             <div className='w-32 font-semibold text-gray-700 text-sm'>Nombre:</div>
-                            <div className='text-gray-900'>{seccion.nombre || 'Sin nombre'}</div>
+                            <div className='text-gray-900'>{subseccion.nombre || 'Sin nombre'}</div>
                         </div>
                     </div>
 
@@ -614,18 +614,18 @@ function VerSeccion({ seccion, onVolver }) {
                         <div className='flex items-start gap-3 border border-black rounded-xl p-3'>
                             <div className='w-32 font-semibold text-gray-700 text-sm'>Estado:</div>
                             <div>
-                                <span className={getEstadoColor(seccion.estado)}>
-                                    {getEstadoTexto(seccion.estado)}
+                                <span className={getEstadoColor(subseccion.estado)}>
+                                    {getEstadoTexto(subseccion.estado)}
                                 </span>
                             </div>
                         </div>
 
                         <div className='flex items-start gap-3 border border-black rounded-xl p-3'>
-                            <div className='w-32 font-semibold text-gray-700 text-sm'>Servicio:</div>
+                            <div className='w-32 font-semibold text-gray-700 text-sm'>Seccion:</div>
                             <div className='text-gray-900'>
-                                <div className='font-medium'>{servicioInfo.nombre}</div>
-                                {servicioInfo.id !== 'No asignado' && (
-                                    <div className='text-xs text-gray-500 mt-1'>ID: {servicioInfo.id}</div>
+                                <div className='font-medium'>{seccionInfo.nombre}</div>
+                                {seccionInfo.id !== 'No asignado' && (
+                                    <div className='text-xs text-gray-500 mt-1'>ID: {seccionInfo.id}</div>
                                 )}
                             </div>
                         </div>

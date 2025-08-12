@@ -30,6 +30,8 @@ import MacroprocesosTable from './components/Administrador/Macroprocesos/Macropr
 import ServiciosTable from './components/Administrador/Servicios/ServiciosTable';
 import ProcesosAtencionTable from './components/Administrador/ProcesosAtencion/ProcesosAtencionTable';
 import PersonasTable from './components/Administrador/Personas/PersonasTable';
+import SeccionesTable from './components/Administrador/Secciones/SeccionesTable';
+import SubseccionesTable from './components/Administrador/Subsecciones/SubseccionesTable';
 
 const App = () => (
   <div className="flex h-screen bg-primary-blue-backwround">
@@ -96,6 +98,8 @@ const App = () => (
           <Route exact path="/servicios" element={<ServiciosTable />} />
           <Route exact path="/procesosatencion" element={<ProcesosAtencionTable />} />
           <Route exact path="/personas" element={<PersonasTable />} />
+          <Route exact path="/secciones" element={<SeccionesTable />} />
+          <Route exact path="/subsecciones" element={<SubseccionesTable />} />
 
         </Routes>
       </main>
