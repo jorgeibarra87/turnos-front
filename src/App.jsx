@@ -28,6 +28,8 @@ import { VerTurno } from './components/Turnos/VerTurno';
 import ProcesosTable from './components/Administrador/Procesos/ProcesosTable';
 import MacroprocesosTable from './components/Administrador/Macroprocesos/MacroprocesosTable';
 import ServiciosTable from './components/Administrador/Servicios/ServiciosTable';
+import ProcesosAtencionTable from './components/Administrador/ProcesosAtencion/ProcesosAtencionTable';
+import PersonasTable from './components/Administrador/Personas/PersonasTable';
 
 const App = () => (
   <div className="flex h-screen bg-primary-blue-backwround">
@@ -92,6 +94,8 @@ const App = () => (
           <Route exact path="/procesos" element={<ProcesosTable />} />
           <Route exact path="/macroprocesos" element={<MacroprocesosTable />} />
           <Route exact path="/servicios" element={<ServiciosTable />} />
+          <Route exact path="/procesosatencion" element={<ProcesosAtencionTable />} />
+          <Route exact path="/personas" element={<PersonasTable />} />
 
         </Routes>
       </main>

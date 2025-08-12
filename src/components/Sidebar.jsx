@@ -47,11 +47,11 @@ const Sidebar = () => {
             id: 'ajustes',
             title: 'Ajustes',
             subItems: [
-                { name: 'Usuarios', route: '#' },
+                { name: 'Personas', route: '/personas' },
                 { name: 'Macroprocesos', route: '/macroprocesos' },
                 { name: 'Procesos', route: '/procesos' },
                 { name: 'Servicios', route: '/servicios' },
-                { name: 'Procesos Atencion', route: '#' },
+                { name: 'Procesos Atencion', route: '/procesosatencion' },
                 { name: 'Secciones', route: '#' },
                 { name: 'Subsecciones', route: '#' },
                 { name: 'Contrato', route: '#' },
