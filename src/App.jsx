@@ -32,6 +32,7 @@ import ProcesosAtencionTable from './components/Administrador/ProcesosAtencion/P
 import PersonasTable from './components/Administrador/Personas/PersonasTable';
 import SeccionesTable from './components/Administrador/Secciones/SeccionesTable';
 import SubseccionesTable from './components/Administrador/Subsecciones/SubseccionesTable';
+import TitulosTable from './components/Administrador/Titulos/TitulosTable';
 
 const App = () => (
   <div className="flex h-screen bg-primary-blue-backwround">
@@ -100,6 +101,7 @@ const App = () => (
           <Route exact path="/personas" element={<PersonasTable />} />
           <Route exact path="/secciones" element={<SeccionesTable />} />
           <Route exact path="/subsecciones" element={<SubseccionesTable />} />
+          <Route exact path="/titulos" element={<TitulosTable />} />
 
         </Routes>
       </main>

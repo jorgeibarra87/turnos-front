@@ -54,11 +54,13 @@ const Sidebar = () => {
                 { name: 'Procesos Atencion', route: '/procesosatencion' },
                 { name: 'Secciones', route: '/secciones' },
                 { name: 'Subsecciones', route: '/subsecciones' },
-                { name: 'Contrato', route: '#' },
-                { name: 'Titulos', route: '#' },
-                { name: 'Turnos', route: '#' },
-                { name: 'Cuadros Turno', route: '#' },
-                { name: 'Equipos', route: '#' },
+                { name: 'Contratos', route: '/contratos' },
+                { name: 'Titulos', route: '/titulos' },
+                {
+                    name: 'Turnos', route: '/selector-cuadro-turno'
+                },
+                { name: 'Cuadros Turno', route: '/' },
+                { name: 'Equipos', route: '/equipos' },
                 { name: 'Bloque Servicio', route: '#' }
             ]
         }
