@@ -40,7 +40,7 @@ const Sidebar = () => {
                 { name: 'Equipos Talento Humano', route: '/equipos' },
                 { name: 'Cuadros de Turno', route: '/' },
                 { name: 'Turnos', route: '/selector-cuadro-turno' },
-                { name: 'Calendario Turnos', route: '#' }
+                { name: 'Calendario Turnos', route: '/calendarioturnos' }
             ]
         },
         {
@@ -56,12 +56,13 @@ const Sidebar = () => {
                 { name: 'Subsecciones', route: '/subsecciones' },
                 { name: 'Contratos', route: '/contratos' },
                 { name: 'Titulos', route: '/titulos' },
+                { name: 'Tipo Formación', route: '/tipoformacion' },
                 {
                     name: 'Turnos', route: '/selector-cuadro-turno'
                 },
                 { name: 'Cuadros Turno', route: '/' },
                 { name: 'Equipos', route: '/equipos' },
-                { name: 'Bloque Servicio', route: '#' }
+                { name: 'Bloque Servicio', route: '/bloqueservicio' }
             ]
         }
     ];
