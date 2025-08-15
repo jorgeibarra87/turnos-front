@@ -44,7 +44,7 @@ export const useCalendarioTurnos = (filtros, fechaActual) => {
                 turnosFiltrados = turnosFiltrados.filter(turno => {
                     if (!turno.fechaInicio) return false;
 
-                    // Asegurar formato correcto de fecha
+                    //  formato de fecha
                     let fechaTurno;
                     if (turno.fechaInicio.includes('T')) {
                         // Si viene como datetime: "2025-08-05T07:00:00"

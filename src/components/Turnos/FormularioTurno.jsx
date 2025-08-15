@@ -336,9 +336,9 @@ export function FormularioTurno() {
                                 onChange={(e) => setJornada(e.target.value)}
                                 className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                             >
-                                <option value="Mañana (M)">Mañana (M)</option>
-                                <option value="Tarde (T)">Tarde (T)</option>
-                                <option value="Noche (N)">Noche (N)</option>
+                                <option value="Mañana">Mañana</option>
+                                <option value="Tarde">Tarde</option>
+                                <option value="Noche">Noche</option>
                                 <option value="24 Horas">24 Horas</option>
                             </select>
                         </div>

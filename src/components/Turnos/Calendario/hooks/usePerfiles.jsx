@@ -23,11 +23,12 @@ export const usePerfiles = (cuadroId) => {
                 const equipoId = cuadroResponse.data.idEquipo;
 
                 if (equipoId) {
-                    // Obtener miembros del equipo con sus perfiles
-                    const equipoResponse = await axios.get(`http://localhost:8080/equipo/${equipoId}/miembros-perfil`);
+                    // USAR EL MISMO ENDPOINT QUE EN TU CÓDIGO EJEMPLAR
+                    const response = await axios.get(`http://localhost:8080/equipo/${equipoId}/miembros-perfil`);
+                    console.log('Datos de miembros-perfil:', response.data);
 
-                    // Extraer perfiles únicos
-                    const todosLosPerfiles = equipoResponse.data.flatMap(miembro =>
+                    // Extraer perfiles únicos de los títulos
+                    const todosLosPerfiles = response.data.flatMap(miembro =>
                         miembro.titulos || []
                     );
 
@@ -40,6 +41,7 @@ export const usePerfiles = (cuadroId) => {
                         .sort((a, b) => a.nombre.localeCompare(b.nombre));
 
                     setPerfiles(perfilesUnicos);
+                    console.log('Perfiles únicos encontrados:', perfilesUnicos);
                 }
             } catch (err) {
                 console.error('Error al cargar perfiles:', err);

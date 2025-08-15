@@ -6,6 +6,7 @@ import { useCalendarioTurnos } from '../Calendario/hooks/useCalendarioTurnos';
 import { useCuadrosTurno } from '../Calendario/hooks/useCuadrosTurno';
 import { useProcesos } from '../Calendario/hooks/useProcesos';
 import { usePerfiles } from '../Calendario/hooks/usePerfiles';
+import ModalDetalleTurno from './ModalDetalleTurno';
 
 export default function CalendarioTurnos() {
     const navigate = useNavigate();
@@ -15,6 +16,15 @@ export default function CalendarioTurnos() {
         proceso: '',
         perfil: '',
         mes: fechaActual.getMonth().toString()
+    });
+
+    // ESTADO PARA EL MODAL
+    const [modalDetalle, setModalDetalle] = useState({
+        isOpen: false,
+        turno: null,
+        cuadroNombre: "",
+        equipoNombre: ""
+
     });
 
     // Hooks
@@ -67,7 +77,8 @@ export default function CalendarioTurnos() {
                 semana.dias.push({
                     fecha: fecha,
                     fechaString: fecha.toISOString().split('T')[0],
-                    esMesActual: fecha.getMonth() === mes
+                    esMesActual: fecha.getMonth() === mes,
+                    numeroDia: fecha.getDate()
                 });
                 fechaActualSemana.setDate(fechaActualSemana.getDate() + 1);
             }
@@ -79,7 +90,7 @@ export default function CalendarioTurnos() {
         return semanas;
     };
 
-    // FUNCIÓN CORREGIDA para obtener turnos por fecha
+    // Función para obtener turnos por fecha
     const obtenerTurnosPorFecha = (fechaString) => {
         console.log('Buscando turnos para fecha:', fechaString);
         console.log('Total turnos disponibles:', turnos.length);
@@ -87,7 +98,6 @@ export default function CalendarioTurnos() {
         const turnosDelDia = turnos.filter(turno => {
             if (!turno.fechaInicio) return false;
 
-            // Normalizar formato de fecha del turno
             let fechaTurnoString;
             if (turno.fechaInicio.includes('T')) {
                 fechaTurnoString = turno.fechaInicio.split('T')[0];
@@ -122,16 +132,41 @@ export default function CalendarioTurnos() {
         setFiltros({ ...filtros, mes: nuevaFecha.getMonth().toString() });
     };
 
+    // FUNCIÓN PARA ABRIR EL MODAL
     const handleVerTurno = (turno) => {
         const cuadroSeleccionado = cuadrosTurno.find(c => c.idCuadroTurno.toString() === filtros.cuadroTurno);
         const cuadroNombre = cuadroSeleccionado?.nombre || '';
-        const equipoNombre = cuadroSeleccionado?.equipoNombre || '';
-
-        navigate(`/ver-turno/${turno.idTurno}?cuadroNombre=${encodeURIComponent(cuadroNombre)}&equipoNombre=${encodeURIComponent(equipoNombre)}`);
+        const nombreEquipo = cuadroSeleccionado?.nombreEquipo || '';
+        console.log('Abriendo modal para turno:', turno);
+        setModalDetalle({
+            isOpen: true,
+            turno: turno,
+            cuadroNombre: cuadroNombre,
+            equipoNombre: nombreEquipo
+        });
     };
 
+    // FUNCIÓN PARA CERRAR EL MODAL
+    const cerrarModal = () => {
+        setModalDetalle({
+            isOpen: false,
+            turno: null
+        });
+    };
+
+    // FUNCIÓN PARA MANEJAR EDITAR TURNO
     const handleEditarTurno = (turno) => {
-        navigate(`/editar-turno/${turno.idTurno}`);
+        const cuadroSeleccionado = cuadrosTurno.find(c => c.idCuadroTurno.toString() === filtros.cuadroTurno);
+        const cuadroNombre = cuadroSeleccionado?.nombre || '';
+        const nombreEquipo = cuadroSeleccionado?.nombreEquipo || '';
+
+        console.log('Navegando a editar turno:', {
+            turnoId: turno.idTurno,
+            cuadroNombre,
+            nombreEquipo
+        });
+
+        navigate(`/editar-turno/${turno.idTurno}?cuadroNombre=${encodeURIComponent(cuadroNombre)}&equipoNombre=${encodeURIComponent(nombreEquipo)}`);
     };
 
     const handleCuadroChange = (e) => {
@@ -274,28 +309,6 @@ export default function CalendarioTurnos() {
                         )}
                         {loadingTurnos ? 'Cargando...' : 'Ver Turnos'}
                     </button>
-
-                    {/* BOTÓN DEBUG TEMPORAL */}
-                    {/* <button
-                        onClick={() => {
-                            console.log('=== DEBUG MANUAL ===');
-                            console.log('Filtros actuales:', filtros);
-                            console.log('Fecha actual del calendario:', fechaActual);
-                            console.log('Turnos cargados:', turnos);
-                            console.log('Cuadros disponibles:', cuadrosTurno);
-
-                            // Verificar específicamente el día 5 de agosto
-                            const fecha5Agosto = '2025-08-05';
-                            const turnosDia5 = turnos.filter(t => {
-                                const fecha = t.fechaInicio?.includes('T') ? t.fechaInicio.split('T')[0] : t.fechaInicio;
-                                return fecha === fecha5Agosto;
-                            });
-                            console.log(`Turnos para ${fecha5Agosto}:`, turnosDia5);
-                        }}
-                        className="bg-red-500 text-white px-4 py-2 rounded ml-2"
-                    >
-                        DEBUG
-                    </button> */}
                 </div>
             </div>
 
@@ -336,7 +349,7 @@ export default function CalendarioTurnos() {
                     <div className="p-4 text-center font-medium">Dom</div>
                 </div>
 
-                {/* FILAS DE SEMANAS - AQUÍ ESTÁ LA SECCIÓN CON DEBUG */}
+                {/* FILAS DE SEMANAS */}
                 {semanas.map((semana, semanaIndex) => (
                     <div key={semanaIndex} className="grid grid-cols-8 border-b border-gray-200 min-h-[200px]">
                         {/* Columna de semana */}
@@ -346,107 +359,83 @@ export default function CalendarioTurnos() {
                             <div className="text-xl font-bold text-blue-600">{calcularHorasSemana(semana)}</div>
                         </div>
 
-                        {/* DÍAS DE LA SEMANA - AQUÍ VA TU CÓDIGO DEBUG */}
+                        {/* DÍAS DE LA SEMANA */}
                         {semana.dias.map((dia, diaIndex) => {
                             const turnosDia = obtenerTurnosPorFecha(dia.fechaString);
                             const totalHorasDia = turnosDia.reduce((sum, turno) => sum + (turno.totalHoras || 0), 0);
 
-                            // DEBUG: Mostrar información del día 5
-                            if (dia.fecha.getDate() === 5) {
-                                console.log(`=== DÍA 5 DE AGOSTO ===`);
-                                console.log('Fecha string:', dia.fechaString);
-                                console.log('Es mes actual:', dia.esMesActual);
-                                console.log('Turnos encontrados:', turnosDia);
-                                console.log('Total horas:', totalHorasDia);
-                            }
-
                             return (
                                 <div key={diaIndex} className={`p-2 border-r border-gray-200 ${!dia.esMesActual ? 'bg-gray-50' : ''}`}>
-                                    {/* Header del día */}
-                                    {/* <div className="flex justify-between items-center mb-2">
+                                    {/* HEADER DEL DÍA CON NÚMERO */}
+                                    <div className="flex justify-between items-center mb-2">
+                                        {/* NÚMERO DEL DÍA */}
+                                        <div className={`text-lg font-bold px-2 py-1 rounded ${dia.esMesActual
+                                            ? 'text-gray-800 bg-white '
+                                            : 'text-gray-500'
+                                            }`}>
+                                            {dia.numeroDia}
+                                        </div>
 
+                                        {/* TOTAL HORAS DEL DÍA */}
                                         {totalHorasDia > 0 && (
-                                            <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
+                                            <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded font-medium">
                                                 {totalHorasDia}h
                                             </span>
                                         )}
-                                    </div> */}
+                                    </div>
 
                                     {/* CARDS DE TURNOS */}
                                     <div className="space-y-1 max-h-40 overflow-y-auto">
-                                        {turnosDia.length === 0 && dia.fecha.getDate() === 5}
-
                                         {turnosDia.map((turno, turnoIndex) => {
                                             const duracionCalculada = calcularDuracionTurno(turno.horaInicio, turno.horaFin);
 
                                             return (
                                                 <div
                                                     key={turnoIndex}
-                                                    className="bg-blue-50 border border-blue-200 rounded p-2 text-xs hover:bg-blue-100 transition-colors cursor-pointer"
+                                                    className="bg-blue-50 border border-blue-200 rounded p-1 text-[10px] hover:bg-blue-100 transition-colors cursor-pointer"
                                                     onClick={() => handleVerTurno(turno)}
                                                 >
-                                                    {/* Header de la Card - Duración total destacada */}
-                                                    <div className="flex justify-between items-center mb-1">
-                                                        {/* <span className="bg-blue-500 text-white px-2 py-1 rounded text-xs font-bold">
-                                                            {duracionCalculada}h
-                                                        </span> */}
-                                                        <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-medium">
-                                                            {turno.totalHoras || duracionCalculada}h
-                                                        </span>
-                                                    </div>
-
-                                                    {/* Nombre de la persona - MÁS PROMINENTE */}
-                                                    <div className="flex items-center gap-1 mb-2">
+                                                    {/* Nombre de la persona */}
+                                                    <div className="flex items-center gap-1 mb-1">
                                                         <User size={12} className="text-blue-600" />
-                                                        <span className="font-bold text-blue-800 text-xs leading-tight">
+                                                        <span className="font-bold text-blue-800 text-[10px] leading-tight">
                                                             {turno.nombrePersona || 'Sin asignar'}
                                                         </span>
                                                     </div>
 
-                                                    {/* Horario - MÁS VISIBLE */}
+                                                    {/* Horario  */}
                                                     <div className="flex items-center justify-center bg-gray-100 rounded p-1 mb-1">
                                                         <Clock size={12} className="text-gray-600 mr-1" />
-                                                        <span className="text-gray-800 font-medium text-xs">
-                                                            {turno.horaInicio} - {turno.horaFin}
+                                                        <span className="text-gray-800 font-medium text-[10px] pr-2">
+                                                            {new Date(turno.fechaInicio).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) || 'N/A'}
+                                                            -
+                                                            {new Date(turno.fechaFin).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) || 'N/A'}
                                                         </span>
-                                                    </div>
-
-                                                    {/* Perfil - MÁS DESTACADO como en la imagen */}
-                                                    <div className="text-center mb-1">
-                                                        <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded text-xs font-medium block">
-                                                            {turno.perfil || 'Sin perfil'}
+                                                        <span className="bg-green-100 text-green-800 rounded text-[10px] font-medium">
+                                                            {turno.totalHoras || duracionCalculada}h
                                                         </span>
-                                                    </div>
-
-                                                    {/* Jornada - Similar a la imagen */}
-                                                    <div className="text-center mb-2">
-                                                        <span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-xs">
-                                                            {turno.jornada || 'Sin especificar'}
-                                                        </span>
-                                                    </div>
-
-                                                    {/* Botones de acción */}
-                                                    <div className="flex gap-1 justify-center mt-2">
-                                                        <button
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                handleVerTurno(turno);
-                                                            }}
-                                                            className="p-1 hover:bg-blue-200 rounded transition-colors"
-                                                            title="Ver turno"
+                                                        {/* <span className="text-gray-800 font-medium text-[10px] pr-2">
+                                                            {turno.jornada || 'N/A'}
+                                                        </span> */}
+                                                        <span
+                                                            className={
+                                                                turno.jornada === 'Mañana'
+                                                                    ? 'bg-yellow-100 text-yellow-800 rounded text-[10px] font-medium pl-1'
+                                                                    : turno.jornada === 'Tarde'
+                                                                        ? 'text-green-500 font-bold'
+                                                                        : turno.jornada === 'Noche'
+                                                                            ? 'text-blue-500 font-bold'
+                                                                            : 'text-gray-500'
+                                                            }
                                                         >
-                                                            <Eye size={12} className="text-blue-600" />
-                                                        </button>
-                                                        <button
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                handleEditarTurno(turno);
-                                                            }}
-                                                            className="p-1 hover:bg-green-200 rounded transition-colors"
-                                                            title="Editar turno"
-                                                        >
-                                                            <Edit size={12} className="text-green-600" />
-                                                        </button>
+                                                            {turno.jornada === 'Mañana'
+                                                                ? '(M)'
+                                                                : turno.jornada === 'Tarde'
+                                                                    ? '(T)'
+                                                                    : turno.jornada === 'Noche'
+                                                                        ? '(N)'
+                                                                        : ''}
+                                                        </span>
                                                     </div>
                                                 </div>
                                             );
@@ -490,6 +479,15 @@ export default function CalendarioTurnos() {
                     </div>
                 </div>
             </div>
+
+            {/* MODAL DE DETALLE DEL TURNO */}
+            <ModalDetalleTurno
+                turno={modalDetalle.turno}
+                isOpen={modalDetalle.isOpen}
+                cuadroNombre={modalDetalle.cuadroNombre}
+                equipoNombre={modalDetalle.equipoNombre}
+                onClose={cerrarModal}
+            />
         </div>
     );
 }

@@ -1,12 +1,14 @@
 import React from 'react';
 import { X, User, Clock, Calendar, MapPin, FileText } from 'lucide-react';
 
-const ModalDetalleTurno = ({ turno, isOpen, onClose }) => {
+const ModalDetalleTurno = ({ turno, isOpen, onClose, cuadroNombre, equipoNombre }) => {
     if (!isOpen || !turno) return null;
-
+    console.log('Detalles del turno:', turno);
+    console.log('cuadroNombre', cuadroNombre);
+    console.log('equipoNombre', equipoNombre);
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-primary-blue-nav bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white bg-opacity-50 rounded-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
                 {/* Header */}
                 <div className="flex justify-between items-center p-6 border-b">
                     <h2 className="text-2xl font-bold">Detalles del Turno</h2>
@@ -26,20 +28,20 @@ const ModalDetalleTurno = ({ turno, isOpen, onClose }) => {
                             <User className="text-blue-600" size={20} />
                             Información del Turno
                         </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-1 gap-2">
                             <div>
-                                <label className="block text-sm font-medium text-gray-600">ID Turno:</label>
-                                <p className="text-lg font-semibold">{turno.idTurno}</p>
+                                <label className="block text-sm font-medium text-gray-600">Nombre Cuadro Turno:</label>
+                                <p className="text-sm font-font-medium">{cuadroNombre}</p>
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-600">Persona Asignada:</label>
-                                <p className="text-lg font-semibold">{turno.nombrePersona}</p>
+                                <p className="text-sm font-medium">{turno.nombrePersona}</p>
                             </div>
-                            <div>
+                            {/* <div>
                                 <label className="block text-sm font-medium text-gray-600">Perfil:</label>
                                 <p className="text-lg">{turno.perfil}</p>
-                            </div>
-                            <div>
+                            </div> */}
+                            {/* <div>
                                 <label className="block text-sm font-medium text-gray-600">Estado:</label>
                                 <span className={`px-2 py-1 rounded-full text-sm font-medium ${turno.estadoTurno === 'abierto'
                                     ? 'bg-green-100 text-green-800'
@@ -47,7 +49,7 @@ const ModalDetalleTurno = ({ turno, isOpen, onClose }) => {
                                     }`}>
                                     {turno.estadoTurno}
                                 </span>
-                            </div>
+                            </div> */}
                         </div>
                     </div>
 
@@ -66,7 +68,7 @@ const ModalDetalleTurno = ({ turno, isOpen, onClose }) => {
                                 <label className="block text-sm font-medium text-gray-600">Fecha Fin:</label>
                                 <p className="text-lg">{turno.fechaFin}</p>
                             </div>
-                            <div>
+                            {/* <div>
                                 <label className="block text-sm font-medium text-gray-600">Hora Inicio:</label>
                                 <p className="text-lg flex items-center gap-1">
                                     <Clock size={16} />
@@ -79,7 +81,7 @@ const ModalDetalleTurno = ({ turno, isOpen, onClose }) => {
                                     <Clock size={16} />
                                     {turno.horaFin}
                                 </p>
-                            </div>
+                            </div> */}
                             <div>
                                 <label className="block text-sm font-medium text-gray-600">Total Horas:</label>
                                 <p className="text-xl font-bold text-blue-600">{turno.totalHoras}h</p>
@@ -98,18 +100,18 @@ const ModalDetalleTurno = ({ turno, isOpen, onClose }) => {
                             Información Adicional
                         </h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
+                            {/* <div>
                                 <label className="block text-sm font-medium text-gray-600">Cuadro ID:</label>
                                 <p className="text-lg">{turno.idCuadroTurno}</p>
-                            </div>
+                            </div> */}
                             <div>
                                 <label className="block text-sm font-medium text-gray-600">Versión:</label>
                                 <p className="text-lg">{turno.version || 'N/A'}</p>
                             </div>
-                            {turno.observaciones && (
+                            {turno.comentarios && (
                                 <div className="md:col-span-2">
-                                    <label className="block text-sm font-medium text-gray-600">Observaciones:</label>
-                                    <p className="text-lg">{turno.observaciones}</p>
+                                    <label className="block text-sm font-medium text-gray-600">Comentarios:</label>
+                                    <p className="text-lg">{turno.comentarios}</p>
                                 </div>
                             )}
                         </div>
