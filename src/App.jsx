@@ -36,6 +36,9 @@ import TitulosTable from './components/Administrador/Titulos/TitulosTable';
 import TipoFormacionTable from './components/Administrador/Titulos/TipoFormacionTable';
 import BloqueServicioTable from './components/Administrador/Servicios/BloqueServicioTable';
 import CalendarioTurnos from './components/Turnos/Calendario/CalendarioTurnos';
+import PersonasTitulosTable from './components/Administrador/Personas/PersonasTitulosTable';
+import PersonasRolesTable from './components/Administrador/Personas/PersonaRolesTable';
+import PersonasEquiposTable from './components/Administrador/Personas/PersonasEquiposTable';
 
 const App = () => (
   <div className="flex h-screen bg-primary-blue-backwround">
@@ -102,6 +105,9 @@ const App = () => (
           <Route exact path="/servicios" element={<ServiciosTable />} />
           <Route exact path="/procesosatencion" element={<ProcesosAtencionTable />} />
           <Route exact path="/personas" element={<PersonasTable />} />
+          <Route exact path="/personastitulos" element={<PersonasTitulosTable />} />
+          <Route exact path="/personasroles" element={<PersonasRolesTable />} />
+          <Route exact path="/personasequipos" element={<PersonasEquiposTable />} />
           <Route exact path="/secciones" element={<SeccionesTable />} />
           <Route exact path="/subsecciones" element={<SubseccionesTable />} />
           <Route exact path="/titulos" element={<TitulosTable />} />

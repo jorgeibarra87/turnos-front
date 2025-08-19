@@ -23,9 +23,10 @@ export function FormularioTurno() {
     const [fechaHoraInicio, setFechaHoraInicio] = useState("");
     const [fechaHoraFin, setFechaHoraFin] = useState("");
     const [selectedPersona, setSelectedPersona] = useState("");
-    const [jornada, setJornada] = useState("Mañana (M)");
+    const [jornada, setJornada] = useState("Mañana");
     const [tipoTurno, setTipoTurno] = useState("Presencial");
     const [comentarios, setComentarios] = useState("");
+    const [estadoTurno, setEstadoTurno] = useState("abierto");
 
     // Estados para cargar datos
     const [personasEquipo, setPersonasEquipo] = useState([]);
@@ -97,9 +98,10 @@ export function FormularioTurno() {
                 setFechaHoraInicio(turnoData.fechaInicio || "");
                 setFechaHoraFin(turnoData.fechaFin || "");
                 setSelectedPersona(turnoData.idPersona || "");
-                setJornada(turnoData.jornada || "Mañana (M)");
+                setJornada(turnoData.jornada || "Mañana");
                 setTipoTurno(turnoData.tipoTurno || "Presencial");
                 setComentarios(turnoData.comentarios || "");
+                setEstadoTurno(turnoData.estadoTurno || "abierto");
 
                 // Cargar datos relacionados
                 if (equipoId) {

@@ -48,6 +48,9 @@ const Sidebar = () => {
             title: 'Ajustes',
             subItems: [
                 { name: 'Personas', route: '/personas' },
+                { name: 'Personas Titulos', route: '/personastitulos' },
+                { name: 'Personas Roles', route: '/personasroles' },
+                { name: 'Personas Equipos', route: '/personasequipos' },
                 { name: 'Macroprocesos', route: '/macroprocesos' },
                 { name: 'Procesos', route: '/procesos' },
                 { name: 'Servicios', route: '/servicios' },
