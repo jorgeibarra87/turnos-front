@@ -30,7 +30,7 @@ const Sidebar = () => {
             title: 'Supervision',
             subItems: [
                 { name: 'Gestionar Contrato', route: '/contratos' },
-                { name: 'Gestionar Reportes', route: '#' }
+                { name: 'Gestionar Reportes', route: 'reportesfiltro' }
             ]
         },
         {
