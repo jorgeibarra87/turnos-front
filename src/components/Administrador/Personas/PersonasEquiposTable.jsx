@@ -134,7 +134,7 @@ export default function PersonasEquiposTable() {
                 </select>
                 <span className="text-sm text-gray-600">por página</span>
             </div>
-            <table className="w-full border-collapse text-sm">
+            <table className="w-full border-collapse text-sm text-left">
                 <thead className="bg-black text-white">
                     <tr>
                         <th className="p-2">Persona</th>
@@ -154,7 +154,7 @@ export default function PersonasEquiposTable() {
                                         key={t.idEquipo}
                                         className="inline-block bg-blue-100 text-blue-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded"
                                     >
-                                        {t.idEquipo} - {t.nombre}
+                                        {t.nombre}
                                     </span>
                                 ))}
                             </td>

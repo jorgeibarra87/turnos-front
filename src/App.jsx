@@ -39,6 +39,7 @@ import CalendarioTurnos from './components/Turnos/Calendario/CalendarioTurnos';
 import PersonasTitulosTable from './components/Administrador/Personas/PersonasTitulosTable';
 import PersonasRolesTable from './components/Administrador/Personas/PersonaRolesTable';
 import PersonasEquiposTable from './components/Administrador/Personas/PersonasEquiposTable';
+import ReportesFiltro from './components/Reportes/ReportesFiltro';
 
 const App = () => (
   <div className="flex h-screen bg-primary-blue-backwround">
@@ -114,6 +115,7 @@ const App = () => (
           <Route exact path="/tipoformacion" element={<TipoFormacionTable />} />
           <Route exact path="/bloqueservicio" element={<BloqueServicioTable />} />
           <Route exact path="/calendarioturnos" element={<CalendarioTurnos />} />
+          <Route exact path="/reportesfiltro" element={<ReportesFiltro />} />
 
         </Routes>
       </main>

@@ -65,7 +65,8 @@ const Sidebar = () => {
                 },
                 { name: 'Cuadros Turno', route: '/' },
                 { name: 'Equipos', route: '/equipos' },
-                { name: 'Bloque Servicio', route: '/bloqueservicio' }
+                { name: 'Bloque Servicio', route: '/bloqueservicio' },
+                { name: 'Reportes', route: '/reportesfiltro' }
             ]
         }
     ];

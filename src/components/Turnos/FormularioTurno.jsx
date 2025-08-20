@@ -121,7 +121,6 @@ export function FormularioTurno() {
                 setLoadingTurnoData(false);
             }
         };
-
         loadTurnoForEdit();
     }, [isEditMode, turnoId]);
 
@@ -182,6 +181,7 @@ export function FormularioTurno() {
                 totalHoras: calcularTotalHoras(),
                 tipoTurno: tipoTurno,
                 jornada: jornada,
+                estadoTurno: estadoTurno,
                 comentarios: comentarios,
                 //equipo: equipo,
                 idEquipo: equipoId,

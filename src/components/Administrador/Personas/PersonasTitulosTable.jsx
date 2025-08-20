@@ -134,7 +134,7 @@ export default function PersonasTitulosTable() {
                 </select>
                 <span className="text-sm text-gray-600">por página</span>
             </div>
-            <table className="w-full border-collapse text-sm">
+            <table className="w-full border-collapse text-sm text-left">
                 <thead className="bg-black text-white">
                     <tr>
                         <th className="p-2">Persona</th>
