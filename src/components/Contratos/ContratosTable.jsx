@@ -69,7 +69,7 @@ export default function ContratosTable() {
         }
     };
 
-    // Función para manejar la eliminación
+    // Función para la eliminación
     const handleDelete = async (id, numeroContrato) => {
         if (window.confirm(`¿Estás seguro de que quieres eliminar el contrato "${numeroContrato}"?`)) {
             try {
@@ -130,7 +130,7 @@ export default function ContratosTable() {
 
             {/* Botón para crear nuevo contrato */}
             <Link to="/crearContrato">
-                <button className="mb-4 px-4 py-2 bg-green-500 text-white rounded-2xl hover:bg-green-600 flex items-center gap-2">
+                <button className="mb-4 px-4 py-2 bg-primary-green-husj  text-white rounded-2xl hover:bg-green-600 flex items-center gap-2">
                     <CopyPlus size={22} color="white" strokeWidth={2} />
                     Crear Contrato
                 </button>
@@ -177,7 +177,7 @@ export default function ContratosTable() {
                                 >
                                     <Eye
                                         size={18}
-                                        className="text-green-600 hover:text-green-800 cursor-pointer transition-colors ml-2"
+                                        className="text-primary-green-husj hover:text-green-600 cursor-pointer transition-colors ml-2"
                                     />
                                 </Link>
 
@@ -189,7 +189,7 @@ export default function ContratosTable() {
                                 >
                                     <Edit
                                         size={18}
-                                        className="text-blue-600 hover:text-blue-800 cursor-pointer transition-colors"
+                                        className="text-primary-blue1-husj hover:text-primary-blue2-husj cursor-pointer transition-colors"
                                     />
                                 </Link>
                             </td>

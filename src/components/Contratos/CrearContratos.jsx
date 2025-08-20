@@ -170,7 +170,7 @@ export default function CrearContrato() {
     const handleAgregarElemento = (elemento, tipo) => {
         switch (tipo) {
             case 'especialidad':
-                // Verificar usando múltiples campos posibles para evitar duplicados
+                // Verificar campos
                 const existeEspecialidad = especialidadesSeleccionadas.find(e =>
                     e.idTitulo === elemento.idTitulo ||
                     e.id === elemento.idTitulo ||
@@ -183,8 +183,7 @@ export default function CrearContrato() {
                 }
                 break;
             case 'proceso':
-                // CAMBIO PRINCIPAL: Para procesos, permitir siempre agregar elementos
-                // Solo verificar duplicados dentro del contrato actual, no globalmente
+                // Verificar campos
                 const existeProcesoEnContrato = procesosSeleccionados.find(p =>
                     p.idProceso === elemento.idProceso ||
                     p.id === elemento.idProceso ||
@@ -224,7 +223,7 @@ export default function CrearContrato() {
             setSaving(true);
             setError('');
 
-            // Extraer IDs de manera más robusta
+            // Extraer IDs
             const titulosIds = especialidadesSeleccionadas.map(e => e.idTitulo || e.id).filter(id => id !== undefined);
             const procesosIds = procesosSeleccionados.map(p => p.idProceso || p.id).filter(id => id !== undefined);
 
@@ -295,8 +294,7 @@ export default function CrearContrato() {
                 return {
                     title: 'Especialidades',
                     data: especialidades.filter(e => {
-                        // Para especialidades mantener el comportamiento original
-                        // Solo mostrar las que no están ya seleccionadas
+                        // Solo excluir los que ya están en la lista de especialidadesSeleccionadas del contrato actual
                         return !especialidadesSeleccionadas.find(sel =>
                             sel.idTitulo === e.idTitulo ||
                             sel.id === e.idTitulo ||
@@ -310,7 +308,6 @@ export default function CrearContrato() {
             case 'proceso':
                 return {
                     title: 'Procesos',
-                    // CAMBIO PRINCIPAL: Para procesos, mostrar TODOS los procesos disponibles
                     // Solo filtrar los que ya están seleccionados en este contrato específico
                     data: procesos.filter(p => {
                         // Solo excluir los que ya están en la lista de procesosSeleccionados del contrato actual
@@ -501,13 +498,13 @@ export default function CrearContrato() {
                     <div className='flex justify-center items-center gap-4 mt-6'>
                         <button
                             onClick={handleMostrarGestorRelacionados}
-                            className="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 flex items-center gap-2 transition-colors"
+                            className="px-6 py-2 bg-primary-green-husj text-white rounded-lg hover:bg-green-600 flex items-center gap-2 transition-colors"
                         >
                             <Plus size={20} />
                             Gestionar Elementos Relacionados
                         </button>
                         <Link to="/contratos">
-                            <button className="px-6 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 flex justify-center items-center gap-2 transition-colors">
+                            <button className="px-6 py-2 bg-primary-red2-husj text-white rounded-lg hover:bg-red-700 flex justify-center items-center gap-2 transition-colors">
                                 <CircleXIcon size={20} color="white" strokeWidth={2} />
                                 Cancelar
                             </button>
@@ -529,7 +526,7 @@ export default function CrearContrato() {
                                 <h3 className='text-lg font-semibold text-gray-800'>Especialidades</h3>
                                 <button
                                     onClick={() => handleMostrarSelector('especialidad')}
-                                    className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 flex items-center gap-1 text-sm"
+                                    className="px-3 py-1 bg-primary-blue1-husj text-white rounded hover:bg-primary-blue3-husj flex items-center gap-1 text-sm"
                                 >
                                     <Plus size={14} />
                                     Agregar
@@ -560,7 +557,7 @@ export default function CrearContrato() {
                                 <h3 className='text-lg font-semibold text-gray-800'>Procesos</h3>
                                 <button
                                     onClick={() => handleMostrarSelector('proceso')}
-                                    className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 flex items-center gap-1 text-sm"
+                                    className="px-3 py-1 bg-primary-blue1-husj text-white rounded hover:bg-primary-blue3-husj flex items-center gap-1 text-sm"
                                 >
                                     <Plus size={14} />
                                     Agregar
@@ -575,7 +572,7 @@ export default function CrearContrato() {
                                             <span className='text-sm'>{proceso.nombre}</span>
                                             <button
                                                 onClick={() => handleRemoverElemento(proceso.idProceso || proceso.id, 'proceso')}
-                                                className="text-red-500 hover:text-red-700"
+                                                className="text-primary-red2-husj hover:text-red-700"
                                             >
                                                 <X size={16} />
                                             </button>
@@ -716,7 +713,7 @@ export default function CrearContrato() {
                                                         // Opcional: cerrar el selector después de agregar
                                                         // setShowSelector(false);
                                                     }}
-                                                    className="px-3 py-1 bg-green-500 text-white text-sm rounded hover:bg-green-600 flex items-center gap-1 mx-auto transition-colors"
+                                                    className="px-3 py-1 bg-primary-green-husj text-white text-sm rounded hover:bg-green-600 flex items-center gap-1 mx-auto transition-colors"
                                                 >
                                                     <Plus size={14} />
                                                     Agregar
@@ -738,7 +735,7 @@ export default function CrearContrato() {
                             Volver a Gestión
                         </button>
                         <Link to="/contratos">
-                            <button className="px-6 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 flex justify-center items-center gap-2 transition-colors">
+                            <button className="px-6 py-2 bg-primary-red-husj text-white rounded-lg hover:bg-red-600 flex justify-center items-center gap-2 transition-colors">
                                 <CircleXIcon size={20} color="white" strokeWidth={2} />
                                 Cancelar
                             </button>
