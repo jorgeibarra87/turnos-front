@@ -710,7 +710,7 @@ export default function CrearContrato() {
                                                 <button
                                                     onClick={() => {
                                                         handleAgregarElemento(elemento, selectorType);
-                                                        // Opcional: cerrar el selector después de agregar
+                                                        // cerrar el selector después de agregar
                                                         // setShowSelector(false);
                                                     }}
                                                     className="px-3 py-1 bg-primary-green-husj text-white text-sm rounded hover:bg-green-600 flex items-center gap-1 mx-auto transition-colors"

@@ -1,4 +1,3 @@
-// hooks/useCalendarioTurnos.js
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 
@@ -22,7 +21,7 @@ export const useCalendarioTurnos = (filtros, fechaActual) => {
                 console.log('Cargando turnos para cuadro:', filtros.cuadroTurno);
                 console.log('Fecha actual del calendario:', fechaActual);
 
-                // Cargar TODOS los turnos primero
+                // Cargar TODOS los turnos
                 const response = await axios.get('http://localhost:8080/turnos');
                 console.log('Todos los turnos obtenidos:', response.data);
 

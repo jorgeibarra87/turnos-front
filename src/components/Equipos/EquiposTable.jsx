@@ -22,18 +22,17 @@ export default function EquiposTable() {
             const result = await axios.get("http://localhost:8080/equipo");
             console.log('Equipos cargados:', result.data);
 
-            // Si la respuesta es un array directamente
+            // Si la respuesta es un array
             if (Array.isArray(result.data)) {
                 const equiposAbiertos = result.data.filter(equipo => equipo.estado === true);
                 setEquipos(equiposAbiertos);
-                // Resetear página si nos quedamos sin elementos en la página actual
+                // Resetear página
                 const totalPages = Math.ceil(equiposAbiertos.length / itemsPerPage);
                 console.log("totalpages", totalPages);
                 if (currentPage > totalPages && totalPages > 0) {
                     setCurrentPage(totalPages);
                 }
             } else {
-                // Si hay alguna estructura diferente, ajustar aquí
                 setEquipos(result.data.equipos || []);
             }
         } catch (err) {
@@ -49,7 +48,7 @@ export default function EquiposTable() {
     const handleDelete = async (id, nombre) => {
         if (window.confirm(`¿Estás seguro de que quieres eliminar el equipo "${nombre}"?`)) {
             try {
-                // Primero verificar si el equipo tiene cuadros de turno asociados
+                // verificar si el equipo tiene cuadros de turno asociados
                 const checkResponse = await axios.get(`http://localhost:8080/equipo/${id}/cuadros`);
 
                 if (checkResponse.data && checkResponse.data.length > 0) {
@@ -79,7 +78,7 @@ export default function EquiposTable() {
         }
     };
 
-    // Función para obtener el número de miembros (si está disponible en la API)
+    // Función para obtener el número de miembros
     const getMiembrosCount = async (equipoId) => {
         try {
             const response = await axios.get(`http://localhost:8080/equipo/${equipoId}/miembros`);
@@ -98,10 +97,10 @@ export default function EquiposTable() {
         if (parts.length >= 2 && parts[0] === 'Equipo') {
             return parts[1]; // Retorna la categoría (Servicio, Proceso, etc.)
         }
-        return 'Personalizado'; // Si no sigue el patrón estándar
+        return 'Personalizado'; // Si no sigue
     };
 
-    // Función para extraer el área/proceso del nombre del equipo
+    // Función para extraer el área/proceso
     const extractArea = (nombre) => {
         if (!nombre) return 'N/A';
 
@@ -109,7 +108,7 @@ export default function EquiposTable() {
         if (parts.length >= 3 && parts[0] === 'Equipo') {
             return parts[2]; // Retorna el área/proceso (UCI1, etc.)
         }
-        return nombre; // Si no sigue el patrón, retorna el nombre completo
+        return nombre; // Si no sigue
     };
 
     if (loading) {

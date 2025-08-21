@@ -48,7 +48,6 @@ export default function CrearCuadroMulti() {
                     console.log('Procesos cargados:', procesosResponse.data);
 
                     const procesosIds = procesosResponse.data.map(p => {
-                        // Intentar diferentes nombres de campo para el ID
                         return (p.idProceso || p.id || p.procesoId || p.idProcesoAtencion)?.toString();
                     }).filter(id => id); // Filtrar valores undefined/null
 
@@ -58,7 +57,6 @@ export default function CrearCuadroMulti() {
                 } catch (procesosError) {
                     console.error('Error al cargar procesos del cuadro:', procesosError);
                     setError('Error al cargar los procesos del cuadro');
-                    // No establecer procesos vacíos, mantener el estado actual
                 }
 
             } catch (err) {

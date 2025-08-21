@@ -17,11 +17,9 @@ const Sidebar = () => {
         }));
     };
 
-    // Función para manejar clics en submenús (cuando no uses React Router)
+    // Función para manejar clics en submenús (React Router)
     const handleSubMenuClick = (route) => {
         console.log('Navegando a:', route);
-        // Aquí puedes agregar tu lógica de navegación personalizada
-        // O cambiar el estado de tu aplicación
     };
 
     const menuItems = [

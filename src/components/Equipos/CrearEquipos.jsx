@@ -64,7 +64,7 @@ export default function CrearEquipo() {
     const [loadingEquipoData, setLoadingEquipoData] = useState(false);
     const [equipoOriginal, setEquipoOriginal] = useState(null);
 
-    // **NUEVOS ESTADOS PARA GESTIÓN DE PERSONAS**
+    // ESTADOS PARA GESTIÓN DE PERSONAS
     const [showPersonasManager, setShowPersonasManager] = useState(false);
     const [personasEquipo, setPersonasEquipo] = useState([]);
     const [showPerfilSelector, setShowPerfilSelector] = useState(false);
@@ -99,7 +99,7 @@ export default function CrearEquipo() {
                     setSelectedCategory(nombreParts[1]);
                 }
 
-                // **CARGAR PERSONAS DEL EQUIPO EN MODO EDICIÓN**
+                // CARGAR PERSONAS DEL EQUIPO EN MODO EDICIÓN
                 await loadPersonasEquipo(equipoId);
 
             } catch (err) {
@@ -113,7 +113,7 @@ export default function CrearEquipo() {
         loadEquipoForEdit();
     }, [isEditMode, equipoId]);
 
-    // **FUNCIÓN PARA CARGAR PERSONAS DEL EQUIPO**
+    // FUNCIÓN PARA CARGAR PERSONAS DEL EQUIPO
     const loadPersonasEquipo = async (idEquipo) => {
         try {
             const response = await axios.get(`http://localhost:8080/usuario/equipo/${idEquipo}/usuarios`);
@@ -123,7 +123,7 @@ export default function CrearEquipo() {
         }
     };
 
-    // **FUNCIÓN PARA CARGAR PERFILES (TÍTULOS)**
+    // FUNCIÓN PARA CARGAR PERFILES (TÍTULOS)
     const loadPerfiles = async () => {
         try {
             setLoadingPerfiles(true);
@@ -137,7 +137,7 @@ export default function CrearEquipo() {
         }
     };
 
-    // **FUNCIÓN PARA CARGAR USUARIOS DISPONIBLES POR PERFIL**
+    // FUNCIÓN PARA CARGAR USUARIOS DISPONIBLES POR PERFIL
     const loadUsuariosPorPerfil = async (idTitulo) => {
         try {
             setLoadingUsuarios(true);
@@ -254,7 +254,7 @@ export default function CrearEquipo() {
         return `Equipo_${selectedCategory}_${selectedOption.nombre}_${timestamp}`;
     };
 
-    // **FUNCIÓN PARA MOSTRAR EL GESTOR DE PERSONAS**
+    // FUNCIÓN PARA MOSTRAR EL GESTOR DE PERSONAS
     const handleMostrarGestorPersonas = () => {
         setShowPersonasManager(true);
         if (!isEditMode) {
@@ -264,14 +264,14 @@ export default function CrearEquipo() {
         loadPerfiles();
     };
 
-    // **FUNCIÓN PARA MOSTRAR SELECTOR DE PERFIL**
+    // FUNCIÓN PARA MOSTRAR SELECTOR DE PERFIL
     const handleMostrarSelectorPerfil = () => {
         setShowPerfilSelector(true);
         setSelectedPerfil("");
         setUsuariosDisponibles([]);
     };
 
-    // **FUNCIÓN PARA MANEJAR CAMBIO DE PERFIL**
+    // FUNCIÓN PARA MANEJAR CAMBIO DE PERFIL
     const handlePerfilChange = (e) => {
         const perfilId = e.target.value;
         setSelectedPerfil(perfilId);
@@ -282,7 +282,7 @@ export default function CrearEquipo() {
         }
     };
 
-    // **FUNCIÓN PARA AGREGAR PERSONA AL EQUIPO**
+    // FUNCIÓN PARA AGREGAR PERSONA AL EQUIPO
     const handleAgregarPersonaAlEquipo = (usuario) => {
         const perfilSeleccionado = perfiles.find(p => p.idTitulo.toString() === selectedPerfil);
 
@@ -302,12 +302,12 @@ export default function CrearEquipo() {
         );
     };
 
-    // **FUNCIÓN PARA REMOVER PERSONA DEL EQUIPO**
+    // FUNCIÓN PARA REMOVER PERSONA DEL EQUIPO
     const handleRemoverPersonaDelEquipo = (idPersona) => {
         setPersonasEquipo(prev => prev.filter(p => p.idPersona !== idPersona));
     };
 
-    // **FUNCIÓN PARA CERRAR SELECTOR DE PERFIL**
+    // FUNCIÓN PARA CERRAR SELECTOR DE PERFIL
     const handleCerrarSelectorPerfil = () => {
         setShowPerfilSelector(false);
         setSelectedPerfil("");
@@ -343,7 +343,7 @@ export default function CrearEquipo() {
             }
             const personasIds = personasEquipo.map(p => p.idPersona);
             console.log('personas id: ', personasIds);
-            // **ACTUALIZAR PERSONAS DEL EQUIPO**
+            // ACTUALIZAR PERSONAS DEL EQUIPO
             if (personasEquipo.length > 0) {
                 const personasIds = personasEquipo.map(p => p.idPersona);
                 await axios.put(`http://localhost:8080/usuario/equipo/${equipoIdFinal}`, personasIds);
@@ -498,7 +498,7 @@ export default function CrearEquipo() {
                     </div>
                 </div>
             ) : showPersonasManager && !showPerfilSelector ? (
-                // **VISTA DEL GESTOR DE PERSONAS**
+                // VISTA DEL GESTOR DE PERSONAS
                 <div className='bg-white p-6 rounded-lg flex flex-col justify-center items-center gap-6 max-w-5xl w-full mx-4 max-h-[90vh] overflow-y-auto'>
                     <div className='text-3xl font-bold text-gray-800 text-center'>
                         {isEditMode ? 'Editando Equipo' : 'Creando Nuevo Equipo'}
@@ -522,7 +522,7 @@ export default function CrearEquipo() {
                         <div><strong>Nombre del Equipo:</strong> {equipoNombre}</div>
                     </div>
 
-                    {/* **SECCIÓN DE PERSONAS DEL EQUIPO** */}
+                    {/* SECCIÓN DE PERSONAS DEL EQUIPO */}
                     <div className='w-full max-w-4xl'>
                         <div className='flex justify-between items-center mb-4'>
                             <h3 className='text-xl font-semibold text-gray-800'>Personas del Equipo</h3>
@@ -615,7 +615,7 @@ export default function CrearEquipo() {
                     </div>
                 </div>
             ) : showPerfilSelector ? (
-                // **VISTA DEL SELECTOR DE PERFIL Y USUARIOS**
+                // VISTA DEL SELECTOR DE PERFIL Y USUARIOS
                 <div className='bg-white p-6 rounded-lg flex flex-col justify-center items-center gap-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto'>
                     <div className='text-2xl font-bold text-gray-800 text-center'>
                         Seleccionar Perfil y Usuario
@@ -734,7 +734,7 @@ export default function CrearEquipo() {
                     </div>
                 </div>
             ) : (
-                // Vista del formulario del equipo (mantenido por compatibilidad)
+                // Vista del formulario del equipo
                 <div className='bg-white p-8 rounded-lg flex flex-col justify-center items-center gap-6 max-w-4xl w-full mx-4'>
                     <div className='text-3xl font-bold text-gray-800 text-center'>
                         {isEditMode ? 'Editando Equipo' : 'Creando Nuevo Equipo'}

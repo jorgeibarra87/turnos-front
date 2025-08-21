@@ -29,7 +29,7 @@ export default function PersonasEquiposTable() {
         setPersonas(res.data);
     };
 
-    // Títulos académicos (para el select del formulario)
+    // equipos (para el select del formulario)
     const loadEquipos = async () => {
         const res = await axios.get("http://localhost:8080/equipo");
         setEquipos(res.data);
@@ -69,7 +69,7 @@ export default function PersonasEquiposTable() {
 
     // Función para generar números de página visibles
     const getVisiblePageNumbers = () => {
-        const delta = 2; // Número de páginas a mostrar a cada lado de la página actual
+        const delta = 2; // Número de páginas
         const range = [];
         const rangeWithDots = [];
 

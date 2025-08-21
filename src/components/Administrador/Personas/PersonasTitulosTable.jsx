@@ -69,7 +69,7 @@ export default function PersonasTitulosTable() {
 
     // Función para generar números de página visibles
     const getVisiblePageNumbers = () => {
-        const delta = 2; // Número de páginas a mostrar a cada lado de la página actual
+        const delta = 2; // Número de páginas
         const range = [];
         const rangeWithDots = [];
 

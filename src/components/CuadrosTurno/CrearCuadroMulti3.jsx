@@ -22,7 +22,7 @@ export default function CrearCuadroMulti3() {
     const [error, setError] = useState(null);
     const [cuadroOriginal, setCuadroOriginal] = useState(null);
 
-    // Cargar datos del cuadro original si estamos editando
+    // Cargar datos del cuadro original edicion
     useEffect(() => {
         const loadCuadroData = async () => {
             if (!isEditMode || !cuadroId) return;

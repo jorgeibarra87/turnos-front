@@ -28,7 +28,7 @@ export default function VerEquipo() {
                         idEquipo: equipoData.idEquipo || equipoData.id || "",
                         nombre: equipoData.nombre || "Sin nombre"
                     };
-                    setEquipo(equipoFormateado); // ✅ equipo es objeto, no array
+                    setEquipo(equipoFormateado); // equipo es objeto
                 } else {
                     setEquipo(null);
                     console.warn('No se recibió equipo');

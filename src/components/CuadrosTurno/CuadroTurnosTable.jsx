@@ -18,7 +18,7 @@ export default function TurnosTable() {
         const result = await axios.get("http://localhost:8080/cuadro-turnos");
         const cuadrosAbiertos = result.data.filter(cuadro => cuadro.estadoCuadro === 'abierto');
         setCuadros(cuadrosAbiertos);
-        // Resetear página si nos quedamos sin elementos en la página actual
+        // Resetear página
         const totalPages = Math.ceil(cuadrosAbiertos.length / itemsPerPage);
         console.log("totalpages", totalPages);
         if (currentPage > totalPages && totalPages > 0) {

@@ -29,7 +29,7 @@ export default function ReportesFiltro() {
         axios.get(`http://localhost:8080/reportes/${anio}/${mes}/${cuadroId}`)
             .then(res => {
                 setReporte(res.data);
-                setCurrentPage(1); // Resetear a primera página cuando se genera nuevo reporte
+                setCurrentPage(1); // Resetear a primera página
             })
             .catch(err => console.error("Error cargando reporte:", err));
     };
@@ -234,7 +234,7 @@ export default function ReportesFiltro() {
                     (turno.horas || 0).toString()
                 ]);
 
-            // Crear tabla usando autoTable como función independiente
+            // Crear tabla autoTable
             autoTable(doc, {
                 head: [['Jornada', 'Fecha Inicio', 'Hora Inicio', 'Fecha Fin', 'Hora Fin', 'Horas']],
                 body: tableData,
@@ -557,7 +557,6 @@ export default function ReportesFiltro() {
                                         return acc;
                                     }, {});
 
-                                    // Usar currentPersonas en lugar de todas las personas
                                     return currentPersonas.map((usuario) => {
                                         const turnos = turnosPorUsuario[usuario];
                                         const totalHoras = turnos.reduce((sum, t) => sum + (t.horas || 0), 0);

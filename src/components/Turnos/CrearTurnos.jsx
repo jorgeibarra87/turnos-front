@@ -23,7 +23,7 @@ export default function CrearTurnos() {
                 const response = await axios.get('http://localhost:8080/cuadro-turnos');
 
                 if (response.data && Array.isArray(response.data)) {
-                    // Asegurarnos de que los cuadros tienen idCuadroTurno y nombre
+                    // si los cuadros tienen idCuadroTurno y nombre
                     const cuadrosFormateados = response.data.map(cuadro => ({
                         idCuadroTurno: cuadro.idCuadroTurno || cuadro.id || "",
                         nombre: cuadro.nombre || cuadro.descripcion || "Sin nombre",
