@@ -7,12 +7,21 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Dependencias
 node_modules
+
+# Producción
 dist
 dist-ssr
+
+# Variables de entorno
+.env
+.env.*
+
+# Archivos locales
 *.local
 
-# Editor directories and files
+# Configuración de editor / SO
 .vscode/*
 !.vscode/extensions.json
 .idea
@@ -22,3 +31,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Locks (opcional, según gestor)
+# yarn.lock
+# pnpm-lock.yaml
