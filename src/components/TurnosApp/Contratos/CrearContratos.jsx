@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { CheckIcon, CircleXIcon, Save, ArrowLeft, Edit, Plus, Trash2, X, Calendar, FileText, User, Clock, Briefcase, Target } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { apiService } from '../Services/apiContratoService';
 
 export default function CrearContrato() {
     const navigate = useNavigate();
@@ -72,12 +73,8 @@ export default function CrearContrato() {
     const [error, setError] = useState('');
     const [loadingData, setLoadingData] = useState(false);
 
-    // Cargar datos iniciales
-    useEffect(() => {
-        loadInitialData();
-    }, []);
 
-    // Cargar datos del contrato para edición cuando los datos iniciales estén listos
+    /* // Cargar datos del contrato para edición cuando los datos iniciales estén listos
     useEffect(() => {
         if (isEditMode && contratoId && especialidades.length > 0 && procesos.length > 0) {
             loadContratoForEdit();
@@ -100,15 +97,84 @@ export default function CrearContrato() {
         } finally {
             setLoading(false);
         }
+    }; */
+
+    // Cargar datos iniciales usando apiService
+    const loadInitialData = async () => {
+        try {
+            setLoading(true);
+            setError('');
+
+            const [especialidadesData, procesosData] = await Promise.all([
+                apiService.contratos.getTitulosFormacionAcademica(),
+                apiService.contratos.getProcesosDisponibles()
+            ]);
+
+            setEspecialidades(especialidadesData);
+            setProcesos(procesosData);
+        } catch (err) {
+            console.error('Error al cargar datos iniciales:', err);
+            setError('Error al cargar datos iniciales');
+        } finally {
+            setLoading(false);
+        }
     };
+
+    /*  const loadContratoForEdit = async () => {
+         try {
+             setLoadingData(true);
+ 
+             // Cargar datos básicos del contrato
+             const contratoResponse = await axios.get(`http://localhost:8080/contrato/contratoTotal/${contratoId}`);
+             const contratoCompleto = contratoResponse.data;
+ 
+             setContratoData({
+                 numContrato: contratoCompleto.numContrato || '',
+                 supervisor: contratoCompleto.supervisor || '',
+                 apoyoSupervision: contratoCompleto.apoyoSupervision || '',
+                 objeto: contratoCompleto.objeto || '',
+                 contratista: contratoCompleto.contratista || '',
+                 fechaInicio: contratoCompleto.fechaInicio || '',
+                 fechaTerminacion: contratoCompleto.fechaTerminacion || '',
+                 anio: contratoCompleto.anio || new Date().getFullYear(),
+                 observaciones: contratoCompleto.observaciones || ''
+             });
+ 
+             // Cargar especialidades relacionadas
+             try {
+                 const especialidadesResponse = await axios.get(`http://localhost:8080/contrato/${contratoId}/titulos`);
+                 const especialidadesDelContrato = especialidadesResponse.data || [];
+                 setEspecialidadesSeleccionadas(especialidadesDelContrato);
+             } catch (error) {
+                 console.warn('Error al cargar especialidades del contrato:', error);
+                 setEspecialidadesSeleccionadas([]);
+             }
+ 
+             // Cargar procesos relacionados
+             try {
+                 const procesosResponse = await axios.get(`http://localhost:8080/contrato/${contratoId}/procesos`);
+                 const procesosDelContrato = procesosResponse.data || [];
+                 setProcesosSeleccionados(procesosDelContrato);
+             } catch (error) {
+                 console.warn('Error al cargar procesos del contrato:', error);
+                 setProcesosSeleccionados([]);
+             }
+ 
+         } catch (err) {
+             setError('Error al cargar datos del contrato');
+             console.error('Error:', err);
+         } finally {
+             setLoadingData(false);
+         }
+     }; */
 
     const loadContratoForEdit = async () => {
         try {
             setLoadingData(true);
+            setError('');
 
-            // Cargar datos básicos del contrato
-            const contratoResponse = await axios.get(`http://localhost:8080/contrato/contratoTotal/${contratoId}`);
-            const contratoCompleto = contratoResponse.data;
+            // Cargar datos básicos del contrato usando apiService
+            const contratoCompleto = await apiService.contratos.getContratoCompleto(contratoId);
 
             setContratoData({
                 numContrato: contratoCompleto.numContrato || '',
@@ -122,20 +188,17 @@ export default function CrearContrato() {
                 observaciones: contratoCompleto.observaciones || ''
             });
 
-            // Cargar especialidades relacionadas
+            // Cargar especialidades y procesos relacionados usando apiService
             try {
-                const especialidadesResponse = await axios.get(`http://localhost:8080/contrato/${contratoId}/titulos`);
-                const especialidadesDelContrato = especialidadesResponse.data || [];
+                const especialidadesDelContrato = await apiService.contratos.getEspecialidades(contratoId);
                 setEspecialidadesSeleccionadas(especialidadesDelContrato);
             } catch (error) {
                 console.warn('Error al cargar especialidades del contrato:', error);
                 setEspecialidadesSeleccionadas([]);
             }
 
-            // Cargar procesos relacionados
             try {
-                const procesosResponse = await axios.get(`http://localhost:8080/contrato/${contratoId}/procesos`);
-                const procesosDelContrato = procesosResponse.data || [];
+                const procesosDelContrato = await apiService.contratos.getProcesos(contratoId);
                 setProcesosSeleccionados(procesosDelContrato);
             } catch (error) {
                 console.warn('Error al cargar procesos del contrato:', error);
@@ -143,12 +206,24 @@ export default function CrearContrato() {
             }
 
         } catch (err) {
+            console.error('Error al cargar datos del contrato:', err);
             setError('Error al cargar datos del contrato');
-            console.error('Error:', err);
         } finally {
             setLoadingData(false);
         }
     };
+
+    // Cargar datos iniciales
+    useEffect(() => {
+        loadInitialData();
+    }, []);
+
+    // Cargar datos del contrato para edición cuando los datos iniciales estén listos
+    useEffect(() => {
+        if (isEditMode && contratoId && especialidades.length > 0 && procesos.length > 0) {
+            loadContratoForEdit();
+        }
+    }, [isEditMode, contratoId, especialidades.length, procesos.length]);
 
     const handleInputChange = (field, value) => {
         setContratoData(prev => ({

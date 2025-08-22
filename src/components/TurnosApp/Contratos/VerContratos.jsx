@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import { FileText, ArrowLeft, Eye, Calendar, User, Building, BookOpen } from 'lucide-react';
+import { apiService } from '../Services/apiContratoService';
 
 export default function VerContrato() {
     const { id } = useParams();
@@ -14,7 +15,7 @@ export default function VerContrato() {
     const [error, setError] = useState(null);
     const [verMasObservaciones, setVerMasObservaciones] = useState(false);
 
-    // Obtener datos completos del contrato
+    /* // Obtener datos completos del contrato
     useEffect(() => {
         const fetchContratoCompleto = async () => {
             try {
@@ -59,6 +60,58 @@ export default function VerContrato() {
         };
 
         if (id) fetchContratoCompleto();
+    }, [id]); */
+
+    // Obtener datos completos del contrato usando apiService
+    const fetchContratoCompleto = async () => {
+        try {
+            setLoading(true);
+            setError(null);
+
+            // Obtener información completa del contrato
+            const contratoData = await apiService.contratos.getContratoCompleto(id);
+
+            if (contratoData) {
+                setContrato(contratoData);
+
+                // Obtener especialidades y procesos usando apiService
+                const [especialidadesData, procesosData] = await Promise.all([
+                    apiService.contratos.getEspecialidades(id).catch(error => {
+                        console.warn('Error al cargar especialidades:', error);
+                        return [];
+                    }),
+                    apiService.contratos.getProcesos(id).catch(error => {
+                        console.warn('Error al cargar procesos:', error);
+                        return [];
+                    })
+                ]);
+
+                setEspecialidades(especialidadesData);
+                setProcesos(procesosData);
+            } else {
+                setContrato(null);
+                setError('Contrato no encontrado');
+            }
+
+        } catch (err) {
+            console.error('Error al cargar contrato:', err);
+
+            if (err.response?.status === 404) {
+                setError('Contrato no encontrado');
+            } else {
+                setError('Error al cargar el contrato');
+            }
+
+            setContrato(null);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        if (id) {
+            fetchContratoCompleto();
+        }
     }, [id]);
 
     // Función para formatear fecha
