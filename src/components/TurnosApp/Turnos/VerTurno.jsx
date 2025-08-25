@@ -3,6 +3,7 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import { ArrowLeft, CircleXIcon, User, Clock, Calendar, Edit } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { apiTurnoService } from '../Services/apiTurnoService';
 
 export function VerTurno() {
     const { turnoId } = useParams();
@@ -24,8 +25,10 @@ export function VerTurno() {
             }
 
             try {
-                const response = await axios.get(`http://localhost:8080/turnos/${turnoId}`);
-                setTurno(response.data);
+                /* const response = await axios.get(`http://localhost:8080/turnos/${turnoId}`);
+                setTurno(response.data); */
+                const turnoData = await apiTurnoService.turnos.getById(turnoId);
+                setTurno(turnoData);
             } catch (err) {
                 console.error('Error al cargar turno:', err);
                 setError('Error al cargar los datos del turno');

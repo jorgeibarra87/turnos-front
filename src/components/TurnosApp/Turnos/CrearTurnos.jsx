@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { CheckIcon, CircleXIcon, Save, User, ArrowLeft, Edit } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { apiTurnoService } from '../Services/apiTurnoService';
 
 export default function CrearTurnos() {
 
@@ -16,6 +17,28 @@ export default function CrearTurnos() {
     const [error, setError] = useState(null);
 
     useEffect(() => {
+        const fetchCuadros = async () => {
+            try {
+                setLoading(true);
+                setError(null);
+
+                // Usar servicio
+                const cuadrosFormateados = await apiTurnoService.auxiliares.getCuadrosFormateados();
+                setCuadros(cuadrosFormateados);
+
+            } catch (err) {
+                setError('Error al cargar los cuadros');
+                console.error('Error al cargar cuadros:', err);
+                setCuadros([]);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchCuadros();
+    }, []);
+
+    /* useEffect(() => {
         const fetchCuadros = async () => {
             try {
                 setLoading(true);
@@ -45,7 +68,7 @@ export default function CrearTurnos() {
         };
 
         fetchCuadros();
-    }, []);
+    }, []); */
 
 
     // Función para manejar el cambio en el select de cuadros;

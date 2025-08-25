@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import { User, ArrowLeft, Eye, Users, CalendarPlus, Calendar, Edit, CalendarSearch, CalendarSync, ChevronLeft, ChevronRight } from 'lucide-react';
+import { apiTurnoService } from '../Services/apiTurnoService';
 //import { turnosData } from '../../data/turnosData';
 
 export default function GestionTurnos() {
@@ -53,19 +54,15 @@ export default function GestionTurnos() {
     // Obtener datos del equipo
     useEffect(() => {
         const fetchEquipo = async () => {
+            if (!equipoId) return;
+
             try {
                 setLoading(true);
                 setError(null);
-                const response = await axios.get(`http://localhost:8080/equipo/${equipoId}`);
 
-                if (response.data) {
-                    const equipoData = response.data;
-                    const equipoFormateado = {
-                        idEquipo: equipoData.idEquipo || equipoData.id || "",
-                        nombre: equipoData.nombre || "Sin nombre"
-                    };
-                    setEquipo(equipoFormateado);
-                }
+                // CAMBIO: Usar servicio
+                const equipoData = await apiTurnoService.auxiliares.getEquipoInfo(equipoId);
+                setEquipo(equipoData);
 
             } catch (err) {
                 setError('Error al cargar el equipo');
@@ -76,43 +73,48 @@ export default function GestionTurnos() {
             }
         };
 
-        if (equipoId) fetchEquipo();
+        fetchEquipo();
     }, [equipoId]);
+
 
     // Obtener miembros del equipo
     useEffect(() => {
-        if (equipoId) {
-            loadMiembrosEquipo(equipoId);
-        }
-    }, [equipoId]);
+        const loadMiembrosEquipo = async () => {
+            if (!equipoId) return;
 
-    const loadMiembrosEquipo = async (equipoId) => {
-        try {
-            setLoadingMiembros(true);
-            setErrorMiembros(null);
-            const response = await axios.get(`http://localhost:8080/equipo/${equipoId}/miembros-perfil`);
-            setMiembros(response.data);
-        } catch (error) {
-            console.error("Error al obtener miembros del equipo:", error);
-            setErrorMiembros("Error al cargar los miembros del equipo");
-            setMiembros([]);
-        } finally {
-            setLoadingMiembros(false);
-        }
-    };
+            try {
+                setLoadingMiembros(true);
+                setErrorMiembros(null);
+
+                // CAMBIO: Usar servicio
+                const miembrosData = await apiTurnoService.auxiliares.getMiembrosPerfilEquipo(equipoId);
+                setMiembros(miembrosData);
+
+            } catch (error) {
+                console.error("Error al obtener miembros del equipo:", error);
+                setErrorMiembros("Error al cargar los miembros del equipo");
+                setMiembros([]);
+            } finally {
+                setLoadingMiembros(false);
+            }
+        };
+
+        loadMiembrosEquipo();
+    }, [equipoId]);
 
     // Obtener datos del turno
     useEffect(() => {
         const fetchTurnos = async () => {
+            if (!cuadroId) return;
+
             try {
                 setLoading(true);
                 setError(null);
-                const result = await axios.get(`http://localhost:8080/turnos/cuadro/${cuadroId}`);
 
-                if (result.data) {
-                    const turnosAbiertos = result.data.filter(turno => turno.estadoTurno === "abierto");
-                    setTurnos(turnosAbiertos);
-                }
+                // usar servicio
+                const turnosData = await apiTurnoService.turnos.getTurnosAbiertosByCuadro(cuadroId);
+                setTurnos(turnosData);
+
             } catch (err) {
                 setError('Error al cargar turnos');
                 console.error('Error al cargar turnos:', err);

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { CheckIcon, CircleXIcon } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { apiTurnoService } from '../Services/apiTurnoService';
 
 export function SelectorCuadroTurno() {
     const navigate = useNavigate();
@@ -11,24 +12,16 @@ export function SelectorCuadroTurno() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
+    //Usar apiTurnoService
     useEffect(() => {
         const fetchCuadros = async () => {
             try {
                 setLoading(true);
                 setError(null);
-                const response = await axios.get('http://localhost:8080/cuadro-turnos');
 
-                if (response.data && Array.isArray(response.data)) {
-                    const cuadrosFormateados = response.data.map(cuadro => ({
-                        idCuadroTurno: cuadro.idCuadroTurno || cuadro.id || "",
-                        nombre: cuadro.nombre || cuadro.descripcion || "Sin nombre",
-                        idEquipo: cuadro.idEquipo || null
-                    }));
-                    setCuadros(cuadrosFormateados);
-                } else {
-                    setCuadros([]);
-                    console.warn('La respuesta no contiene un array de cuadros');
-                }
+                //Usar servicio en lugar de axios directo
+                const cuadrosFormateados = await apiTurnoService.auxiliares.getCuadrosFormateados();
+                setCuadros(cuadrosFormateados);
 
             } catch (err) {
                 setError('Error al cargar los cuadros');
@@ -42,6 +35,7 @@ export function SelectorCuadroTurno() {
         fetchCuadros();
     }, []);
 
+    // Función para manejar el cambio en el select de cuadros;
     const handleCuadroChange = (e) => {
         const cuadroId = e.target.value;
         const cuadroSeleccionado = cuadros.find(cuadro =>

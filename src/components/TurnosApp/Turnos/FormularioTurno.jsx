@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate, useLocation, useParams } from 'react-rout
 import axios from 'axios';
 import { Save, User, ArrowLeft, Edit, CircleXIcon, Clock, FileText } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { apiTurnoService } from '../Services/apiTurnoService';
 
 export function FormularioTurno() {
     const navigate = useNavigate();
@@ -89,6 +90,47 @@ export function FormularioTurno() {
 
             try {
                 setLoadingTurnoData(true);
+
+                // CAMBIO: Usar servicio
+                const turnoData = await apiTurnoService.turnos.getById(turnoId);
+
+                setTurnoOriginal(turnoData);
+                setCuadroTurno(turnoData.cuadroTurno || "");
+                setEquipo(equipoId);
+                setFechaHoraInicio(turnoData.fechaInicio || "");
+                setFechaHoraFin(turnoData.fechaFin || "");
+                setSelectedPersona(turnoData.idPersona || "");
+                setJornada(turnoData.jornada || "Mañana");
+                setTipoTurno(turnoData.tipoTurno || "Presencial");
+                setComentarios(turnoData.comentarios || "");
+                setEstadoTurno(turnoData.estadoTurno || "abierto");
+
+                if (equipoId) {
+                    setCuadroData(prev => ({
+                        ...prev,
+                        equipoId: equipoId,
+                        id: turnoData.idCuadroTurno,
+                        nombre: turnoData.cuadroTurno
+                    }));
+                    loadPersonasEquipo(equipoId);
+                }
+
+            } catch (err) {
+                console.error('Error al cargar turno para editar:', err);
+                setError('Error al cargar los datos del turno');
+            } finally {
+                setLoadingTurnoData(false);
+            }
+        };
+
+        loadTurnoForEdit();
+    }, [isEditMode, turnoId]);
+    /* useEffect(() => {
+        const loadTurnoForEdit = async () => {
+            if (!isEditMode || !turnoId) return;
+
+            try {
+                setLoadingTurnoData(true);
                 const response = await axios.get(`http://localhost:8080/turnos/${turnoId}`);
                 const turnoData = response.data;
                 console.log("turnoData", turnoData);
@@ -122,10 +164,25 @@ export function FormularioTurno() {
             }
         };
         loadTurnoForEdit();
-    }, [isEditMode, turnoId]);
+    }, [isEditMode, turnoId]); */
 
     // Función para cargar personas del equipo
     const loadPersonasEquipo = async (equipoId) => {
+        try {
+            setLoadingPersonas(true);
+
+            // CAMBIO: Usar servicio
+            const personasData = await apiTurnoService.auxiliares.getUsuariosEquipo(equipoId);
+            setPersonasEquipo(personasData);
+
+        } catch (err) {
+            console.error('Error al cargar personas del equipo:', err);
+            setError('Error al cargar las personas del equipo');
+        } finally {
+            setLoadingPersonas(false);
+        }
+    };
+    /* const loadPersonasEquipo = async (equipoId) => {
         try {
             setLoadingPersonas(true);
             const response = await axios.get(`http://localhost:8080/usuario/equipo/${equipoId}/usuarios`);
@@ -136,17 +193,27 @@ export function FormularioTurno() {
         } finally {
             setLoadingPersonas(false);
         }
-    };
+    }; */
     console.log("PersonasEquipo: ", personasEquipo);
     // Función para cargar info del equipo
     const loadEquipoInfo = async (equipoId) => {
+        try {
+            // CAMBIO: Usar servicio
+            const equipoInfo = await apiTurnoService.auxiliares.getEquipoInfo(equipoId);
+            setEquipo(equipoInfo.nombre);
+
+        } catch (err) {
+            console.error('Error al cargar info del equipo:', err);
+        }
+    };
+    /* const loadEquipoInfo = async (equipoId) => {
         try {
             const response = await axios.get(`http://localhost:8080/equipo/${equipoId}`);
             setEquipo(response.data.nombre || `Equipo_${equipoId}`);
         } catch (err) {
             console.error('Error al cargar info del equipo:', err);
         }
-    };
+    }; */
 
     // Función para formatear fecha para input datetime-local
     const formatDateForInput = (dateTimeString) => {
@@ -196,9 +263,11 @@ export function FormularioTurno() {
             let response;
 
             if (isEditMode) {
-                response = await axios.put(`http://localhost:8080/turnos/${turnoId}`, turnoData);
+                /* response = await axios.put(`http://localhost:8080/turnos/${turnoId}`, turnoData); */
+                await apiTurnoService.turnos.update(turnoId, turnoData);
             } else {
-                response = await axios.post('http://localhost:8080/turnos', turnoData);
+                /* response = await axios.post('http://localhost:8080/turnos', turnoData); */
+                await apiTurnoService.turnos.create(turnoData);
             }
 
             alert(`Turno ${isEditMode ? 'actualizado' : 'creado'} exitosamente`);
