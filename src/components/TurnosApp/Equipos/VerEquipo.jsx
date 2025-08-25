@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import { User, ArrowLeft, Eye, Users } from 'lucide-react';
+import { apiEquipoService } from '../Services/apiEquipoService';
 
 export default function VerEquipo() {
     const { id } = useParams();
@@ -14,59 +15,64 @@ export default function VerEquipo() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    // Obtener datos del equipo
+
+    //Obtener datos del equipo usando apiService;
     useEffect(() => {
         const fetchEquipo = async () => {
             try {
                 setLoading(true);
                 setError(null);
-                const response = await axios.get(`http://localhost:8080/equipo/${id}`);
 
-                if (response.data) {
-                    const equipoData = response.data;
-                    const equipoFormateado = {
-                        idEquipo: equipoData.idEquipo || equipoData.id || "",
-                        nombre: equipoData.nombre || "Sin nombre"
-                    };
-                    setEquipo(equipoFormateado); // equipo es objeto
-                } else {
-                    setEquipo(null);
-                    console.warn('No se recibió equipo');
-                }
+                // CAMBIO: Usar apiEquipoService
+                const equipoData = await apiEquipoService.equipos.getById(id);
+                setEquipo(equipoData);
 
             } catch (err) {
-                setError('Error al cargar el equipo');
                 console.error('Error al cargar equipo:', err);
+
+                if (err.response?.status === 404) {
+                    setError('Equipo no encontrado');
+                } else {
+                    setError('Error al cargar el equipo');
+                }
+
                 setEquipo(null);
             } finally {
                 setLoading(false);
             }
         };
 
-        if (id) fetchEquipo();
-    }, [id]);
-
-    // Obtener miembros del equipo
-    useEffect(() => {
         if (id) {
-            loadMiembrosEquipo(id);
+            fetchEquipo();
         }
     }, [id]);
 
-    const loadMiembrosEquipo = async (id) => {
-        try {
-            setLoadingMiembros(true);
-            setErrorMiembros(null);
-            const response = await axios.get(`http://localhost:8080/equipo/${id}/miembros-perfil`);
-            setMiembros(response.data);
-        } catch (error) {
-            console.error("Error al obtener miembros del equipo:", error);
-            setErrorMiembros("Error al cargar los miembros del equipo");
-            setMiembros([]);
-        } finally {
-            setLoadingMiembros(false);
-        }
-    };
+    //Cargar miembros usando apiService;
+    useEffect(() => {
+        const loadMiembrosEquipo = async () => {
+            if (!id) return;
+
+            try {
+                setLoadingMiembros(true);
+                setErrorMiembros(null);
+
+                // Usar apiEquipoService
+                const miembrosData = await apiEquipoService.equipos.getMiembrosPerfil(id);
+                setMiembros(miembrosData);
+
+            } catch (error) {
+                console.error("Error al obtener miembros del equipo:", error);
+                setErrorMiembros("Error al cargar los miembros del equipo");
+                setMiembros([]);
+            } finally {
+                setLoadingMiembros(false);
+            }
+        };
+
+        loadMiembrosEquipo();
+    }, [id]);
+
+
 
     return (
         <div className='absolute inset-0 bg-opacity-30 backdrop-blur-sm flex justify-center items-center'>

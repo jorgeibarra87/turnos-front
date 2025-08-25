@@ -4,9 +4,9 @@ import TurnosTable from './components/TurnosApp/CuadrosTurno/CuadroTurnosTable';
 import { turnosData } from './data/turnosData';
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import CrearCuadro from './components/TurnosApp/CuadrosTurno/CrearCuadro';
-import CrearCuadro2 from './components/TurnosApp/CuadrosTurno/CrearCuadro2';
+/* import CrearCuadro2 from './components/TurnosApp/CuadrosTurno/CrearCuadro2';
 import CrearCuadro3 from './components/TurnosApp/CuadrosTurno/CrearCuadro3';
-import CrearCuadro4 from './components/TurnosApp/CuadrosTurno/CrearCuadro4';
+import CrearCuadro4 from './components/TurnosApp/CuadrosTurno/CrearCuadro4'; */
 import VerCuadro from './components/TurnosApp/CuadrosTurno/VerCuadro';
 import CrearCuadroMulti from './components/TurnosApp/CuadrosTurno/CrearCuadroMulti';
 import CrearCuadroMulti2 from './components/TurnosApp/CuadrosTurno/CrearCuadroMulti2';
@@ -57,9 +57,9 @@ const App = () => (
           {/* Ruta para crear desde /crearCuadro */}
           <Route exact path="crearCuadro/crear" element={<CrearCuadro />} />
 
-          <Route exact path="/crearCuadro2/" element={<CrearCuadro2 />} />
+          {/* <Route exact path="/crearCuadro2/" element={<CrearCuadro2 />} />
           <Route exact path="/crearCuadro3/" element={<CrearCuadro3 />} />
-          <Route exact path="/crearCuadro4/" element={<CrearCuadro4 />} />
+          <Route exact path="/crearCuadro4/" element={<CrearCuadro4 />} /> */}
           <Route exact path="/CrearCuadroMulti/" element={<CrearCuadroMulti />} />
           <Route exact path="/CrearCuadroMulti2/" element={<CrearCuadroMulti2 />} />
           <Route exact path="/CrearCuadroMulti3/" element={<CrearCuadroMulti3 />} />

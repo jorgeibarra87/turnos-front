@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Save, CircleXIcon, User, Edit } from 'lucide-react';
-import axios from 'axios';
+import { apiCuadroService } from '../Services/apiCuadroService';
 
 export default function CrearCuadroMulti3() {
     const [searchParams] = useSearchParams();
@@ -22,31 +22,37 @@ export default function CrearCuadroMulti3() {
     const [error, setError] = useState(null);
     const [cuadroOriginal, setCuadroOriginal] = useState(null);
 
-    // Cargar datos del cuadro original edicion
+    // CAMBIO: Cargar datos del cuadro original para edición usando apiService
     useEffect(() => {
         const loadCuadroData = async () => {
             if (!isEditMode || !cuadroId) return;
 
             try {
-                const response = await axios.get(`http://localhost:8080/cuadro-turnos/${cuadroId}`);
-                setCuadroOriginal(response.data);
+                // CAMBIO: Usar apiCuadroService en lugar de axios directo
+                const cuadroData = await apiCuadroService.cuadros.getById(cuadroId);
+                setCuadroOriginal(cuadroData);
             } catch (err) {
                 console.error('Error al cargar cuadro original:', err);
+                setError('Error al cargar datos del cuadro original');
             }
         };
 
         loadCuadroData();
     }, [isEditMode, cuadroId]);
 
-    // Cargar miembros del equipo
+    // CAMBIO: Cargar miembros del equipo usando apiService
     useEffect(() => {
         const fetchMiembros = async () => {
             if (!equipoId) return;
 
             try {
                 setLoadingMiembros(true);
-                const response = await axios.get(`http://localhost:8080/equipo/${equipoId}/miembros-perfil`);
-                setMiembros(response.data);
+                setError(null);
+
+                // CAMBIO: Usar apiCuadroService
+                const miembrosData = await apiCuadroService.auxiliares.getMiembrosEquipo(equipoId);
+                setMiembros(miembrosData);
+
             } catch (err) {
                 console.error("Error al obtener miembros del equipo:", err);
                 setError("Error al cargar los miembros del equipo");
@@ -59,19 +65,35 @@ export default function CrearCuadroMulti3() {
         fetchMiembros();
     }, [equipoId]);
 
-    // Cargar datos de los procesos
+    // CAMBIO: Cargar datos de los procesos usando apiService
     useEffect(() => {
         const fetchProcesosData = async () => {
             if (!procesos) return;
 
             try {
                 setLoadingProcesos(true);
+                setError(null);
+
                 const procesosIds = JSON.parse(procesos);
-                const procesosPromises = procesosIds.map(id =>
-                    axios.get(`http://localhost:8080/procesos/${id}`)
-                );
-                const responses = await Promise.all(procesosPromises);
-                setProcesosData(responses.map(response => response.data));
+
+                // CAMBIO: Usar apiCuadroService para obtener detalles de procesos
+                const procesosDataPromises = procesosIds.map(async (id) => {
+                    try {
+                        // Intentar obtener el proceso específico por ID
+                        const procesoData = await apiCuadroService.auxiliares.getProcesoById(id);
+                        return procesoData;
+                    } catch (error) {
+                        // Si falla, buscar en la lista completa de procesos
+                        console.warn(`No se pudo obtener proceso individual ${id}, buscando en lista completa`);
+                        const allProcesos = await apiCuadroService.auxiliares.getProcesos();
+                        const proceso = allProcesos.find(p => p.idProceso.toString() === id.toString());
+                        return proceso || { id, nombre: `Proceso ID: ${id}` };
+                    }
+                });
+
+                const procesosDataResolved = await Promise.all(procesosDataPromises);
+                setProcesosData(procesosDataResolved);
+
             } catch (err) {
                 console.error("Error al cargar datos de procesos:", err);
                 setError("Error al cargar información de los procesos");
@@ -84,40 +106,47 @@ export default function CrearCuadroMulti3() {
         fetchProcesosData();
     }, [procesos]);
 
-    // Manejar guardar cuadro multiproceso
+    // CAMBIO: Manejar guardar cuadro multiproceso usando apiService
     const handleGuardarCuadro = async () => {
         setSaving(true);
         setError(null);
 
         try {
             const procesosIds = JSON.parse(procesos);
+            const fechaActual = new Date();
 
             const cuadroData = {
                 categoria: categoria.toLowerCase(),
-                anio: isEditMode && cuadroOriginal ? cuadroOriginal.anio : "2025",
-                mes: isEditMode && cuadroOriginal ? cuadroOriginal.mes : "07",
+                anio: isEditMode && cuadroOriginal ? cuadroOriginal.anio : fechaActual.getFullYear().toString(),
+                mes: isEditMode && cuadroOriginal ? cuadroOriginal.mes : (fechaActual.getMonth() + 1).toString().padStart(2, '0'),
                 turnoExcepcion: isEditMode && cuadroOriginal ? cuadroOriginal.turnoExcepcion : false,
                 idEquipo: parseInt(equipoId),
                 idsProcesosAtencion: procesosIds.map(id => parseInt(id))
             };
 
-            let response;
+            // CAMBIO: Usar apiCuadroService en lugar de axios directo
             if (isEditMode) {
-                // Actualizar cuadro multiproceso existente
-                response = await axios.put(`http://localhost:8080/cuadro-turnos/${cuadroId}/editar-total`, cuadroData);
+                await apiCuadroService.cuadros.updateCompleto(cuadroId, cuadroData);
                 alert('Cuadro multiproceso actualizado exitosamente');
             } else {
-                // Crear nuevo cuadro multiproceso
-                response = await axios.post('http://localhost:8080/cuadro-turnos/crear-total', cuadroData);
+                await apiCuadroService.cuadros.createCompleto(cuadroData);
                 alert('Cuadro multiproceso guardado exitosamente');
             }
 
-            console.log('Cuadro multiproceso guardado/actualizado:', response.data);
+            console.log('Cuadro multiproceso guardado/actualizado exitosamente');
             navigate('/');
 
         } catch (err) {
-            setError(`Error al ${isEditMode ? 'actualizar' : 'guardar'} el cuadro multiproceso`);
-            console.error('Error:', err);
+            console.error('Error al guardar/actualizar cuadro:', err);
+
+            // Manejo mejorado de errores
+            if (err.response?.status === 409) {
+                setError('Ya existe un cuadro multiproceso con esta configuración');
+            } else if (err.response?.status === 400) {
+                setError(err.response?.data?.message || 'Datos inválidos');
+            } else {
+                setError(`Error al ${isEditMode ? 'actualizar' : 'guardar'} el cuadro multiproceso`);
+            }
         } finally {
             setSaving(false);
         }
@@ -203,9 +232,10 @@ export default function CrearCuadroMulti3() {
 
                     {loadingMiembros ? (
                         <div className="w-full p-8 text-center">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
                             <p className="text-gray-500 text-lg">Cargando miembros del equipo...</p>
                         </div>
-                    ) : (
+                    ) : miembros.length > 0 ? (
                         <div className='border rounded-lg overflow-hidden'>
                             <table className='w-full text-left'>
                                 <thead className='bg-blue-100 text-gray-800'>
@@ -232,6 +262,11 @@ export default function CrearCuadroMulti3() {
                                 </tbody>
                             </table>
                         </div>
+                    ) : (
+                        <div className="w-full p-8 text-center">
+                            <User size={48} className="mx-auto mb-4 text-gray-300" />
+                            <p className="text-gray-500 text-lg">No se encontraron miembros en el equipo</p>
+                        </div>
                     )}
                 </div>
 
@@ -239,6 +274,12 @@ export default function CrearCuadroMulti3() {
                 {error && (
                     <div className='w-full p-3 bg-red-100 border border-red-300 rounded-lg text-red-700 text-center'>
                         {error}
+                        <button
+                            onClick={() => setError(null)}
+                            className="ml-4 px-2 py-1 bg-red-200 hover:bg-red-300 text-red-800 rounded text-xs"
+                        >
+                            Cerrar
+                        </button>
                     </div>
                 )}
 
@@ -246,8 +287,8 @@ export default function CrearCuadroMulti3() {
                 <div className='flex justify-center items-center gap-4 mt-6'>
                     <button
                         onClick={handleGuardarCuadro}
-                        disabled={saving || loadingMiembros}
-                        className={`px-6 py-2 text-white rounded-lg flex justify-center items-center gap-2 transition-colors ${saving || loadingMiembros
+                        disabled={saving || loadingMiembros || loadingProcesos}
+                        className={`px-6 py-2 text-white rounded-lg flex justify-center items-center gap-2 transition-colors ${saving || loadingMiembros || loadingProcesos
                             ? 'bg-gray-400 cursor-not-allowed'
                             : 'bg-blue-500 hover:bg-blue-600'
                             }`}

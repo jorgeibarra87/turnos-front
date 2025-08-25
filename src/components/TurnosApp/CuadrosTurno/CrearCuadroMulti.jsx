@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams, Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, CheckIcon, CircleXIcon, Plus, X, Edit } from 'lucide-react';
 import axios from 'axios';
+import { apiCuadroService } from '../Services/apiCuadroService';
 
 export default function CrearCuadroMulti() {
     const [searchParams] = useSearchParams();
@@ -20,45 +21,23 @@ export default function CrearCuadroMulti() {
     const [cuadroOriginal, setCuadroOriginal] = useState(null);
     const [loadingCuadro, setLoadingCuadro] = useState(false);
 
-    // Cargar datos del cuadro si estamos editando
+    // Cargar datos del cuadro para edición
     useEffect(() => {
         const loadCuadroData = async () => {
             if (!isEditMode || !cuadroId) return;
 
             try {
                 setLoadingCuadro(true);
-                console.log('Cargando datos del cuadro multiproceso:', cuadroId);
 
-                const response = await axios.get(`http://localhost:8080/cuadro-turnos/${cuadroId}`);
-                const cuadroData = response.data;
-                console.log('Datos del cuadro cargados:', cuadroData);
-
+                const cuadroData = await apiCuadroService.cuadros.getById(cuadroId);
                 setCuadroOriginal(cuadroData);
 
-                // Verificar que sea multiproceso
-                // if (cuadroData.categoria?.toLowerCase() !== 'multiproceso') {
-                //     console.warn('El cuadro no es multiproceso, redirigiendo...');
-                //     navigate(`/crearCuadro/editar/${cuadroId}`);
-                //     return;
-                // }
+                const procesosData = await apiCuadroService.cuadros.getProcesos(cuadroId);
+                const procesosIds = procesosData.map(p =>
+                    (p.idProceso || p.id || p.procesoId || p.idProcesoAtencion)?.toString()
+                ).filter(id => id);
 
-                // Cargar procesos del cuadro
-                try {
-                    const procesosResponse = await axios.get(`http://localhost:8080/cuadro-turnos/${cuadroId}/procesos`);
-                    console.log('Procesos cargados:', procesosResponse.data);
-
-                    const procesosIds = procesosResponse.data.map(p => {
-                        return (p.idProceso || p.id || p.procesoId || p.idProcesoAtencion)?.toString();
-                    }).filter(id => id); // Filtrar valores undefined/null
-
-                    console.log('IDs de procesos extraídos:', procesosIds);
-                    setProcesos(procesosIds);
-
-                } catch (procesosError) {
-                    console.error('Error al cargar procesos del cuadro:', procesosError);
-                    setError('Error al cargar los procesos del cuadro');
-                }
-
+                setProcesos(procesosIds);
             } catch (err) {
                 console.error('Error al cargar datos del cuadro:', err);
                 setError('Error al cargar datos del cuadro');
@@ -68,29 +47,18 @@ export default function CrearCuadroMulti() {
         };
 
         loadCuadroData();
-    }, [isEditMode, cuadroId, navigate]);
+    }, [isEditMode, cuadroId]);
 
-    // Cargar procesos desde URL si están disponibles
-    useEffect(() => {
-        if (procesosFromUrl && !isEditMode) {
-            try {
-                const procesosArray = JSON.parse(decodeURIComponent(procesosFromUrl));
-                setProcesos(procesosArray);
-            } catch (err) {
-                console.error('Error al parsear procesos desde URL:', err);
-            }
-        }
-    }, [procesosFromUrl, isEditMode]);
-
+    // Cargar procesos disponibles
     useEffect(() => {
         const fetchProcesos = async () => {
             try {
                 setLoading(true);
-                const response = await axios.get('http://localhost:8080/procesos');
-                setProcesosDisponibles(response.data);
+                const procesosData = await apiCuadroService.auxiliares.getProcesos();
+                setProcesosDisponibles(procesosData);
             } catch (err) {
-                setError(err.message);
                 console.error('Error al cargar procesos:', err);
+                setError('Error al cargar procesos disponibles');
             } finally {
                 setLoading(false);
             }

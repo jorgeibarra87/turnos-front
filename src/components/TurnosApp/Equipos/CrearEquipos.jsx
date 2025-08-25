@@ -1,70 +1,47 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
-import axios from 'axios';
-import { CheckIcon, CircleXIcon, Save, User, ArrowLeft, Edit, Plus, Trash2, UserPlus, X } from 'lucide-react';
+import { CheckIcon, CircleXIcon, Save, User, ArrowLeft, Edit, Plus, UserPlus, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { apiEquipoService } from '../Services/apiEquipoService';
+import { apiCuadroService } from '../Services/apiCuadroService';
 
 export default function CrearEquipo() {
     const navigate = useNavigate();
     const location = useLocation();
     const [searchParams] = useSearchParams();
 
-    // Función para detectar modo edición y extraer ID
+    // Detectar modo edición e id
     const detectEditMode = () => {
         const pathname = location.pathname;
-        console.log('Pathname actual:', pathname);
-
         const editMatch = pathname.match(/\/editar\/(\d+)/);
-
         if (editMatch) {
-            console.log('Modo edición detectado. ID:', editMatch[1]);
-            return {
-                isEditMode: true,
-                equipoId: editMatch[1]
-            };
+            return { isEditMode: true, equipoId: editMatch[1] };
         }
-
         const editFromQuery = searchParams.get('edit') === 'true';
         const idFromQuery = searchParams.get('id');
-
         if (editFromQuery && idFromQuery) {
-            console.log('Modo edición desde query params. ID:', idFromQuery);
-            return {
-                isEditMode: true,
-                equipoId: idFromQuery
-            };
+            return { isEditMode: true, equipoId: idFromQuery };
         }
-
-        console.log('Modo creación detectado');
-        return {
-            isEditMode: false,
-            equipoId: null
-        };
+        return { isEditMode: false, equipoId: null };
     };
 
     const { isEditMode, equipoId } = detectEditMode();
 
-    // Estados para la categoría (switch/select)
+    // Estados
     const [selectedCategory, setSelectedCategory] = useState("");
-
-    // Estados para las opciones del segundo select
     const [options, setOptions] = useState([]);
     const [selectedOption, setSelectedOption] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const [optionId, setOptionId] = useState("");
-
-    // Estados para mostrar el formulario de equipo
     const [showEquipoForm, setShowEquipoForm] = useState(false);
     const [equipoNombre, setEquipoNombre] = useState("");
     const [saving, setSaving] = useState(false);
     const [errorEquipo, setErrorEquipo] = useState(null);
-
-    // Estados específicos para edición
     const [loadingEquipoData, setLoadingEquipoData] = useState(false);
     const [equipoOriginal, setEquipoOriginal] = useState(null);
 
-    // ESTADOS PARA GESTIÓN DE PERSONAS
+    // Gestión de personas
     const [showPersonasManager, setShowPersonasManager] = useState(false);
     const [personasEquipo, setPersonasEquipo] = useState([]);
     const [showPerfilSelector, setShowPerfilSelector] = useState(false);
@@ -74,94 +51,113 @@ export default function CrearEquipo() {
     const [loadingPerfiles, setLoadingPerfiles] = useState(false);
     const [loadingUsuarios, setLoadingUsuarios] = useState(false);
 
-    // useEffect para cargar datos del equipo si estamos en modo edición
+    // Cargar datos para edición
     useEffect(() => {
         const loadEquipoForEdit = async () => {
-            if (!isEditMode || !equipoId) {
-                console.log('No es modo edición o no hay ID');
-                return;
-            }
-
-            console.log('Cargando equipo para editar. ID:', equipoId);
-
+            if (!isEditMode || !equipoId) return;
             try {
                 setLoadingEquipoData(true);
-                const response = await axios.get(`http://localhost:8080/equipo/${equipoId}`);
-                const equipoData = response.data;
-
-                console.log('Datos del equipo cargados:', equipoData);
+                setError("");
+                // API refact
+                const equipoData = await apiEquipoService.equipos.getById(equipoId);
                 setEquipoOriginal(equipoData);
-
                 setEquipoNombre(equipoData.nombre || "");
-
                 const nombreParts = equipoData.nombre?.split('_');
                 if (nombreParts && nombreParts.length >= 3 && nombreParts[0] === 'Equipo') {
                     setSelectedCategory(nombreParts[1]);
                 }
-
-                // CARGAR PERSONAS DEL EQUIPO EN MODO EDICIÓN
+                // Personas asociadas
                 await loadPersonasEquipo(equipoId);
-
             } catch (err) {
-                console.error('Error al cargar equipo para editar:', err);
                 setError('Error al cargar los datos del equipo');
             } finally {
                 setLoadingEquipoData(false);
             }
         };
-
         loadEquipoForEdit();
     }, [isEditMode, equipoId]);
 
-    // FUNCIÓN PARA CARGAR PERSONAS DEL EQUIPO
+    // API: Personas cargadas de equipo
     const loadPersonasEquipo = async (idEquipo) => {
         try {
-            const response = await axios.get(`http://localhost:8080/usuario/equipo/${idEquipo}/usuarios`);
-            setPersonasEquipo(response.data || []);
+            const personas = await apiEquipoService.equipos.getUsuariosEquipo(idEquipo);
+            setPersonasEquipo(personas || []);
         } catch (err) {
             console.error('Error al cargar personas del equipo:', err);
         }
     };
+    /* const loadPersonasEquipo = async (idEquipo) => {
+        try {
+            const personas = await apiEquipoService.equipos.getMiembros(idEquipo);
+            setPersonasEquipo(personas || []);
+        } catch (err) {
+            // manejar error si se requiere
+        }
+    }; */
 
-    // FUNCIÓN PARA CARGAR PERFILES (TÍTULOS)
+    // Perfiles (se puede migrar a service)
     const loadPerfiles = async () => {
         try {
             setLoadingPerfiles(true);
-            const response = await axios.get('http://localhost:8080/titulosFormacionAcademica');
-            setPerfiles(response.data || []);
+            const perfilesData = await apiEquipoService.auxiliares.getPerfiles();
+            setPerfiles(perfilesData);
         } catch (err) {
-            console.error('Error al cargar perfiles:', err);
             setError('Error al cargar los perfiles disponibles');
         } finally {
             setLoadingPerfiles(false);
         }
     };
+    /* const loadPerfiles = async () => {
+        try {
+            setLoadingPerfiles(true);
+            const response = await axios.get('http://localhost:8080/titulosFormacionAcademica');
+            setPerfiles(response.data || []);
+        } catch (err) {
+            setError('Error al cargar los perfiles disponibles');
+        } finally {
+            setLoadingPerfiles(false);
+        }
+    }; */
 
-    // FUNCIÓN PARA CARGAR USUARIOS DISPONIBLES POR PERFIL
+    // Usuarios por perfil
     const loadUsuariosPorPerfil = async (idTitulo) => {
         try {
             setLoadingUsuarios(true);
-            const response = await axios.get(`http://localhost:8080/usuario/titulo/${idTitulo}/usuarios`);
+            const usuariosData = await apiEquipoService.auxiliares.getUsuariosPorPerfil(idTitulo);
+
             // Filtrar usuarios que ya están en el equipo
+            const usuariosYaEnEquipo = personasEquipo.map(p => p.idPersona);
+            const usuariosFiltered = usuariosData.filter(
+                user => !usuariosYaEnEquipo.includes(user.idPersona)
+            );
+            setUsuariosDisponibles(usuariosFiltered);
+        } catch (err) {
+            setError('Error al cargar usuarios disponibles');
+        } finally {
+            setLoadingUsuarios(false);
+        }
+    };
+    /* const loadUsuariosPorPerfil = async (idTitulo) => {
+        try {
+            setLoadingUsuarios(true);
+            const response = await axios.get(`http://localhost:8080/usuario/titulo/${idTitulo}/usuarios`);
+            // Filtrar ya en el equipo
             const usuariosYaEnEquipo = personasEquipo.map(p => p.idPersona);
             const usuariosFiltered = (response.data || []).filter(
                 user => !usuariosYaEnEquipo.includes(user.idPersona)
             );
             setUsuariosDisponibles(usuariosFiltered);
         } catch (err) {
-            console.error('Error al cargar usuarios por perfil:', err);
             setError('Error al cargar usuarios disponibles');
         } finally {
             setLoadingUsuarios(false);
         }
-    };
-    //console.log('usuarios disponibles', usuariosDisponibles);
+    }; */
 
-    // Función para manejar el cambio de categoría
+    // Cambio categoría (cargar opciones)
     const handleCategoryChange = (e) => {
         const newCategory = e.target.value;
         setSelectedCategory(newCategory);
-
         if (!loadingEquipoData) {
             setSelectedOption("");
             setOptions([]);
@@ -169,7 +165,8 @@ export default function CrearEquipo() {
         }
     };
 
-    // useEffect para cargar datos cuando cambia la categoría
+    // Opciones por categoría (usando apiCuadroService.auxiliares)
+    // CAMBIO: Opciones por categoría usando apiEquipoService
     useEffect(() => {
         const fetchOptions = async () => {
             if (!selectedCategory) {
@@ -181,64 +178,94 @@ export default function CrearEquipo() {
                 setLoading(true);
                 setError("");
 
-                let endpoint = '';
-                let idField = '';
+                const optionsData = await apiEquipoService.auxiliares.getByCategoria(selectedCategory);
 
-                switch (selectedCategory) {
-                    case 'Macroproceso':
-                        endpoint = 'http://localhost:8080/macroprocesos';
-                        idField = 'idMacroproceso';
-                        break;
-                    case 'Proceso':
-                        endpoint = 'http://localhost:8080/procesos';
-                        idField = 'idProceso';
-                        break;
-                    case 'Servicio':
-                        endpoint = 'http://localhost:8080/servicio';
-                        idField = 'idServicio';
-                        break;
-                    case 'Seccion':
-                        endpoint = 'http://localhost:8080/seccionesServicio';
-                        idField = 'idSeccionServicio';
-                        break;
-                    case 'Subseccion':
-                        endpoint = 'http://localhost:8080/subseccionesServicio';
-                        idField = 'idSubseccionServicio';
-                        break;
-                    default:
-                        setLoading(false);
-                        return;
-                }
+                const idFields = {
+                    'Macroproceso': 'idMacroproceso',
+                    'Proceso': 'idProceso',
+                    'Servicio': 'idServicio',
+                    'Seccion': 'idSeccionServicio',
+                    'Subseccion': 'idSubseccionServicio'
+                };
 
-                setOptionId(idField);
-                const response = await axios.get(endpoint);
-                setOptions(response.data);
+                setOptionId(idFields[selectedCategory]);
+                setOptions(optionsData);
 
-                if (isEditMode && equipoOriginal && response.data.length > 0) {
+                if (isEditMode && equipoOriginal && optionsData.length > 0) {
                     const nombreParts = equipoOriginal.nombre?.split('_');
                     if (nombreParts && nombreParts.length >= 3) {
                         const optionName = nombreParts[2];
-                        const foundOption = response.data.find(option =>
+                        const foundOption = optionsData.find(option =>
                             option.nombre === optionName
                         );
-                        if (foundOption) {
-                            setSelectedOption(foundOption);
-                        }
+                        if (foundOption) setSelectedOption(foundOption);
                     }
                 }
-
             } catch (err) {
-                setError(err.message);
-                console.error('Error al cargar opciones:', err);
+                setError('Error al cargar opciones: ' + err.message);
             } finally {
                 setLoading(false);
             }
         };
-
         fetchOptions();
     }, [selectedCategory, equipoOriginal]);
+    /* useEffect(() => {
+        const fetchOptions = async () => {
+            if (!selectedCategory) {
+                setOptions([]);
+                return;
+            }
 
-    // Función para manejar el cambio en el segundo select
+            try {
+                setLoading(true);
+                setError("");
+                let optionsData = [];
+                let idField = '';
+                switch (selectedCategory) {
+                    case 'Macroproceso':
+                        optionsData = await apiCuadroService.auxiliares.getMacroprocesos();
+                        idField = 'idMacroproceso';
+                        break;
+                    case 'Proceso':
+                        optionsData = await apiCuadroService.auxiliares.getProcesos();
+                        idField = 'idProceso';
+                        break;
+                    case 'Servicio':
+                        optionsData = await apiCuadroService.auxiliares.getServicios();
+                        idField = 'idServicio';
+                        break;
+                    case 'Seccion':
+                        optionsData = await apiCuadroService.auxiliares.getSeccionesServicio();
+                        idField = 'idSeccionServicio';
+                        break;
+                    case 'Subseccion':
+                        optionsData = await apiCuadroService.auxiliares.getSubseccionesServicio();
+                        idField = 'idSubseccionServicio';
+                        break;
+                }
+                setOptionId(idField);
+                setOptions(optionsData);
+
+                if (isEditMode && equipoOriginal && optionsData.length > 0) {
+                    const nombreParts = equipoOriginal.nombre?.split('_');
+                    if (nombreParts && nombreParts.length >= 3) {
+                        const optionName = nombreParts[2];
+                        const foundOption = optionsData.find(option =>
+                            option.nombre === optionName
+                        );
+                        if (foundOption) setSelectedOption(foundOption);
+                    }
+                }
+            } catch (err) {
+                setError('Error al cargar opciones');
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchOptions();
+    }, [selectedCategory, equipoOriginal]); */
+
+    // Cambios en segundo select
     const handleOptionChange = (e) => {
         const selectedId = e.target.value;
         const selectedObj = options.find(option =>
@@ -247,14 +274,14 @@ export default function CrearEquipo() {
         setSelectedOption(selectedObj || "");
     };
 
-    // Función para generar el nombre del equipo automáticamente
+    // Generar nombre
     const generarNombreEquipo = () => {
         if (!selectedCategory || !selectedOption) return '';
         const timestamp = Date.now().toString().slice(-2);
         return `Equipo_${selectedCategory}_${selectedOption.nombre}_${timestamp}`;
     };
 
-    // FUNCIÓN PARA MOSTRAR EL GESTOR DE PERSONAS
+    // Mostrar gestor personas
     const handleMostrarGestorPersonas = () => {
         setShowPersonasManager(true);
         if (!isEditMode) {
@@ -264,14 +291,14 @@ export default function CrearEquipo() {
         loadPerfiles();
     };
 
-    // FUNCIÓN PARA MOSTRAR SELECTOR DE PERFIL
+    // Mostrar selector perfil
     const handleMostrarSelectorPerfil = () => {
         setShowPerfilSelector(true);
         setSelectedPerfil("");
         setUsuariosDisponibles([]);
     };
 
-    // FUNCIÓN PARA MANEJAR CAMBIO DE PERFIL
+    // Cambiar perfil y usuarios por perfil
     const handlePerfilChange = (e) => {
         const perfilId = e.target.value;
         setSelectedPerfil(perfilId);
@@ -282,10 +309,9 @@ export default function CrearEquipo() {
         }
     };
 
-    // FUNCIÓN PARA AGREGAR PERSONA AL EQUIPO
+    // Agregar persona equipo
     const handleAgregarPersonaAlEquipo = (usuario) => {
         const perfilSeleccionado = perfiles.find(p => p.idTitulo.toString() === selectedPerfil);
-
         const nuevaPersona = {
             idPersona: usuario.idPersona,
             nombreCompleto: usuario.nombreCompleto,
@@ -293,32 +319,29 @@ export default function CrearEquipo() {
             perfil: perfilSeleccionado?.titulo || 'Sin título',
             idTitulo: selectedPerfil
         };
-
         setPersonasEquipo(prev => [...prev, nuevaPersona]);
-
-        // Remover de usuarios disponibles
         setUsuariosDisponibles(prev =>
             prev.filter(u => u.idPersona !== usuario.idPersona)
         );
     };
 
-    // FUNCIÓN PARA REMOVER PERSONA DEL EQUIPO
+    // Remover persona
     const handleRemoverPersonaDelEquipo = (idPersona) => {
         setPersonasEquipo(prev => prev.filter(p => p.idPersona !== idPersona));
     };
 
-    // FUNCIÓN PARA CERRAR SELECTOR DE PERFIL
+    // Cerrar selector perfil
     const handleCerrarSelectorPerfil = () => {
         setShowPerfilSelector(false);
         setSelectedPerfil("");
         setUsuariosDisponibles([]);
     };
 
-    // Función para guardar el equipo (crear o actualizar)
+    // Guardar equipo usando apiEquipoService
+    // CAMBIO: Guardar equipo usando apiEquipoService completamente
     const handleGuardarEquipo = async () => {
         setSaving(true);
         setErrorEquipo(null);
-
         try {
             const equipoData = {
                 nombre: equipoNombre.trim(),
@@ -330,62 +353,75 @@ export default function CrearEquipo() {
                 throw new Error('El nombre del equipo es requerido');
             }
 
-            let response;
             let equipoIdFinal = equipoId;
 
             if (isEditMode) {
-                // Actualizar equipo existente
-                response = await axios.put(`http://localhost:8080/equipo/${equipoId}/actualizar-nombre`, equipoData);
+                await apiEquipoService.equipos.updateNombre(equipoId, equipoData);
             } else {
-                // Crear nuevo equipo
-                response = await axios.post('http://localhost:8080/equipo/equipoNombre', equipoData);
-                equipoIdFinal = response.data.idEquipo;
+                const created = await apiEquipoService.equipos.createCompleto(equipoData);
+                equipoIdFinal = created.idEquipo;
             }
-            const personasIds = personasEquipo.map(p => p.idPersona);
-            console.log('personas id: ', personasIds);
-            // ACTUALIZAR PERSONAS DEL EQUIPO
+
+            // CAMBIO: Usar apiEquipoService para usuarios
             if (personasEquipo.length > 0) {
                 const personasIds = personasEquipo.map(p => p.idPersona);
-                await axios.put(`http://localhost:8080/usuario/equipo/${equipoIdFinal}`, personasIds);
+                await apiEquipoService.equipos.updateUsuariosEquipo(equipoIdFinal, personasIds);
             }
 
             alert(`Equipo ${isEditMode ? 'actualizado' : 'creado'} exitosamente`);
             navigate('/equipos');
-
         } catch (err) {
-            setErrorEquipo(err.response?.data?.message || err.message || `Error al ${isEditMode ? 'actualizar' : 'crear'} el equipo`);
-            console.error('Error:', err);
+            setErrorEquipo(
+                err.response?.data?.message ||
+                err.message ||
+                `Error al ${isEditMode ? 'actualizar' : 'crear'} el equipo`
+            );
         } finally {
             setSaving(false);
         }
     };
-
-    // Función para volver a las selecciones
-    const handleVolver = () => {
-        if (showPerfilSelector) {
-            handleCerrarSelectorPerfil();
-        } else if (showPersonasManager) {
-            setShowPersonasManager(false);
-        } else {
-            setShowEquipoForm(false);
+    /* const handleGuardarEquipo = async () => {
+        setSaving(true);
+        setErrorEquipo(null);
+        try {
+            const equipoData = {
+                nombre: equipoNombre.trim(),
+                categoria: selectedCategory,
+                subcategoria: selectedOption?.nombre || null,
+            };
+            if (!equipoData.nombre) throw new Error('El nombre del equipo es requerido');
+            let equipoIdFinal = equipoId;
+            if (isEditMode) {
+                await apiEquipoService.equipos.update(equipoId, equipoData);
+            } else {
+                const created = await apiEquipoService.equipos.create(equipoData);
+                equipoIdFinal = created.idEquipo;
+            }
+            // Asignar personas al equipo (puede migrar a servicio)
+            if (personasEquipo.length > 0) {
+                const personasIds = personasEquipo.map(p => p.idPersona);
+                await axios.put(
+                    `${import.meta.env.REACT_APP_API_BASE_URL || 'http://localhost:8080'}/usuario/equipo/${equipoIdFinal}`,
+                    personasIds
+                );
+            }
+            alert(`Equipo ${isEditMode ? 'actualizado' : 'creado'} exitosamente`);
+            navigate('/equipos');
+        } catch (err) {
+            setErrorEquipo(err.response?.data?.message || err.message || `Error al ${isEditMode ? 'actualizar' : 'crear'} el equipo`);
+        } finally {
+            setSaving(false);
         }
+    }; */
+
+    // Volver
+    const handleVolver = () => {
+        if (showPerfilSelector) handleCerrarSelectorPerfil();
+        else if (showPersonasManager) setShowPersonasManager(false);
+        else setShowEquipoForm(false);
         setEquipoNombre("");
         setErrorEquipo(null);
     };
-
-    // Mostrar loading si estamos cargando datos para editar
-    if (isEditMode && loadingEquipoData) {
-        return (
-            <div className='absolute inset-0 bg-opacity-30 backdrop-blur-sm flex justify-center items-center'>
-                <div className='bg-white p-8 rounded-lg flex flex-col justify-center items-center gap-5 max-w-lg w-full mx-4'>
-                    <div className='text-2xl font-bold'>Cargando datos del equipo...</div>
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-                </div>
-            </div>
-        );
-    }
-
-    const idopcion = selectedOption ? selectedOption[optionId] : '';
 
     return (
         <div className='absolute inset-0 bg-opacity-30 backdrop-blur-sm flex justify-center items-center'>

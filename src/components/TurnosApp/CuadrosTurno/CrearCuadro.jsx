@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
-import axios from 'axios';
 import { CheckIcon, CircleXIcon, Save, User, ArrowLeft, Edit } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { apiCuadroService } from '../Services/apiCuadroService';
 
 export default function CrearCuadro() {
     const navigate = useNavigate();
@@ -12,32 +12,30 @@ export default function CrearCuadro() {
     // Función para detectar modo edición y extraer ID
     const detectEditMode = () => {
         const pathname = location.pathname;
-        console.log('Pathname actual:', pathname); // Debug
+        console.log('Pathname actual:', pathname);
 
-        // Buscar el patrón /editar/ID en cualquier parte de la URL
         const editMatch = pathname.match(/\/editar\/(\d+)/);
 
         if (editMatch) {
-            console.log('Modo edición detectado. ID:', editMatch[1]); // Debug
+            console.log('Modo edición detectado. ID:', editMatch[1]);
             return {
                 isEditMode: true,
                 cuadroId: editMatch[1]
             };
         }
 
-        // buscar parámetro de query
         const editFromQuery = searchParams.get('edit') === 'true';
         const idFromQuery = searchParams.get('id');
 
         if (editFromQuery && idFromQuery) {
-            console.log('Modo edición desde query params. ID:', idFromQuery); // Debug
+            console.log('Modo edición desde query params. ID:', idFromQuery);
             return {
                 isEditMode: true,
                 cuadroId: idFromQuery
             };
         }
 
-        console.log('Modo creación detectado'); // Debug
+        console.log('Modo creación detectado');
         return {
             isEditMode: false,
             cuadroId: null
@@ -46,10 +44,6 @@ export default function CrearCuadro() {
 
     const { isEditMode, cuadroId } = detectEditMode();
     const cuadroIdToEdit = cuadroId;
-
-    const isMultiprocesoEdit = () => {
-        return isEditMode && cuadroOriginal?.categoria?.toLowerCase() === 'multiproceso';
-    };
 
     // Estados para la categoría (primer select)
     const [selectedCategory, setSelectedCategory] = useState("");
@@ -77,7 +71,6 @@ export default function CrearCuadro() {
     // Estados específicos para edición
     const [loadingCuadroData, setLoadingCuadroData] = useState(false);
     const [cuadroOriginal, setCuadroOriginal] = useState(null);
-    const [procesosMultiples, setProcesosMultiples] = useState([]);
 
     // useEffect para cargar datos del cuadro si estamos en modo edición
     useEffect(() => {
@@ -91,8 +84,9 @@ export default function CrearCuadro() {
 
             try {
                 setLoadingCuadroData(true);
-                const response = await axios.get(`http://localhost:8080/cuadro-turnos/${cuadroIdToEdit}`);
-                const cuadroData = response.data;
+
+                // Usar apiService
+                const cuadroData = await apiCuadroService.cuadros.getById(cuadroIdToEdit);
 
                 console.log('Datos del cuadro cargados:', cuadroData);
                 setCuadroOriginal(cuadroData);
@@ -101,26 +95,22 @@ export default function CrearCuadro() {
                 if (cuadroData.categoria?.toLowerCase() === 'multiproceso') {
                     console.log('Detectado cuadro multiproceso, redirigiendo...');
 
-                    // delay para asegurar que el estado se actualice
                     setTimeout(async () => {
                         try {
-                            // Obtener los procesos del cuadro multiproceso
-                            const procesosResponse = await axios.get(`http://localhost:8080/cuadro-turnos/${cuadroIdToEdit}/procesos`);
-                            const procesosIds = procesosResponse.data.map(p => p.idProceso || p.id);
+                            //Usar apiService para obtener procesos
+                            const procesosData = await apiCuadroService.cuadros.getProcesos(cuadroIdToEdit);
+                            const procesosIds = procesosData.map(p => p.idProceso || p.id);
 
                             console.log('Procesos encontrados:', procesosIds);
-
-                            // Redirigir con los procesos
                             navigate(`/crearCuadroMulti?edit=true&id=${cuadroIdToEdit}&procesos=${encodeURIComponent(JSON.stringify(procesosIds))}`);
 
                         } catch (procesosError) {
                             console.error('Error al cargar procesos del cuadro multiproceso:', procesosError);
-                            // Si no se pueden cargar los procesos, redirigir con la info básica
                             navigate(`/crearCuadroMulti?edit=true&id=${cuadroIdToEdit}`);
                         }
                     }, 100);
 
-                    return; // Salir de la función
+                    return;
                 }
 
                 // Resto de la lógica para cuadros
@@ -159,13 +149,11 @@ export default function CrearCuadro() {
         const newCategory = e.target.value;
         setSelectedCategory(newCategory);
 
-        // Si se selecciona Multiproceso, redirigir a la nueva ruta
         if (newCategory === 'Multiproceso') {
             navigate('/crearCuadroMulti');
             return;
         }
 
-        // Solo resetear si no estamos cargando datos iniciales en modo edición
         if (!loadingCuadroData) {
             setSelectedOption("");
             setOptions([]);
@@ -186,42 +174,23 @@ export default function CrearCuadro() {
                 setLoading(true);
                 setError("");
 
-                // Determinar qué endpoint llamar según la categoría
-                let endpoint = '';
-                let idField = '';
+                // Usar apiService
+                const data = await apiCuadroService.auxiliares.getDataByCategoria(selectedCategory);
+                setOptions(data);
 
-                switch (selectedCategory) {
-                    case 'Macroproceso':
-                        endpoint = 'http://localhost:8080/macroprocesos';
-                        idField = 'idMacroproceso';
-                        break;
-                    case 'Proceso':
-                        endpoint = 'http://localhost:8080/procesos';
-                        idField = 'idProceso';
-                        break;
-                    case 'Servicio':
-                        endpoint = 'http://localhost:8080/servicio';
-                        idField = 'idServicio';
-                        break;
-                    case 'Seccion':
-                        endpoint = 'http://localhost:8080/seccionesServicio';
-                        idField = 'idSeccionServicio';
-                        break;
-                    case 'Subseccion':
-                        endpoint = 'http://localhost:8080/subseccionesServicio';
-                        idField = 'idSubseccionServicio';
-                        break;
-                    default:
-                        setLoading(false);
-                        return;
-                }
+                // Determinar qué campo ID usar según la categoría
+                const idFields = {
+                    'Macroproceso': 'idMacroproceso',
+                    'Proceso': 'idProceso',
+                    'Servicio': 'idServicio',
+                    'Seccion': 'idSeccionServicio',
+                    'Subseccion': 'idSubseccionServicio'
+                };
 
-                setOptionId(idField);
-                const response = await axios.get(endpoint);
-                setOptions(response.data);
+                setOptionId(idFields[selectedCategory]);
 
                 // Si estamos en modo edición y tenemos datos, preseleccionar la opción
-                if (isEditMode && cuadroOriginal && response.data.length > 0) {
+                if (isEditMode && cuadroOriginal && data.length > 0) {
                     const categoryMapping = {
                         'Macroproceso': cuadroOriginal.idMacroproceso,
                         'Proceso': cuadroOriginal.idProceso,
@@ -232,8 +201,8 @@ export default function CrearCuadro() {
 
                     const valueToFind = categoryMapping[selectedCategory];
                     if (valueToFind) {
-                        const foundOption = response.data.find(option =>
-                            option[idField] === valueToFind
+                        const foundOption = data.find(option =>
+                            option[idFields[selectedCategory]] === valueToFind
                         );
                         if (foundOption) {
                             setSelectedOption(foundOption);
@@ -242,7 +211,7 @@ export default function CrearCuadro() {
                 }
 
             } catch (err) {
-                setError(err.message);
+                setError('Error al cargar opciones: ' + err.message);
                 console.error('Error al cargar opciones:', err);
             } finally {
                 setLoading(false);
@@ -250,9 +219,9 @@ export default function CrearCuadro() {
         };
 
         fetchOptions();
-    }, [selectedCategory, cuadroOriginal]); // Agregar cuadroOriginal 
+    }, [selectedCategory, cuadroOriginal]);
 
-    // useEffect para cargar equipos cuando se selecciona una categoría
+    // useEffect para cargar equipos usando apiService
     useEffect(() => {
         const fetchEquipos = async () => {
             if (!selectedCategory || selectedCategory === 'Multiproceso') {
@@ -263,30 +232,22 @@ export default function CrearCuadro() {
             try {
                 setLoadingEquipos(true);
                 setErrorEquipos("");
-                const response = await axios.get('http://localhost:8080/equipo');
 
-                if (response.data && Array.isArray(response.data)) {
-                    const equiposFormateados = response.data.map(equipo => ({
-                        idEquipo: equipo.idEquipo || equipo.id || "",
-                        nombre: equipo.nombre || equipo.descripcion || "Sin nombre"
-                    }));
-                    setEquipos(equiposFormateados);
+                // Usar apiService
+                const equiposData = await apiCuadroService.auxiliares.getEquipos();
+                setEquipos(equiposData);
 
-                    // Si estamos en modo edición, preseleccionar el equipo
-                    if (isEditMode && cuadroOriginal && equiposFormateados.length > 0) {
-                        const equipoEncontrado = equiposFormateados.find(equipo =>
-                            equipo.idEquipo.toString() === cuadroOriginal.idEquipo.toString()
-                        );
-                        if (equipoEncontrado) {
-                            setSelectedEquipo({
-                                id: equipoEncontrado.idEquipo,
-                                nombre: equipoEncontrado.nombre
-                            });
-                        }
+                // Si estamos en modo edición, preseleccionar el equipo
+                if (isEditMode && cuadroOriginal && equiposData.length > 0) {
+                    const equipoEncontrado = equiposData.find(equipo =>
+                        equipo.idEquipo.toString() === cuadroOriginal.idEquipo.toString()
+                    );
+                    if (equipoEncontrado) {
+                        setSelectedEquipo({
+                            id: equipoEncontrado.idEquipo,
+                            nombre: equipoEncontrado.nombre
+                        });
                     }
-                } else {
-                    setEquipos([]);
-                    console.warn('La respuesta no contiene un array de equipos');
                 }
 
             } catch (err) {
@@ -329,7 +290,6 @@ export default function CrearCuadro() {
 
     // Función para generar el nombre del cuadro
     const generaNombreCuadro = () => {
-        // Si estamos en modo edición y tenemos un nombre original, mostrarlo primero
         if (isEditMode && cuadroOriginal?.nombre) {
             return (
                 <div>
@@ -347,21 +307,20 @@ export default function CrearCuadro() {
             );
         }
 
-        // Para modo creación
         if (!selectedCategory || !selectedOption || !selectedEquipo.nombre) return '';
-
         return `CT_${selectedCategory}_${selectedOption.nombre}_${selectedEquipo.nombre}`;
     };
 
-    // Función para mostrar el cuadro de turno
+    // Función para mostrar el cuadro usando apiService
     const handleMostrarCuadro = async () => {
         setShowCuadro(true);
         setLoadingMiembros(true);
         setErrorCuadro(null);
 
         try {
-            const response = await axios.get(`http://localhost:8080/equipo/${selectedEquipo.id}/miembros-perfil`);
-            setMiembros(response.data);
+            // Usar apiService
+            const miembrosData = await apiCuadroService.auxiliares.getMiembrosEquipo(selectedEquipo.id);
+            setMiembros(miembrosData);
         } catch (error) {
             console.error("Error al obtener miembros del equipo:", error);
             setErrorCuadro("Error al cargar los miembros del equipo");
@@ -371,11 +330,12 @@ export default function CrearCuadro() {
         }
     };
 
-    // Función para guardar el cuadro (crear o actualizar)
+    // Función para guardar el cuadro usando apiService
     const handleGuardarCuadro = async () => {
         setSaving(true);
         setErrorCuadro(null);
         const fechaActual = new Date();
+
         try {
             const cuadroData = {
                 categoria: selectedCategory.toLowerCase(),
@@ -398,23 +358,29 @@ export default function CrearCuadro() {
                 cuadroData.idSubseccionServicio = selectedOption[optionId];
             }
 
-            let response;
+            // Usar apiService en lugar de axios directo
             if (isEditMode) {
-                // Actualizar cuadro existente
-                response = await axios.put(`http://localhost:8080/cuadro-turnos/${cuadroIdToEdit}/editar-total`, cuadroData);
+                await apiCuadroService.cuadros.updateCompleto(cuadroIdToEdit, cuadroData);
                 alert('Cuadro de turno actualizado exitosamente');
             } else {
-                // Crear nuevo cuadro
-                response = await axios.post('http://localhost:8080/cuadro-turnos/crear-total', cuadroData);
+                await apiCuadroService.cuadros.createCompleto(cuadroData);
                 alert('Cuadro de turno guardado exitosamente');
             }
 
-            console.log('Cuadro guardado/actualizado:', response.data);
+            console.log('Cuadro guardado/actualizado exitosamente');
             navigate('/');
 
         } catch (err) {
-            setErrorCuadro(`Error al ${isEditMode ? 'actualizar' : 'guardar'} el cuadro de turno`);
-            console.error('Error:', err);
+            console.error('Error al guardar/actualizar cuadro:', err);
+
+            // Manejo de errores
+            if (err.response?.status === 409) {
+                setErrorCuadro('Ya existe un cuadro con esta configuración');
+            } else if (err.response?.status === 400) {
+                setErrorCuadro(err.response?.data?.message || 'Datos inválidos');
+            } else {
+                setErrorCuadro(`Error al ${isEditMode ? 'actualizar' : 'guardar'} el cuadro de turno`);
+            }
         } finally {
             setSaving(false);
         }
@@ -471,7 +437,7 @@ export default function CrearCuadro() {
                                 <Edit size={16} className="text-blue-600" />
                                 <span className='font-semibold text-blue-800'>Modo Edición Cuadro de Turno</span>
                             </div>
-                            <div className='text-xs  text-gray-700'>
+                            <div className='text-xs text-gray-700'>
                                 <div><span className='text-xs'>ID:</span> {cuadroIdToEdit}</div>
                                 <div>
                                     <span className='text-xs'>Nombre:</span>
@@ -507,7 +473,7 @@ export default function CrearCuadro() {
                         )}
                     </div>
 
-                    {/* Segundo select - Opciones dinámicas (no mostrar si es Multiproceso) */}
+                    {/* Segundo select - Opciones dinámicas */}
                     {selectedCategory && selectedCategory !== 'Multiproceso' && (
                         <div className="w-full">
                             <label htmlFor="option-select" className="block text-sm font-medium text-gray-700 mb-2">
@@ -546,7 +512,7 @@ export default function CrearCuadro() {
                         </div>
                     )}
 
-                    {/* Tercer select - Equipos (no mostrar si es Multiproceso) */}
+                    {/* Tercer select - Equipos */}
                     {selectedCategory && selectedCategory !== 'Multiproceso' && (
                         <div className="w-full">
                             <label htmlFor="equipo-select" className="block text-sm font-medium text-gray-700 mb-2">
@@ -585,7 +551,7 @@ export default function CrearCuadro() {
                         </div>
                     )}
 
-                    {/* Botones de acción (no mostrar si es Multiproceso ya que redirige automáticamente) */}
+                    {/* Botones de acción */}
                     {selectedCategory !== 'Multiproceso' && (
                         <div className='flex justify-center items-center gap-4 mt-4'>
                             <button

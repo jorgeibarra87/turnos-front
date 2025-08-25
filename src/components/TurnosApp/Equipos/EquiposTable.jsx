@@ -1,8 +1,10 @@
 import React from 'react';
 import { Eye, Edit, Trash2, CopyPlusIcon, CopyPlus, UsersIcon, BoxesIcon, Users, Settings, ChevronLeft, ChevronRight } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
+import { apiEquipoService } from '../Services/apiEquipoService';
+
 
 export default function EquiposTable() {
     const [equipos, setEquipos] = useState([]);
@@ -11,62 +13,50 @@ export default function EquiposTable() {
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(10);
 
-    useEffect(() => {
-        loadEquipos();
-    }, []);
-
-    const loadEquipos = async () => {
+    // Cargar equipos usando apiService
+    const loadEquipos = useCallback(async () => {
         try {
             setLoading(true);
             setError(null);
-            const result = await axios.get("http://localhost:8080/equipo");
-            console.log('Equipos cargados:', result.data);
 
-            // Si la respuesta es un array
-            if (Array.isArray(result.data)) {
-                const equiposAbiertos = result.data.filter(equipo => equipo.estado === true);
-                setEquipos(equiposAbiertos);
-                // Resetear página
-                const totalPages = Math.ceil(equiposAbiertos.length / itemsPerPage);
-                console.log("totalpages", totalPages);
-                if (currentPage > totalPages && totalPages > 0) {
-                    setCurrentPage(totalPages);
-                }
-            } else {
-                setEquipos(result.data.equipos || []);
+            // Usar apiEquipoService
+            const equiposData = await apiEquipoService.equipos.getEquiposActivos();
+            setEquipos(equiposData);
+
+            // Resetear página si es necesario
+            const totalPages = Math.ceil(equiposData.length / itemsPerPage);
+            if (currentPage > totalPages && totalPages > 0) {
+                setCurrentPage(totalPages);
             }
         } catch (err) {
             console.error('Error al cargar equipos:', err);
-            setError('Error al cargar los equipos');
+            setError('Error al cargar los equipos. Intenta nuevamente.');
             setEquipos([]);
         } finally {
             setLoading(false);
         }
-    };
+    }, [currentPage, itemsPerPage]);
 
-    // Función para manejar la eliminación
-    const handleDelete = async (id, nombre) => {
+    // Manejar eliminación usando apiService
+    const handleDelete = useCallback(async (id, nombre) => {
         if (window.confirm(`¿Estás seguro de que quieres eliminar el equipo "${nombre}"?`)) {
             try {
-                // verificar si el equipo tiene cuadros de turno asociados
-                const checkResponse = await axios.get(`http://localhost:8080/equipo/${id}/cuadros`);
+                // Usar apiEquipoService para verificar dependencias
+                const deleteCheck = await apiEquipoService.equipos.canDelete(id);
 
-                if (checkResponse.data && checkResponse.data.length > 0) {
-                    alert(`No se puede eliminar el equipo "${nombre}" porque tiene ${checkResponse.data.length} cuadro(s) de turno asociado(s). Primero debe cerrar o eliminar los cuadros de turno.`);
+                if (!deleteCheck.canDelete) {
+                    alert(`No se puede eliminar el equipo "${nombre}" porque tiene ${deleteCheck.cuadrosCount} cuadro(s) de turno asociado(s). Primero debe cerrar o eliminar los cuadros de turno.`);
                     return;
                 }
 
-                // Si no tiene cuadros asociados, proceder con la eliminación
-                const response = await axios.delete(`http://localhost:8080/equipo/${id}`);
-
-                // Recargar la lista después de la eliminación
-                loadEquipos();
+                // Usar apiEquipoService para eliminar
+                await apiEquipoService.equipos.delete(id);
+                await loadEquipos(); // Recargar lista
                 alert('Equipo eliminado exitosamente');
-                console.log('Respuesta:', response.data);
-            } catch (error) {
-                console.error('Error al eliminar el equipo:', error.response?.data || error.message);
 
-                // Manejar diferentes tipos de errores
+            } catch (error) {
+                console.error('Error al eliminar el equipo:', error);
+
                 if (error.response?.status === 409) {
                     alert('No se puede eliminar el equipo porque tiene cuadros de turno asociados');
                 } else if (error.response?.status === 404) {
@@ -76,10 +66,26 @@ export default function EquiposTable() {
                 }
             }
         }
-    };
+    }, [loadEquipos]);
+
+    useEffect(() => {
+        loadEquipos();
+    }, [loadEquipos]);
+
 
     // Función para obtener el número de miembros
+    // Función para obtener el número de miembros
     const getMiembrosCount = async (equipoId) => {
+        try {
+            const miembros = await apiEquipoService.equipos.getMiembros(equipoId);
+            return miembros.length || 0;
+        } catch (error) {
+            console.warn(`No se pudo obtener el número de miembros para el equipo ${equipoId}`);
+            return 0;
+        }
+    };
+
+    /* const getMiembrosCount = async (equipoId) => {
         try {
             const response = await axios.get(`http://localhost:8080/equipo/${equipoId}/miembros`);
             return response.data.length || 0;
@@ -87,7 +93,7 @@ export default function EquiposTable() {
             console.warn(`No se pudo obtener el número de miembros para el equipo ${equipoId}`);
             return 0;
         }
-    };
+    }; */
 
     // Función para extraer la categoría del nombre del equipo
     const extractCategory = (nombre) => {
@@ -101,7 +107,7 @@ export default function EquiposTable() {
     };
 
     // Función para extraer el área/proceso
-    const extractArea = (nombre) => {
+    /* const extractArea = (nombre) => {
         if (!nombre) return 'N/A';
 
         const parts = nombre.split('_');
@@ -109,7 +115,7 @@ export default function EquiposTable() {
             return parts[2]; // Retorna el área/proceso (UCI1, etc.)
         }
         return nombre; // Si no sigue
-    };
+    }; */
 
     if (loading) {
         return (

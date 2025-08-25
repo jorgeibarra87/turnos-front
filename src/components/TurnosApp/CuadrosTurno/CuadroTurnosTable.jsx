@@ -1,50 +1,68 @@
 import React from 'react';
 import { Eye, Edit, Trash2, CopyPlus, UsersIcon, BoxesIcon, ChevronLeft, ChevronRight } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
 import CrearCuadro from './CrearCuadro';
+import { apiCuadroService } from '../Services/apiCuadroService';
 
 export default function TurnosTable() {
     const [cuadros, setCuadros] = useState([]);
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(10);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+
+
+
+    // Cargar cuadros usando apiService
+    const loadCuadros = useCallback(async () => {
+        try {
+            setLoading(true);
+            setError(null);
+
+            const cuadrosAbiertos = await apiCuadroService.cuadros.getCuadrosAbiertos();
+            setCuadros(cuadrosAbiertos);
+
+            // Resetear página si es necesario
+            const totalPages = Math.ceil(cuadrosAbiertos.length / itemsPerPage);
+            if (currentPage > totalPages && totalPages > 0) {
+                setCurrentPage(totalPages);
+            }
+        } catch (err) {
+            console.error('Error al cargar cuadros:', err);
+            setError('Error al cargar los cuadros. Intenta nuevamente.');
+            setCuadros([]);
+        } finally {
+            setLoading(false);
+        }
+    }, [currentPage, itemsPerPage]);
+
+    // Función para manejar la eliminación usando apiService
+    const handleDelete = useCallback(async (id, nombre) => {
+        if (window.confirm(`¿Estás seguro de que quieres cerrar el cuadro "${nombre}"?`)) {
+            try {
+                await apiCuadroService.cuadros.cerrar(id);
+                await loadCuadros();
+                alert('Cuadro cerrado exitosamente');
+            } catch (error) {
+                console.error('Error al cerrar el cuadro:', error);
+
+                if (error.response?.status === 409) {
+                    alert('No se puede cerrar el cuadro porque tiene dependencias asociadas');
+                } else if (error.response?.status === 404) {
+                    alert('El cuadro no fue encontrado');
+                } else {
+                    alert('Error al cerrar el cuadro');
+                }
+            }
+        }
+    }, [loadCuadros]);
 
     useEffect(() => {
         loadCuadros();
-    }, []);
+    }, [loadCuadros]);
 
-    const loadCuadros = async () => {
-        const result = await axios.get("http://localhost:8080/cuadro-turnos");
-        const cuadrosAbiertos = result.data.filter(cuadro => cuadro.estadoCuadro === 'abierto');
-        setCuadros(cuadrosAbiertos);
-        // Resetear página
-        const totalPages = Math.ceil(cuadrosAbiertos.length / itemsPerPage);
-        console.log("totalpages", totalPages);
-        if (currentPage > totalPages && totalPages > 0) {
-            setCurrentPage(totalPages);
-        }
-    };
-
-    // Función para manejar la eliminación
-    const handleDelete = async (id, nombre) => {
-        if (window.confirm(`¿Estás seguro de que quieres cerrar el cuadro "${nombre}"?`)) {
-            try {
-                const response = await axios.put('http://localhost:8080/cuadro-turnos/cambiar-estado', {
-                    estadoActual: 'abierto',
-                    nuevoEstado: 'cerrado',
-                    idsCuadros: [id]
-                });
-
-                loadCuadros();
-                alert('Cuadro cerrado exitosamente');
-                console.log('Respuesta:', response.data);
-            } catch (error) {
-                console.error('Error al cerrar el cuadro:', error.response?.data || error.message);
-                alert('Error al cerrar el cuadro');
-            }
-        }
-    };
 
     // Lógica de paginación
     const totalPages = Math.ceil(cuadros.length / itemsPerPage);

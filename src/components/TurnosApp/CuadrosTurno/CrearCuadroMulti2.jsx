@@ -1,84 +1,110 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { ArrowLeft, CheckIcon, CircleXIcon, Edit } from 'lucide-react';
-import axios from 'axios';
+import { apiCuadroService } from '../Services/apiCuadroService';
+
 export default function SiguientePaso() {
     const [searchParams] = useSearchParams();
     const procesos = searchParams.get('procesos');
     const isEditMode = searchParams.get('edit') === 'true';
     const cuadroId = searchParams.get('id');
     const categoria = "Multiproceso";
+
     const [selectedEquipo, setSelectedEquipo] = useState({ id: "", nombre: "" });
     const [equipos, setEquipos] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [cuadroOriginal, setCuadroOriginal] = useState(null);
     const [loadingCuadro, setLoadingCuadro] = useState(false);
-    // Nuevos estados para los nombres de los procesos
+
+    // Estados para los nombres de los procesos
     const [nombresProcesos, setNombresProcesos] = useState([]);
     const [loadingProcesos, setLoadingProcesos] = useState(false);
-    // Cargar datos del cuadro si estamos editando
+
+    // Cargar datos del cuadro usando apiService
     useEffect(() => {
         const loadCuadroData = async () => {
             if (!isEditMode || !cuadroId) return;
+
             try {
                 setLoadingCuadro(true);
-                const response = await axios.get(`http://localhost:8080/cuadro-turnos/${cuadroId}`);
-                const cuadroData = response.data;
+                setError(null);
+
+                // Usar apiCuadroService
+                const cuadroData = await apiCuadroService.cuadros.getById(cuadroId);
                 setCuadroOriginal(cuadroData);
+
                 // Preseleccionar el equipo
                 setSelectedEquipo({
                     id: cuadroData.idEquipo.toString(),
                     nombre: cuadroData.equipoNombre || cuadroData.nombreEquipo || ""
                 });
+
             } catch (err) {
+                console.error('Error al cargar datos del cuadro:', err);
                 setError('Error al cargar datos del cuadro');
-                console.error('Error:', err);
             } finally {
                 setLoadingCuadro(false);
             }
         };
+
         loadCuadroData();
     }, [isEditMode, cuadroId]);
+
+    // Cargar equipos usando apiService
     useEffect(() => {
         const fetchEquipos = async () => {
             try {
                 setLoading(true);
                 setError(null);
-                const response = await axios.get('http://localhost:8080/equipo');
-                if (response.data && Array.isArray(response.data)) {
-                    const equiposFormateados = response.data.map(equipo => ({
-                        idEquipo: equipo.idEquipo || equipo.id || "",
-                        nombre: equipo.nombre || equipo.descripcion || "Sin nombre"
-                    }));
-                    setEquipos(equiposFormateados);
-                } else {
-                    setEquipos([]);
-                    console.warn('La respuesta no contiene un array de equipos');
-                }
+
+                // Usar apiCuadroService
+                const equiposData = await apiCuadroService.auxiliares.getEquipos();
+                setEquipos(equiposData);
+
             } catch (err) {
-                setError('Error al cargar los equipos');
                 console.error('Error al cargar equipos:', err);
+                setError('Error al cargar los equipos');
                 setEquipos([]);
             } finally {
                 setLoading(false);
             }
         };
+
         fetchEquipos();
     }, []);
-    // Efecto para cargar los nombres de los procesos
+
+    // Cargar nombres de procesos usando apiService
     useEffect(() => {
         const fetchNombresProcesos = async () => {
-            if (!procesos) return;
+            if (!procesos) {
+                setNombresProcesos([]);
+                return;
+            }
+
             try {
                 setLoadingProcesos(true);
                 const procesosIds = JSON.parse(procesos);
-                const promises = procesosIds.map(id =>
-                    axios.get(`http://localhost:8080/procesos/${id}`)
+
+                //Usar apiCuadroService para obtener detalles de procesos
+                const procesosData = await Promise.all(
+                    procesosIds.map(async (id) => {
+                        try {
+                            // Primero intentamos obtener el proceso específico por ID
+                            const response = await apiCuadroService.auxiliares.getProcesoById(id);
+                            return response.nombre;
+                        } catch (error) {
+                            // Si falla, obtenemos todos los procesos y buscamos por ID
+                            console.warn(`No se pudo obtener proceso individual ${id}, buscando en lista completa`);
+                            const allProcesos = await apiCuadroService.auxiliares.getProcesos();
+                            const proceso = allProcesos.find(p => p.idProceso.toString() === id.toString());
+                            return proceso ? proceso.nombre : `Proceso ID: ${id}`;
+                        }
+                    })
                 );
-                const responses = await Promise.all(promises);
-                const nombres = responses.map(res => res.data.nombre);
-                setNombresProcesos(nombres);
+
+                setNombresProcesos(procesosData);
+
             } catch (err) {
                 console.error("Error al cargar nombres de procesos:", err);
                 setNombresProcesos([]);
@@ -86,11 +112,16 @@ export default function SiguientePaso() {
                 setLoadingProcesos(false);
             }
         };
+
         fetchNombresProcesos();
     }, [procesos]);
+
     const handleEquipoChange = (e) => {
         const equipoId = e.target.value;
-        const equipoSeleccionado = equipos.find(equipo => equipo.idEquipo.toString() === equipoId.toString());
+        const equipoSeleccionado = equipos.find(equipo =>
+            equipo.idEquipo.toString() === equipoId.toString()
+        );
+
         if (equipoSeleccionado) {
             setSelectedEquipo({
                 id: equipoSeleccionado.idEquipo,
@@ -100,30 +131,38 @@ export default function SiguientePaso() {
             setSelectedEquipo({ id: "", nombre: "" });
         }
     };
+
     const getNextStepUrl = () => {
         if (!selectedEquipo.id) return "#";
+
         const params = new URLSearchParams({
             categoria: categoria || '',
             procesos: procesos || '',
             equipoId: selectedEquipo.id,
             equipoNombre: selectedEquipo.nombre
         });
+
         if (isEditMode) {
             params.append('edit', 'true');
             params.append('id', cuadroId);
         }
+
         return `/crearCuadroMulti3?${params.toString()}`;
     };
+
     const getBackUrl = () => {
         const params = new URLSearchParams({
             procesos: procesos || ''
         });
+
         if (isEditMode) {
             params.append('edit', 'true');
             params.append('id', cuadroId);
         }
+
         return `/crearCuadroMulti?${params.toString()}`;
     };
+
     if (loadingCuadro) {
         return (
             <div className='absolute inset-0 bg-opacity-30 backdrop-blur-sm flex justify-center items-center'>
@@ -134,12 +173,14 @@ export default function SiguientePaso() {
             </div>
         );
     }
+
     return (
         <div className='absolute inset-0 bg-opacity-30 backdrop-blur-sm flex justify-center items-center'>
             <div className='bg-white p-8 rounded-lg flex flex-col justify-center items-center gap-5 max-w-lg w-full mx-4'>
                 <div className='text-3xl text-center font-bold'>
                     {isEditMode ? 'Editar Cuadro de Turno' : 'Crear Cuadro de Turno'}
                 </div>
+
                 {/* Información de edición */}
                 {isEditMode && cuadroOriginal && (
                     <div className='text-sm bg-blue-50 border border-blue-200 rounded px-4 py-2 w-full'>
@@ -153,6 +194,7 @@ export default function SiguientePaso() {
                         </div>
                     </div>
                 )}
+
                 <div className='text-center space-y-2'>
                     <div className='text-lg font-semibold text-blue-600'>
                         Categoría: {categoria || 'No especificada'}
@@ -170,10 +212,12 @@ export default function SiguientePaso() {
                         </div>
                     )}
                 </div>
+
                 <div className="w-full">
                     <label htmlFor="equipo-select" className="block text-sm font-bold text-gray-700 mb-2">
                         Selecciona un Equipo
                     </label>
+
                     {loading ? (
                         <div className="w-full px-4 py-2 border border-gray-300 rounded-md bg-gray-50 text-center">
                             <p className="text-gray-500">Cargando equipos...</p>
@@ -181,6 +225,12 @@ export default function SiguientePaso() {
                     ) : error ? (
                         <div className="w-full px-4 py-2 border border-red-300 rounded-md bg-red-50">
                             <p className="text-red-500 text-center">{error}</p>
+                            <button
+                                onClick={() => window.location.reload()}
+                                className="mt-2 px-3 py-1 bg-red-100 hover:bg-red-200 text-red-700 rounded text-sm"
+                            >
+                                Reintentar
+                            </button>
                         </div>
                     ) : (
                         <select
@@ -197,12 +247,14 @@ export default function SiguientePaso() {
                             ))}
                         </select>
                     )}
+
                     {selectedEquipo.id && (
                         <p className="text-xs font-semibold text-gray-700 p-2">
                             Equipo seleccionado: {selectedEquipo.nombre}
                         </p>
                     )}
                 </div>
+
                 <div className='flex justify-center items-center gap-4 mt-4'>
                     <Link to={getNextStepUrl()}>
                         <button
@@ -216,12 +268,14 @@ export default function SiguientePaso() {
                             {isEditMode ? 'Continuar' : 'Aceptar'}
                         </button>
                     </Link>
+
                     <Link to={getBackUrl()}>
                         <button className="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 flex justify-center items-center gap-2 transition-colors">
                             <ArrowLeft size={20} color="white" strokeWidth={2} />
                             Volver
                         </button>
                     </Link>
+
                     <Link to="/">
                         <button className="px-6 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 flex justify-center items-center gap-2 transition-colors">
                             <CircleXIcon size={20} color="white" strokeWidth={2} />
