@@ -23,7 +23,7 @@ export default function VerEquipo() {
                 setLoading(true);
                 setError(null);
 
-                // CAMBIO: Usar apiEquipoService
+                // Usar apiEquipoService
                 const equipoData = await apiEquipoService.equipos.getById(id);
                 setEquipo(equipoData);
 

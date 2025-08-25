@@ -37,7 +37,7 @@ export default function EquiposTable() {
         }
     }, [currentPage, itemsPerPage]);
 
-    // Manejar eliminación usando apiService
+    //eliminación usando apiService
     const handleDelete = useCallback(async (id, nombre) => {
         if (window.confirm(`¿Estás seguro de que quieres eliminar el equipo "${nombre}"?`)) {
             try {
@@ -72,8 +72,6 @@ export default function EquiposTable() {
         loadEquipos();
     }, [loadEquipos]);
 
-
-    // Función para obtener el número de miembros
     // Función para obtener el número de miembros
     const getMiembrosCount = async (equipoId) => {
         try {
@@ -84,16 +82,6 @@ export default function EquiposTable() {
             return 0;
         }
     };
-
-    /* const getMiembrosCount = async (equipoId) => {
-        try {
-            const response = await axios.get(`http://localhost:8080/equipo/${equipoId}/miembros`);
-            return response.data.length || 0;
-        } catch (error) {
-            console.warn(`No se pudo obtener el número de miembros para el equipo ${equipoId}`);
-            return 0;
-        }
-    }; */
 
     // Función para extraer la categoría del nombre del equipo
     const extractCategory = (nombre) => {

@@ -86,16 +86,8 @@ export default function CrearEquipo() {
             console.error('Error al cargar personas del equipo:', err);
         }
     };
-    /* const loadPersonasEquipo = async (idEquipo) => {
-        try {
-            const personas = await apiEquipoService.equipos.getMiembros(idEquipo);
-            setPersonasEquipo(personas || []);
-        } catch (err) {
-            // manejar error si se requiere
-        }
-    }; */
 
-    // Perfiles (se puede migrar a service)
+    // Perfiles
     const loadPerfiles = async () => {
         try {
             setLoadingPerfiles(true);
@@ -107,17 +99,6 @@ export default function CrearEquipo() {
             setLoadingPerfiles(false);
         }
     };
-    /* const loadPerfiles = async () => {
-        try {
-            setLoadingPerfiles(true);
-            const response = await axios.get('http://localhost:8080/titulosFormacionAcademica');
-            setPerfiles(response.data || []);
-        } catch (err) {
-            setError('Error al cargar los perfiles disponibles');
-        } finally {
-            setLoadingPerfiles(false);
-        }
-    }; */
 
     // Usuarios por perfil
     const loadUsuariosPorPerfil = async (idTitulo) => {
@@ -137,22 +118,6 @@ export default function CrearEquipo() {
             setLoadingUsuarios(false);
         }
     };
-    /* const loadUsuariosPorPerfil = async (idTitulo) => {
-        try {
-            setLoadingUsuarios(true);
-            const response = await axios.get(`http://localhost:8080/usuario/titulo/${idTitulo}/usuarios`);
-            // Filtrar ya en el equipo
-            const usuariosYaEnEquipo = personasEquipo.map(p => p.idPersona);
-            const usuariosFiltered = (response.data || []).filter(
-                user => !usuariosYaEnEquipo.includes(user.idPersona)
-            );
-            setUsuariosDisponibles(usuariosFiltered);
-        } catch (err) {
-            setError('Error al cargar usuarios disponibles');
-        } finally {
-            setLoadingUsuarios(false);
-        }
-    }; */
 
     // Cambio categoría (cargar opciones)
     const handleCategoryChange = (e) => {
@@ -165,8 +130,7 @@ export default function CrearEquipo() {
         }
     };
 
-    // Opciones por categoría (usando apiCuadroService.auxiliares)
-    // CAMBIO: Opciones por categoría usando apiEquipoService
+    //Opciones por categoría usando apiEquipoService
     useEffect(() => {
         const fetchOptions = async () => {
             if (!selectedCategory) {
@@ -209,61 +173,6 @@ export default function CrearEquipo() {
         };
         fetchOptions();
     }, [selectedCategory, equipoOriginal]);
-    /* useEffect(() => {
-        const fetchOptions = async () => {
-            if (!selectedCategory) {
-                setOptions([]);
-                return;
-            }
-
-            try {
-                setLoading(true);
-                setError("");
-                let optionsData = [];
-                let idField = '';
-                switch (selectedCategory) {
-                    case 'Macroproceso':
-                        optionsData = await apiCuadroService.auxiliares.getMacroprocesos();
-                        idField = 'idMacroproceso';
-                        break;
-                    case 'Proceso':
-                        optionsData = await apiCuadroService.auxiliares.getProcesos();
-                        idField = 'idProceso';
-                        break;
-                    case 'Servicio':
-                        optionsData = await apiCuadroService.auxiliares.getServicios();
-                        idField = 'idServicio';
-                        break;
-                    case 'Seccion':
-                        optionsData = await apiCuadroService.auxiliares.getSeccionesServicio();
-                        idField = 'idSeccionServicio';
-                        break;
-                    case 'Subseccion':
-                        optionsData = await apiCuadroService.auxiliares.getSubseccionesServicio();
-                        idField = 'idSubseccionServicio';
-                        break;
-                }
-                setOptionId(idField);
-                setOptions(optionsData);
-
-                if (isEditMode && equipoOriginal && optionsData.length > 0) {
-                    const nombreParts = equipoOriginal.nombre?.split('_');
-                    if (nombreParts && nombreParts.length >= 3) {
-                        const optionName = nombreParts[2];
-                        const foundOption = optionsData.find(option =>
-                            option.nombre === optionName
-                        );
-                        if (foundOption) setSelectedOption(foundOption);
-                    }
-                }
-            } catch (err) {
-                setError('Error al cargar opciones');
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchOptions();
-    }, [selectedCategory, equipoOriginal]); */
 
     // Cambios en segundo select
     const handleOptionChange = (e) => {
@@ -338,7 +247,6 @@ export default function CrearEquipo() {
     };
 
     // Guardar equipo usando apiEquipoService
-    // CAMBIO: Guardar equipo usando apiEquipoService completamente
     const handleGuardarEquipo = async () => {
         setSaving(true);
         setErrorEquipo(null);
@@ -362,7 +270,7 @@ export default function CrearEquipo() {
                 equipoIdFinal = created.idEquipo;
             }
 
-            // CAMBIO: Usar apiEquipoService para usuarios
+            //Usar apiEquipoService para usuarios
             if (personasEquipo.length > 0) {
                 const personasIds = personasEquipo.map(p => p.idPersona);
                 await apiEquipoService.equipos.updateUsuariosEquipo(equipoIdFinal, personasIds);
@@ -380,39 +288,7 @@ export default function CrearEquipo() {
             setSaving(false);
         }
     };
-    /* const handleGuardarEquipo = async () => {
-        setSaving(true);
-        setErrorEquipo(null);
-        try {
-            const equipoData = {
-                nombre: equipoNombre.trim(),
-                categoria: selectedCategory,
-                subcategoria: selectedOption?.nombre || null,
-            };
-            if (!equipoData.nombre) throw new Error('El nombre del equipo es requerido');
-            let equipoIdFinal = equipoId;
-            if (isEditMode) {
-                await apiEquipoService.equipos.update(equipoId, equipoData);
-            } else {
-                const created = await apiEquipoService.equipos.create(equipoData);
-                equipoIdFinal = created.idEquipo;
-            }
-            // Asignar personas al equipo (puede migrar a servicio)
-            if (personasEquipo.length > 0) {
-                const personasIds = personasEquipo.map(p => p.idPersona);
-                await axios.put(
-                    `${import.meta.env.REACT_APP_API_BASE_URL || 'http://localhost:8080'}/usuario/equipo/${equipoIdFinal}`,
-                    personasIds
-                );
-            }
-            alert(`Equipo ${isEditMode ? 'actualizado' : 'creado'} exitosamente`);
-            navigate('/equipos');
-        } catch (err) {
-            setErrorEquipo(err.response?.data?.message || err.message || `Error al ${isEditMode ? 'actualizar' : 'crear'} el equipo`);
-        } finally {
-            setSaving(false);
-        }
-    }; */
+
 
     // Volver
     const handleVolver = () => {

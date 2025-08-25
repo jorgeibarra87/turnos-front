@@ -7,6 +7,7 @@ import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { apiReporteService } from '../Services/apiReporteService';
 
 export default function ReportesFiltro() {
     const [anio, setAnio] = useState(new Date().getFullYear());
@@ -17,24 +18,68 @@ export default function ReportesFiltro() {
     const [itemsPerPage, setItemsPerPage] = useState(5);
 
     const [cuadros, setCuadros] = useState([]); // lista de cuadros desde backend
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
 
-    useEffect(() => {
+
+    /* useEffect(() => {
         // cargar lista de cuadros para el select
         axios.get("http://localhost:8080/cuadro-turnos")
             .then(res => setCuadros(res.data))
             .catch(err => console.error("Error cargando cuadros:", err));
+    }, []); */
+
+    //Cargar cuadros usando apiReporteService;
+    useEffect(() => {
+        const loadCuadros = async () => {
+            try {
+                setLoading(true);
+                const cuadrosData = await apiReporteService.auxiliares.getCuadrosTurno();
+                setCuadros(cuadrosData);
+
+                // Establecer el primer cuadro como seleccionado por defecto si existe
+                if (cuadrosData.length > 0 && !cuadroId) {
+                    setCuadroId(cuadrosData[0].idCuadroTurno);
+                }
+            } catch (err) {
+                console.error("Error cargando cuadros:", err);
+                setError("Error al cargar los cuadros de turno");
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        loadCuadros();
     }, []);
 
-    const fetchReporte = () => {
+    /* const fetchReporte = () => {
         axios.get(`http://localhost:8080/reportes/${anio}/${mes}/${cuadroId}`)
             .then(res => {
                 setReporte(res.data);
                 setCurrentPage(1); // Resetear a primera página
             })
             .catch(err => console.error("Error cargando reporte:", err));
+    }; */
+
+    //Función para obtener reporte usando apiReporteService;
+    const fetchReporte = async () => {
+        try {
+            setLoading(true);
+            setError(null);
+
+            const reporteData = await apiReporteService.reportes.getReporte(anio, mes, cuadroId);
+            setReporte(reporteData);
+            setCurrentPage(1); // Resetear a primera página
+        } catch (err) {
+            console.error("Error cargando reporte:", err);
+            setError("Error al cargar el reporte. Verifique los parámetros seleccionados.");
+            setReporte(null);
+        } finally {
+            setLoading(false);
+        }
     };
 
-    // Función para exportar a Excel
+    /* // Función para exportar a Excel
     const exportToExcel = () => {
         if (!reporte || !reporte.detalleTurnos.length) {
             alert('No hay datos para exportar');
@@ -163,9 +208,155 @@ export default function ReportesFiltro() {
         const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
         const data = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
         saveAs(data, `Reporte_Turnos_${reporte.anio}_${String(reporte.mes).padStart(2, '0')}.xlsx`);
+    }; */
+
+    //Función de exportación mejorada con manejo de errores;
+    const exportToExcel = async () => {
+        if (!reporte || !reporte.detalleTurnos.length) {
+            alert('No hay datos para exportar');
+            return;
+        }
+
+        try {
+            // Intentar usar endpoint del backend si está disponible
+            try {
+                const blob = await apiReporteService.exportacion.exportToExcel(anio, mes, cuadroId);
+                saveAs(blob, `Reporte_Turnos_${anio}_${String(mes).padStart(2, '0')}.xlsx`);
+                return;
+            } catch (backendError) {
+                console.log('Endpoint de backend no disponible, usando exportación local');
+            }
+
+            // Fallback a exportación local (código original)
+            const excelData = [];
+
+            // Agregar información del reporte
+            excelData.push({
+                'Usuario': `REPORTE DE TURNOS - ${reporte.mes}/${reporte.anio}`,
+                'Total Turnos': '',
+                'Total Horas': '',
+                'Jornada': '',
+                'Fecha Inicio': '',
+                'Hora Inicio': '',
+                'Fecha Fin': '',
+                'Hora Fin': '',
+                'Horas': ''
+            });
+
+            excelData.push({
+                'Usuario': `Total Turnos: ${reporte.detalleTurnos.length}`,
+                'Total Turnos': `Total Horas: ${reporte.detalleTurnos.reduce((sum, t) => sum + (t.horas || 0), 0)}`,
+                'Total Horas': '',
+                'Jornada': '',
+                'Fecha Inicio': '',
+                'Hora Inicio': '',
+                'Fecha Fin': '',
+                'Hora Fin': '',
+                'Horas': ''
+            });
+
+            // Agregar fila vacía
+            excelData.push({
+                'Usuario': '',
+                'Total Turnos': '',
+                'Total Horas': '',
+                'Jornada': '',
+                'Fecha Inicio': '',
+                'Hora Inicio': '',
+                'Fecha Fin': '',
+                'Hora Fin': '',
+                'Horas': ''
+            });
+
+            // Agrupar turnos por usuario
+            const turnosPorUsuario = reporte.detalleTurnos.reduce((acc, turno) => {
+                const usuario = turno.usuario || "Sin asignar";
+                if (!acc[usuario]) {
+                    acc[usuario] = [];
+                }
+                acc[usuario].push(turno);
+                return acc;
+            }, {});
+
+            // Crear filas para Excel
+            Object.entries(turnosPorUsuario).forEach(([usuario, turnos]) => {
+                const totalHoras = turnos.reduce((sum, t) => sum + (t.horas || 0), 0);
+
+                // Agregar fila de encabezado del usuario
+                excelData.push({
+                    'Usuario': usuario,
+                    'Total Turnos': `${turnos.length} turnos`,
+                    'Total Horas': `${totalHoras} horas`,
+                    'Jornada': '',
+                    'Fecha Inicio': '',
+                    'Hora Inicio': '',
+                    'Fecha Fin': '',
+                    'Hora Fin': '',
+                    'Horas': ''
+                });
+
+                // Agregar turnos del usuario
+                turnos
+                    .sort((a, b) => new Date(a.fechaInicio) - new Date(b.fechaInicio))
+                    .forEach(turno => {
+                        excelData.push({
+                            'Usuario': '',
+                            'Total Turnos': '',
+                            'Total Horas': '',
+                            'Jornada': turno.jornada || 'N/A',
+                            'Fecha Inicio': formatearFecha(turno.fechaInicio),
+                            'Hora Inicio': formatearHora(turno.fechaInicio),
+                            'Fecha Fin': formatearFecha(turno.fechaFin),
+                            'Hora Fin': formatearHora(turno.fechaFin),
+                            'Horas': turno.horas || 0
+                        });
+                    });
+
+                // Agregar fila vacía para separación
+                excelData.push({
+                    'Usuario': '',
+                    'Total Turnos': '',
+                    'Total Horas': '',
+                    'Jornada': '',
+                    'Fecha Inicio': '',
+                    'Hora Inicio': '',
+                    'Fecha Fin': '',
+                    'Hora Fin': '',
+                    'Horas': ''
+                });
+            });
+
+            // Crear libro de Excel
+            const worksheet = XLSX.utils.json_to_sheet(excelData);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, 'Reporte Turnos');
+
+            // Ajustar ancho de columnas
+            const colWidths = [
+                { wch: 20 }, // Usuario
+                { wch: 15 }, // Total Turnos
+                { wch: 15 }, // Total Horas
+                { wch: 12 }, // Jornada
+                { wch: 15 }, // Fecha Inicio
+                { wch: 12 }, // Hora Inicio
+                { wch: 15 }, // Fecha Fin
+                { wch: 12 }, // Hora Fin
+                { wch: 8 }   // Horas
+            ];
+            worksheet['!cols'] = colWidths;
+
+            // Generar archivo Excel
+            const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+            const data = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            saveAs(data, `Reporte_Turnos_${reporte.anio}_${String(reporte.mes).padStart(2, '0')}.xlsx`);
+
+        } catch (err) {
+            console.error('Error al exportar a Excel:', err);
+            alert('Error al exportar el archivo Excel');
+        }
     };
 
-    // Función para exportar a PDF
+    /* // Función para exportar a PDF
     const exportToPDF = () => {
         if (!reporte || !reporte.detalleTurnos.length) {
             alert('No hay datos para exportar');
@@ -275,10 +466,229 @@ export default function ReportesFiltro() {
 
         // Guardar PDF
         doc.save(`Reporte_Turnos_${reporte.anio}_${String(reporte.mes).padStart(2, '0')}.pdf`);
+    }; */
+
+
+    //Función de exportación PDF;
+    const exportToPDF = async () => {
+        if (!reporte || !reporte.detalleTurnos.length) {
+            alert('No hay datos para exportar');
+            return;
+        }
+
+        try {
+            // Intentar usar endpoint del backend si está disponible
+            try {
+                const blob = await apiReporteService.exportacion.exportToPDF(anio, mes, cuadroId);
+                saveAs(blob, `Reporte_Turnos_${anio}_${String(mes).padStart(2, '0')}.pdf`);
+                return;
+            } catch (backendError) {
+                console.log('Endpoint de backend no disponible, usando exportación local');
+            }
+
+            // Fallback a exportación local (código original)
+            const doc = new jsPDF();
+
+            // Título del documento
+            doc.setFontSize(20);
+            doc.setFont('helvetica', 'bold');
+            doc.text(`Reporte de Turnos - ${String(reporte.mes).padStart(2, '0')}/${reporte.anio}`, 14, 22);
+
+            // Resumen
+            doc.setFontSize(12);
+            doc.setFont('helvetica', 'normal');
+            const totalTurnos = reporte.detalleTurnos.length;
+            const totalHoras = reporte.detalleTurnos.reduce((sum, t) => sum + (t.horas || 0), 0);
+
+            doc.text(`Total Turnos: ${totalTurnos}`, 14, 35);
+            doc.text(`Total Horas: ${totalHoras}`, 14, 42);
+
+            // Línea separadora
+            doc.line(14, 47, 196, 47);
+
+            let yPosition = 55;
+
+            // Agrupar turnos por usuario
+            const turnosPorUsuario = reporte.detalleTurnos.reduce((acc, turno) => {
+                const usuario = turno.usuario || "Sin asignar";
+                if (!acc[usuario]) {
+                    acc[usuario] = [];
+                }
+                acc[usuario].push(turno);
+                return acc;
+            }, {});
+
+            // Generar tabla para cada usuario
+            Object.entries(turnosPorUsuario).forEach(([usuario, turnos]) => {
+                const totalHorasUsuario = turnos.reduce((sum, t) => sum + (t.horas || 0), 0);
+
+                // Verificar si hay espacio en la página
+                if (yPosition > 240) {
+                    doc.addPage();
+                    yPosition = 20;
+                }
+
+                // Encabezado del usuario
+                doc.setFontSize(14);
+                doc.setFont('helvetica', 'bold');
+                doc.text(`${usuario}`, 14, yPosition);
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(10);
+                doc.text(`(${turnos.length} turnos - ${totalHorasUsuario} horas)`, 14, yPosition + 6);
+                yPosition += 15;
+
+                // Preparar datos de la tabla
+                const tableData = turnos
+                    .sort((a, b) => new Date(a.fechaInicio) - new Date(b.fechaInicio))
+                    .map(turno => [
+                        turno.jornada || 'N/A',
+                        formatearFecha(turno.fechaInicio),
+                        formatearHora(turno.fechaInicio),
+                        formatearFecha(turno.fechaFin),
+                        formatearHora(turno.fechaFin),
+                        (turno.horas || 0).toString()
+                    ]);
+
+                // Crear tabla autoTable
+                autoTable(doc, {
+                    head: [['Jornada', 'Fecha Inicio', 'Hora Inicio', 'Fecha Fin', 'Hora Fin', 'Horas']],
+                    body: tableData,
+                    startY: yPosition,
+                    styles: {
+                        fontSize: 8,
+                        cellPadding: 2
+                    },
+                    headStyles: {
+                        fillColor: [41, 128, 185],
+                        textColor: 255,
+                        fontSize: 9,
+                        fontStyle: 'bold'
+                    },
+                    alternateRowStyles: { fillColor: [245, 245, 245] },
+                    margin: { left: 14, right: 14 },
+                    columnStyles: {
+                        0: { cellWidth: 20 }, // Jornada
+                        1: { cellWidth: 25 }, // Fecha Inicio
+                        2: { cellWidth: 20 }, // Hora Inicio
+                        3: { cellWidth: 25 }, // Fecha Fin
+                        4: { cellWidth: 20 }, // Hora Fin
+                        5: { cellWidth: 15, halign: 'center' } // Horas
+                    }
+                });
+
+                yPosition = doc.lastAutoTable.finalY + 20;
+            });
+
+            // Pie de página con fecha de generación
+            const pageCount = doc.internal.getNumberOfPages();
+            for (let i = 1; i <= pageCount; i++) {
+                doc.setPage(i);
+                doc.setFontSize(8);
+                doc.setFont('helvetica', 'normal');
+                doc.text(`Generado el: ${new Date().toLocaleDateString('es-ES')} - Página ${i} de ${pageCount}`, 14, 285);
+            }
+
+            // Guardar PDF
+            doc.save(`Reporte_Turnos_${reporte.anio}_${String(reporte.mes).padStart(2, '0')}.pdf`);
+
+        } catch (err) {
+            console.error('Error al exportar a PDF:', err);
+            alert('Error al exportar el archivo PDF');
+        }
     };
 
+    // Resto de funciones permanecen igual
+    const goToPage = (page) => {
+        setCurrentPage(page);
+    };
 
-    // Funciones de paginación
+    const goToPrevious = () => {
+        if (currentPage > 1) {
+            setCurrentPage(currentPage - 1);
+        }
+    };
+
+    const goToNext = () => {
+        if (currentPage < totalPages) {
+            setCurrentPage(currentPage + 1);
+        }
+    };
+
+    const getVisiblePageNumbers = () => {
+        const delta = 2;
+        const range = [];
+        const rangeWithDots = [];
+
+        for (let i = Math.max(2, currentPage - delta);
+            i <= Math.min(totalPages - 1, currentPage + delta);
+            i++) {
+            range.push(i);
+        }
+
+        if (currentPage - delta > 2) {
+            rangeWithDots.push(1, '...');
+        } else {
+            rangeWithDots.push(1);
+        }
+
+        rangeWithDots.push(...range);
+
+        if (currentPage + delta < totalPages - 1) {
+            rangeWithDots.push('...', totalPages);
+        } else if (totalPages > 1) {
+            rangeWithDots.push(totalPages);
+        }
+
+        return rangeWithDots;
+    };
+
+    const formatearFecha = (fecha) => {
+        if (!fecha) return "N/A";
+        return new Date(fecha).toLocaleDateString("es-ES", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric"
+        });
+    };
+
+    const formatearHora = (fecha) => {
+        if (!fecha) return "N/A";
+        return new Date(fecha).toLocaleTimeString("es-ES", {
+            hour: "2-digit",
+            minute: "2-digit"
+        });
+    };
+
+    const COLORS = ["#4CAF50", "#FF9800", "#2196F3"];
+
+    // Lógica de paginación para personas
+    let totalPages = 1;
+    let currentPersonas = [];
+    let startIndex = 0;
+    let endIndex = 0;
+    let totalPersonas = 0;
+
+    if (reporte && reporte.detalleTurnos.length > 0) {
+        // Agrupar turnos por usuario para paginación
+        const turnosPorUsuario = reporte.detalleTurnos.reduce((acc, turno) => {
+            const usuario = turno.usuario || "Sin asignar";
+            if (!acc[usuario]) {
+                acc[usuario] = [];
+            }
+            acc[usuario].push(turno);
+            return acc;
+        }, {});
+
+        const personas = Object.keys(turnosPorUsuario);
+        totalPersonas = personas.length;
+        totalPages = Math.ceil(personas.length / itemsPerPage);
+        startIndex = (currentPage - 1) * itemsPerPage;
+        endIndex = startIndex + itemsPerPage;
+        currentPersonas = personas.slice(startIndex, endIndex);
+    }
+
+
+    /* // Funciones de paginación
     const goToPage = (page) => {
         setCurrentPage(page);
     };
@@ -367,7 +777,7 @@ export default function ReportesFiltro() {
         startIndex = (currentPage - 1) * itemsPerPage;
         endIndex = startIndex + itemsPerPage;
         currentPersonas = personas.slice(startIndex, endIndex);
-    }
+    } */
 
     return (
         <div className="p-6 space-y-6">
@@ -381,7 +791,7 @@ export default function ReportesFiltro() {
                             value={anio}
                             onChange={(e) => setAnio(e.target.value)}
                         >
-                            {[2024, 2025, 2026].map(y => (
+                            {[2023, 2024, 2025, 2026, 2027].map(y => (
                                 <option key={y} value={y}>{y}</option>
                             ))}
                         </select>
