@@ -58,16 +58,21 @@ export default function CrearEquipo() {
             try {
                 setLoadingEquipoData(true);
                 setError("");
-                // API refact
+
+                // Cargar datos del equipo
                 const equipoData = await apiEquipoService.equipos.getById(equipoId);
                 setEquipoOriginal(equipoData);
                 setEquipoNombre(equipoData.nombre || "");
+
                 const nombreParts = equipoData.nombre?.split('_');
                 if (nombreParts && nombreParts.length >= 3 && nombreParts[0] === 'Equipo') {
                     setSelectedCategory(nombreParts[1]);
                 }
-                // Personas asociadas
+                // Cargar perfiles primero para tener la información disponible
+                await loadPerfiles();
+                // Luego cargar personas del equipo
                 await loadPersonasEquipo(equipoId);
+
             } catch (err) {
                 setError('Error al cargar los datos del equipo');
             } finally {
@@ -80,10 +85,40 @@ export default function CrearEquipo() {
     // API: Personas cargadas de equipo
     const loadPersonasEquipo = async (idEquipo) => {
         try {
-            const personas = await apiEquipoService.equipos.getUsuariosEquipo(idEquipo);
-            setPersonasEquipo(personas || []);
+            // Usar el endpoint que ya devuelve miembros con perfil
+            const personas = await apiEquipoService.equipos.getMiembrosPerfil(idEquipo);
+            //console.log('Personas cargadas con perfil:', personas);
+            if (!personas || personas.length === 0) {
+                setPersonasEquipo([]);
+                return;
+            }
+            // Los títulos vienen en un array, formatear correctamente
+            const personasFormateadas = personas.map(persona => ({
+                ...persona,
+                perfil: persona.titulos && persona.titulos.length > 0
+                    ? persona.titulos.join(', ') // Unir múltiples títulos con coma
+                    : 'Sin perfil asignado',
+                idTitulo: persona.titulos && persona.titulos.length > 0 ? persona.titulos[0] : null // Usar el primer título como ID
+            }));
+            //console.log('Personas formateadas:', personasFormateadas);
+            setPersonasEquipo(personasFormateadas);
+
         } catch (err) {
             console.error('Error al cargar personas del equipo:', err);
+
+            //si getMiembrosPerfil falla, usar getUsuariosEquipo
+            try {
+                const personasBasicas = await apiEquipoService.equipos.getUsuariosEquipo(idEquipo);
+                const personasSinPerfil = personasBasicas.map(persona => ({
+                    ...persona,
+                    perfil: 'Perfil no disponible',
+                    idTitulo: null
+                }));
+                setPersonasEquipo(personasSinPerfil);
+            } catch (Err) {
+                console.error('Error:', Err);
+                setPersonasEquipo([]);
+            }
         }
     };
 
@@ -92,9 +127,11 @@ export default function CrearEquipo() {
         try {
             setLoadingPerfiles(true);
             const perfilesData = await apiEquipoService.auxiliares.getPerfiles();
-            setPerfiles(perfilesData);
+            setPerfiles(perfilesData || []); // Asegurar que no sea undefined
         } catch (err) {
+            console.error('Error al cargar perfiles:', err);
             setError('Error al cargar los perfiles disponibles');
+            setPerfiles([]); // Valor por defecto en caso de error
         } finally {
             setLoadingPerfiles(false);
         }
