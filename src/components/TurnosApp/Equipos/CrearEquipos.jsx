@@ -127,7 +127,7 @@ export default function CrearEquipo() {
         try {
             setLoadingPerfiles(true);
             const perfilesData = await apiEquipoService.auxiliares.getPerfiles();
-            setPerfiles(perfilesData || []); // Asegurar que no sea undefined
+            setPerfiles(perfilesData || []);
         } catch (err) {
             console.error('Error al cargar perfiles:', err);
             setError('Error al cargar los perfiles disponibles');
