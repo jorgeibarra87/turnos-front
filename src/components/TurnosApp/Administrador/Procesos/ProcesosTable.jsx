@@ -1,7 +1,7 @@
 import React from 'react';
 import { Eye, Edit, Trash2, CopyPlus, Users, Settings, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import axios from 'axios';
+import { procesosService, macroprocesosService, procesoUtils } from '../../Services/apiProcesoService';
 
 export default function ProcesosTable() {
     const [procesos, setProcesos] = useState([]);
@@ -24,19 +24,13 @@ export default function ProcesosTable() {
         try {
             setLoading(true);
             setError(null);
-            // llamada a la API
-            const result = await axios.get("http://localhost:8080/procesos");
-            console.log('Procesos cargados:', result.data);
-            let procesosData = [];
-            if (Array.isArray(result.data)) {
-                procesosData = result.data;
-            } else {
-                procesosData = result.data.procesos || [];
-            }
-            setProcesos(procesosData);
+
+            const procesosData = await procesosService.getAll();
+            console.log('Procesos cargados:', procesosData);
+            setProcesos(Array.isArray(procesosData) ? procesosData : []);
         } catch (err) {
             console.error('Error al cargar procesos:', err);
-            setError('Error al cargar los procesos');
+            setError(err.message);
             setProcesos([]);
         } finally {
             setLoading(false);
@@ -45,11 +39,9 @@ export default function ProcesosTable() {
 
     const loadMacroprocesos = async () => {
         try {
-            //llamada a la API
-            const result = await axios.get("http://localhost:8080/macroprocesos");
-
-
-            setMacroprocesos(result.data || []);
+            const macroprocesosData = await macroprocesosService.getAll();
+            console.log('Macroprocesos cargados:', macroprocesosData);
+            setMacroprocesos(Array.isArray(macroprocesosData) ? macroprocesosData : []);
         } catch (err) {
             console.warn('Error al cargar macroprocesos:', err);
             setMacroprocesos([]);
@@ -60,24 +52,15 @@ export default function ProcesosTable() {
     const handleDelete = async (id, nombreProceso) => {
         if (window.confirm(`¿Estás seguro de que quieres eliminar el proceso "${nombreProceso}"?`)) {
             try {
-                const response = await axios.delete(`http://localhost:8080/procesos/${id}`);
-
-                // eliminación exitosa
+                await procesosService.delete(id);
                 console.log(`Eliminando proceso con ID: ${id}`);
 
                 // Actualizar la lista local
                 setProcesos(prev => prev.filter(p => p.idProceso !== id));
                 alert('Proceso eliminado exitosamente');
             } catch (error) {
-                console.error('Error al eliminar el proceso:', error.response?.data || error.message);
-                // Manejar diferentes tipos de errores
-                if (error.response?.status === 409) {
-                    alert('No se puede eliminar el proceso porque tiene dependencias asociadas');
-                } else if (error.response?.status === 404) {
-                    alert('El proceso no fue encontrado');
-                } else {
-                    alert('Error al eliminar el proceso');
-                }
+                console.error('Error al eliminar el proceso:', error);
+                alert(error.message);
             }
         }
     };
@@ -110,12 +93,9 @@ export default function ProcesosTable() {
         setModoEdicion(false);
     };
 
-    // Función para obtener el nombre del macroproceso
+    // Función para obtener el nombre del macroproceso usando utilidad
     const getMacroprocesoNombre = (proceso) => {
-        if (proceso.nombreMacroproceso) {
-            return proceso.nombreMacroproceso;
-        }
-        return 'Sin macroproceso';
+        return procesoUtils.getMacroprocesoNombre(proceso, macroprocesos);
     };
 
     // Función para obtener el estado en texto
@@ -160,11 +140,11 @@ export default function ProcesosTable() {
         return (
             <VerProceso
                 proceso={procesoSeleccionado}
+                macroprocesos={macroprocesos}
                 onVolver={handleCerrarFormularios}
             />
         );
     }
-
 
     // Lógica de paginación
     const totalPages = Math.ceil(procesos.length / itemsPerPage);
@@ -221,6 +201,7 @@ export default function ProcesosTable() {
 
         return rangeWithDots;
     };
+
     return (
         <div className="m-8 p-6 bg-white shadow rounded">
             <div className='m-10 text-5xl text-center font-bold'>Ver Todos los Procesos:</div>
@@ -405,7 +386,7 @@ export default function ProcesosTable() {
 function CrearEditarProceso({ proceso, macroprocesos, modoEdicion, onVolver, onActualizar }) {
     const [formData, setFormData] = useState({
         nombre: proceso?.nombre || '',
-        idMacroproceso: proceso?.macroprocesos?.idMacroproceso || '',
+        idMacroproceso: proceso?.idMacroproceso || '',
         estado: proceso?.estado ?? true
     });
     const [saving, setSaving] = useState(false);
@@ -437,11 +418,11 @@ function CrearEditarProceso({ proceso, macroprocesos, modoEdicion, onVolver, onA
             console.log('Datos a enviar:', procesoData);
 
             if (modoEdicion) {
-                await axios.put(`http://localhost:8080/procesos/${proceso.idProceso}`, procesoData);
+                await procesosService.update(proceso.idProceso, procesoData);
                 console.log(`Actualizando proceso ID: ${proceso.idProceso}`);
                 alert('Proceso actualizado exitosamente');
             } else {
-                await axios.post('http://localhost:8080/procesos', procesoData);
+                await procesosService.create(procesoData);
                 console.log('Creando nuevo proceso');
                 alert('Proceso creado exitosamente');
             }
@@ -450,7 +431,7 @@ function CrearEditarProceso({ proceso, macroprocesos, modoEdicion, onVolver, onA
             onVolver();
 
         } catch (err) {
-            setError(err.response?.data?.message || `Error al ${modoEdicion ? 'actualizar' : 'crear'} el proceso`);
+            setError(err.message);
             console.error('Error:', err);
         } finally {
             setSaving(false);
@@ -488,6 +469,7 @@ function CrearEditarProceso({ proceso, macroprocesos, modoEdicion, onVolver, onA
                             onChange={(e) => handleInputChange('nombre', e.target.value)}
                             className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                             placeholder="Ingrese el nombre del proceso"
+                            disabled={saving}
                         />
                     </div>
 
@@ -500,6 +482,7 @@ function CrearEditarProceso({ proceso, macroprocesos, modoEdicion, onVolver, onA
                             value={formData.idMacroproceso}
                             onChange={(e) => handleInputChange('idMacroproceso', e.target.value)}
                             className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            disabled={saving}
                         >
                             <option value="">Seleccionar macroproceso</option>
                             {macroprocesos.map(macro => (
@@ -519,6 +502,7 @@ function CrearEditarProceso({ proceso, macroprocesos, modoEdicion, onVolver, onA
                             value={formData.estado}
                             onChange={(e) => handleInputChange('estado', e.target.value === 'true')}
                             className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            disabled={saving}
                         >
                             <option value={true}>Activo</option>
                             <option value={false}>Inactivo</option>
@@ -545,7 +529,8 @@ function CrearEditarProceso({ proceso, macroprocesos, modoEdicion, onVolver, onA
                     </button>
                     <button
                         onClick={onVolver}
-                        className="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+                        disabled={saving}
+                        className="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors disabled:opacity-50"
                     >
                         Cancelar
                     </button>
@@ -556,20 +541,7 @@ function CrearEditarProceso({ proceso, macroprocesos, modoEdicion, onVolver, onA
 }
 
 // Componente para Ver Proceso
-function VerProceso({ proceso, onVolver }) {
-    const getMacroprocesoInfo = () => {
-        if (proceso.idMacroproceso) {
-            return {
-                id: proceso.idMacroproceso,
-                nombre: proceso.nombreMacroproceso
-            };
-        }
-        return {
-            id: 'No asignado',
-            nombre: 'Sin macroproceso'
-        };
-    };
-
+function VerProceso({ proceso, macroprocesos, onVolver }) {
     const getEstadoTexto = (estado) => {
         return estado ? 'Activo' : 'Inactivo';
     };
@@ -579,8 +551,9 @@ function VerProceso({ proceso, onVolver }) {
             ? 'text-green-600 bg-green-50 px-3 py-1 rounded-full text-sm font-medium'
             : 'text-red-600 bg-red-50 px-3 py-1 rounded-full text-sm font-medium';
     };
-    const macroprocesoInfo = getMacroprocesoInfo();
 
+    // Usar utilidad para obtener información del macroproceso
+    const macroprocesoInfo = procesoUtils.getMacroprocesoInfo(proceso, macroprocesos);
 
     return (
         <div className='absolute inset-0 bg-opacity-30 backdrop-blur-sm flex justify-center items-center'>

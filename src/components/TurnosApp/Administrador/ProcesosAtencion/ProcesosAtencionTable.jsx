@@ -1,7 +1,12 @@
 import React from 'react';
 import { Eye, Edit, Trash2, CopyPlus, Users, Settings, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import axios from 'axios';
+import {
+    procesosAtencionService,
+    cuadrosTurnoService,
+    procesosService,
+    procesoAtencionUtils
+} from '../../Services/apiProcesosAtencionService';
 
 export default function ProcesosAtencionTable() {
     const [procesosAtencion, setProcesosAtencion] = useState([]);
@@ -26,19 +31,13 @@ export default function ProcesosAtencionTable() {
         try {
             setLoading(true);
             setError(null);
-            // llamada a la API
-            const result = await axios.get("http://localhost:8080/procesosAtencion");
-            console.log('Procesos Atencion cargados:', result.data);
-            let procesosAtencionData = [];
-            if (Array.isArray(result.data)) {
-                procesosAtencionData = result.data;
-            } else {
-                procesosAtencionData = result.data.procesosAtencion || [];
-            }
-            setProcesosAtencion(procesosAtencionData);
+
+            const procesosAtencionData = await procesosAtencionService.getAll();
+            console.log('Procesos Atención cargados:', procesosAtencionData);
+            setProcesosAtencion(Array.isArray(procesosAtencionData) ? procesosAtencionData : []);
         } catch (err) {
-            console.error('Error al cargar procesos atencion:', err);
-            setError('Error al cargar los procesos atencion');
+            console.error('Error al cargar procesos atención:', err);
+            setError(err.message);
             setProcesosAtencion([]);
         } finally {
             setLoading(false);
@@ -47,11 +46,9 @@ export default function ProcesosAtencionTable() {
 
     const loadCuadros = async () => {
         try {
-            //llamada a la API
-            const result = await axios.get("http://localhost:8080/cuadro-turnos");
-
-
-            setCuadros(result.data || []);
+            const cuadrosData = await cuadrosTurnoService.getAll();
+            console.log('Cuadros cargados:', cuadrosData);
+            setCuadros(Array.isArray(cuadrosData) ? cuadrosData : []);
         } catch (err) {
             console.warn('Error al cargar cuadros:', err);
             setCuadros([]);
@@ -60,11 +57,9 @@ export default function ProcesosAtencionTable() {
 
     const loadProcesos = async () => {
         try {
-            //llamada a la API
-            const result = await axios.get("http://localhost:8080/procesos");
-
-
-            setProcesos(result.data || []);
+            const procesosData = await procesosService.getAll();
+            console.log('Procesos cargados:', procesosData);
+            setProcesos(Array.isArray(procesosData) ? procesosData : []);
         } catch (err) {
             console.warn('Error al cargar procesos:', err);
             setProcesos([]);
@@ -73,44 +68,35 @@ export default function ProcesosAtencionTable() {
 
     // Función para manejar la eliminación
     const handleDelete = async (id, nombreProcesoAtencion) => {
-        if (window.confirm(`¿Estás seguro de que quieres eliminar el proceso de atencion "${nombreProcesoAtencion}"?`)) {
+        if (window.confirm(`¿Estás seguro de que quieres eliminar el proceso de atención "${nombreProcesoAtencion}"?`)) {
             try {
-                const response = await axios.delete(`http://localhost:8080/procesosAtencion/${id}`);
-
-                // eliminación exitosa
-                console.log(`Eliminando proceso atencion con ID: ${id}`);
+                await procesosAtencionService.delete(id);
+                console.log(`Eliminando proceso atención con ID: ${id}`);
 
                 // Actualizar la lista local
                 setProcesosAtencion(prev => prev.filter(p => p.idProcesoAtencion !== id));
-                alert('Proceso Atencion eliminado exitosamente');
+                alert('Proceso de Atención eliminado exitosamente');
             } catch (error) {
-                console.error('Error al eliminar el proceso atencion:', error.response?.data || error.message);
-                // Manejar diferentes tipos de errores
-                if (error.response?.status === 409) {
-                    alert('No se puede eliminar el proceso atencion porque tiene dependencias asociadas');
-                } else if (error.response?.status === 404) {
-                    alert('El proceso atencion no fue encontrado');
-                } else {
-                    alert('Error al eliminar el proceso atencion');
-                }
+                console.error('Error al eliminar el proceso atención:', error);
+                alert(error.message);
             }
         }
     };
 
-    // Función para manejar ver servicio
-    const handleVerProsesoAtencion = (procesoAtencion) => {
+    // Función para manejar ver proceso de atención
+    const handleVerProcesoAtencion = (procesoAtencion) => {
         setProcesoAtencionSeleccionado(procesoAtencion);
         setShowVerProcesoAtencion(true);
     };
 
-    // Función para manejar editar procesoAtencion
-    const handleEditarServicio = (procesoAtencion) => {
+    // Función para manejar editar proceso de atención
+    const handleEditarProcesoAtencion = (procesoAtencion) => {
         setProcesoAtencionSeleccionado(procesoAtencion);
         setModoEdicion(true);
         setShowCrearProcesoAtencion(true);
     };
 
-    // Función para crear nuevo procesoAtencion
+    // Función para crear nuevo proceso de atención
     const handleNuevoProcesoAtencion = () => {
         setProcesoAtencionSeleccionado(null);
         setModoEdicion(false);
@@ -125,20 +111,14 @@ export default function ProcesosAtencionTable() {
         setModoEdicion(false);
     };
 
-    // Función para obtener el nombre del cuadro
+    // Función para obtener el nombre del cuadro usando utilidades
     const getCuadroNombre = (procesoAtencion) => {
-        if (procesoAtencion.nombreCuadro) {
-            return procesoAtencion.nombreCuadro;
-        }
-        return 'Sin cuadro';
+        return procesoAtencionUtils.getCuadroNombre(procesoAtencion, cuadros);
     };
 
-    // Función para obtener el nombre del proceso
+    // Función para obtener el nombre del proceso usando utilidades
     const getProcesoNombre = (procesoAtencion) => {
-        if (procesoAtencion.nombreProceso) {
-            return procesoAtencion.nombreProceso;
-        }
-        return 'Sin proceso';
+        return procesoAtencionUtils.getProcesoNombre(procesoAtencion, procesos);
     };
 
     // Función para obtener el estado en texto
@@ -156,20 +136,20 @@ export default function ProcesosAtencionTable() {
     if (loading) {
         return (
             <div className="m-8 p-6 bg-white shadow rounded">
-                <div className='m-10 text-5xl text-center font-bold'>Ver Todos los Procesos de Atencion:</div>
+                <div className='m-10 text-5xl text-center font-bold'>Ver Todos los Procesos de Atención:</div>
                 <div className="text-center py-8">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-                    <p className="text-lg text-gray-500">Cargando Procesos de Atencion...</p>
+                    <p className="text-lg text-gray-500">Cargando Procesos de Atención...</p>
                 </div>
             </div>
         );
     }
 
-    // Mostrar componente de crear/editar procesosAtencion
+    // Mostrar componente de crear/editar proceso de atención
     if (showCrearProcesoAtencion) {
         return (
-            <CrearEditarServicio
-                procesosAtencion={procesoAtencionSeleccionado}
+            <CrearEditarProcesoAtencion
+                procesoAtencion={procesoAtencionSeleccionado}
                 cuadros={cuadros}
                 procesos={procesos}
                 modoEdicion={modoEdicion}
@@ -179,16 +159,17 @@ export default function ProcesosAtencionTable() {
         );
     }
 
-    // Mostrar componente de ver procesosAtencion
+    // Mostrar componente de ver proceso de atención
     if (showVerProcesoAtencion && procesoAtencionSeleccionado) {
         return (
             <VerProcesoAtencion
-                procesosAtencion={procesoAtencionSeleccionado}
+                procesoAtencion={procesoAtencionSeleccionado}
+                cuadros={cuadros}
+                procesos={procesos}
                 onVolver={handleCerrarFormularios}
             />
         );
     }
-
 
     // Lógica de paginación
     const totalPages = Math.ceil(procesosAtencion.length / itemsPerPage);
@@ -245,17 +226,18 @@ export default function ProcesosAtencionTable() {
 
         return rangeWithDots;
     };
+
     return (
         <div className="m-8 p-6 bg-white shadow rounded">
-            <div className='m-10 text-5xl text-center font-bold'>Ver Todos los Procesos de Atencion:</div>
+            <div className='m-10 text-5xl text-center font-bold'>Ver Todos los Procesos de Atención:</div>
 
-            {/* Botón para crear nuevo Proceso de Atencion */}
+            {/* Botón para crear nuevo Proceso de Atención */}
             <button
                 onClick={handleNuevoProcesoAtencion}
                 className="mb-1 px-4 py-2 bg-green-500 text-white rounded-2xl hover:bg-green-600 flex items-center gap-2"
             >
                 <CopyPlus size={22} color="white" strokeWidth={2} />
-                Crear Proceso de Atencion
+                Crear Proceso de Atención
             </button>
 
             {/* Mostrar error si existe */}
@@ -284,7 +266,7 @@ export default function ProcesosAtencionTable() {
                 <span className="text-sm text-gray-600">por página</span>
             </div>
 
-            {/* Tabla de servicios */}
+            {/* Tabla de procesos de atención */}
             <table className="w-full text-left text-sm border-collapse">
                 <thead className="bg-black text-white">
                     <tr>
@@ -300,30 +282,30 @@ export default function ProcesosAtencionTable() {
                     </tr>
                 </thead>
                 <tbody>
-                    {currentProcesosAtencion.map((procesosAtencion) => (
-                        <tr key={procesosAtencion.idProcesoAtencion} className="border-b hover:bg-gray-50">
+                    {currentProcesosAtencion.map((procesoAtencion) => (
+                        <tr key={procesoAtencion.idProcesoAtencion} className="border-b hover:bg-gray-50">
                             <td className="p-3 border border-gray-200 font-medium">
-                                {procesosAtencion.idProcesoAtencion}
+                                {procesoAtencion.idProcesoAtencion}
                             </td>
                             <td className="p-3 border border-gray-200">
-                                {procesosAtencion.detalle || 'Sin detalle'}
+                                {procesoAtencion.detalle || 'Sin detalle'}
                             </td>
                             <td className="p-3 border border-gray-200 text-sm">
-                                {getCuadroNombre(procesosAtencion)}
+                                {getCuadroNombre(procesoAtencion)}
                             </td>
                             <td className="p-3 border border-gray-200">
-                                <span className={getEstadoColor(procesosAtencion.estado)}>
-                                    {getEstadoTexto(procesosAtencion.estado)}
+                                <span className={getEstadoColor(procesoAtencion.estado)}>
+                                    {getEstadoTexto(procesoAtencion.estado)}
                                 </span>
                             </td>
                             <td className="p-3 border border-gray-200 text-sm">
-                                {getProcesoNombre(procesosAtencion)}
+                                {getProcesoNombre(procesoAtencion)}
                             </td>
                             <td className="p-3 border border-gray-200 space-x-6">
                                 {/* Botón Ver */}
                                 <button
-                                    onClick={() => handleVerProsesoAtencion(procesosAtencion)}
-                                    title={`Ver proceso atencion: ${procesosAtencion.detalle}`}
+                                    onClick={() => handleVerProcesoAtencion(procesoAtencion)}
+                                    title={`Ver proceso atención: ${procesoAtencion.detalle}`}
                                     className="inline-block"
                                 >
                                     <Eye
@@ -334,8 +316,8 @@ export default function ProcesosAtencionTable() {
 
                                 {/* Botón Editar */}
                                 <button
-                                    onClick={() => handleEditarServicio(procesosAtencion)}
-                                    title={`Editar procesosAtencion: ${procesosAtencion.detalle}`}
+                                    onClick={() => handleEditarProcesoAtencion(procesoAtencion)}
+                                    title={`Editar proceso atención: ${procesoAtencion.detalle}`}
                                     className="inline-block"
                                 >
                                     <Edit
@@ -346,8 +328,8 @@ export default function ProcesosAtencionTable() {
 
                                 {/* Botón Eliminar */}
                                 <button
-                                    onClick={() => handleDelete(procesosAtencion.idServicio, procesosAtencion.detalle)}
-                                    title={`Eliminar procesosAtencion: ${procesosAtencion.detalle}`}
+                                    onClick={() => handleDelete(procesoAtencion.idProcesoAtencion, procesoAtencion.detalle)}
+                                    title={`Eliminar proceso atención: ${procesoAtencion.detalle}`}
                                     className="inline-block"
                                 >
                                     <Trash2
@@ -417,26 +399,25 @@ export default function ProcesosAtencionTable() {
                 </div>
             )}
 
-            {/* Mensaje cuando no hay servicios */}
+            {/* Mensaje cuando no hay procesos de atención */}
             {procesosAtencion.length === 0 && !loading && (
                 <div className="text-center py-8 text-gray-500">
                     <Users size={48} className="mx-auto mb-4 text-gray-300" />
-                    <p className="text-lg">No hay servicios disponibles</p>
-                    <p className="text-sm">Crea tu primer procesosAtencion usando el botón de arriba</p>
+                    <p className="text-lg">No hay procesos de atención disponibles</p>
+                    <p className="text-sm">Crea tu primer proceso de atención usando el botón de arriba</p>
                 </div>
             )}
         </div>
     );
 }
 
-// Componente para Crear/Editar procesosAtencion
-function CrearEditarServicio({ procesosAtencion, cuadros, procesos, modoEdicion, onVolver, onActualizar }) {
+// Componente para Crear/Editar Proceso de Atención
+function CrearEditarProcesoAtencion({ procesoAtencion, cuadros, procesos, modoEdicion, onVolver, onActualizar }) {
     const [formData, setFormData] = useState({
-        idProcesoAtencion: procesosAtencion?.idProcesoAtencion || '',
-        detalle: procesosAtencion?.detalle || '',
-        idCuadroTurno: procesosAtencion?.procesosAtencion?.idCuadroTurno || '',
-        estado: procesosAtencion?.estado ?? true,
-        idProceso: procesosAtencion?.procesos?.idProceso || '',
+        detalle: procesoAtencion?.detalle || '',
+        idCuadroTurno: procesoAtencion?.idCuadroTurno || '',
+        estado: procesoAtencion?.estado ?? true,
+        idProceso: procesoAtencion?.idProceso || '',
     });
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
@@ -450,7 +431,7 @@ function CrearEditarServicio({ procesosAtencion, cuadros, procesos, modoEdicion,
 
     const handleGuardar = async () => {
         if (!formData.detalle.trim()) {
-            setError('El detalle del procesoAtencion es requerido');
+            setError('El detalle del proceso de atención es requerido');
             return;
         }
 
@@ -468,20 +449,20 @@ function CrearEditarServicio({ procesosAtencion, cuadros, procesos, modoEdicion,
             console.log('Datos a enviar:', procesoAtencionData);
 
             if (modoEdicion) {
-                await axios.put(`http://localhost:8080/procesosAtencion/${procesosAtencion.idProcesoAtencion}`, procesoAtencionData);
-                console.log(`Actualizando Proceso Atencion ID: ${procesosAtencion.idProcesoAtencion}`);
-                alert('Proceso Atencion actualizado exitosamente');
+                await procesosAtencionService.update(procesoAtencion.idProcesoAtencion, procesoAtencionData);
+                console.log(`Actualizando Proceso Atención ID: ${procesoAtencion.idProcesoAtencion}`);
+                alert('Proceso de Atención actualizado exitosamente');
             } else {
-                await axios.post('http://localhost:8080/procesosAtencion', procesoAtencionData);
-                console.log('Creando nuevo proceso atencion');
-                alert('Proceso Atencion creado exitosamente');
+                await procesosAtencionService.create(procesoAtencionData);
+                console.log('Creando nuevo proceso atención');
+                alert('Proceso de Atención creado exitosamente');
             }
 
             onActualizar();
             onVolver();
 
         } catch (err) {
-            setError(err.response?.data?.message || `Error al ${modoEdicion ? 'actualizar' : 'crear'} el proceso atencion`);
+            setError(err.message);
             console.error('Error:', err);
         } finally {
             setSaving(false);
@@ -492,33 +473,34 @@ function CrearEditarServicio({ procesosAtencion, cuadros, procesos, modoEdicion,
         <div className='absolute inset-0 bg-opacity-30 backdrop-blur-sm flex justify-center items-center'>
             <div className='bg-white p-6 rounded-lg flex flex-col justify-center items-center gap-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto'>
                 <div className='text-3xl font-bold text-gray-800 text-center'>
-                    {modoEdicion ? 'Editar Servicio' : 'Crear Nuevo Servicio'}
+                    {modoEdicion ? 'Editar Proceso de Atención' : 'Crear Nuevo Proceso de Atención'}
                 </div>
 
                 {modoEdicion && (
                     <div className='p-4 text-center bg-orange-50 border border-orange-200 rounded-lg w-full'>
                         <div className='flex items-center justify-center gap-2 mb-2'>
                             <Edit size={16} className="text-orange-600" />
-                            <span className='font-semibold text-orange-800'>Modificando servicio existente</span>
+                            <span className='font-semibold text-orange-800'>Modificando proceso de atención existente</span>
                         </div>
                         <div className='text-gray-700'>
-                            <div><span className='font-medium'>ID:</span> {procesosAtencion.idProcesoAtencion}</div>
+                            <div><span className='font-medium'>ID:</span> {procesoAtencion.idProcesoAtencion}</div>
                         </div>
                     </div>
                 )}
 
                 <div className='w-full grid grid-cols-1 gap-6'>
-                    {/* Detalle del Proceso Atencion */}
+                    {/* Detalle del Proceso Atención */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Detalle del Proceso Atencion *
+                            Detalle del Proceso de Atención *
                         </label>
                         <input
                             type="text"
                             value={formData.detalle}
                             onChange={(e) => handleInputChange('detalle', e.target.value)}
                             className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="Ingrese el detalle del proceso atencion"
+                            placeholder="Ingrese el detalle del proceso de atención"
+                            disabled={saving}
                         />
                     </div>
 
@@ -531,12 +513,12 @@ function CrearEditarServicio({ procesosAtencion, cuadros, procesos, modoEdicion,
                             value={formData.idCuadroTurno}
                             onChange={(e) => handleInputChange('idCuadroTurno', e.target.value)}
                             className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            disabled={saving}
                         >
                             <option value="">Seleccionar Cuadro</option>
                             {cuadros.map(cuadro => (
                                 <option key={cuadro.id} value={cuadro.id}>
-                                    {cuadro.nombre
-                                    }
+                                    {cuadro.nombre}
                                 </option>
                             ))}
                         </select>
@@ -551,13 +533,14 @@ function CrearEditarServicio({ procesosAtencion, cuadros, procesos, modoEdicion,
                             value={formData.estado}
                             onChange={(e) => handleInputChange('estado', e.target.value === 'true')}
                             className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            disabled={saving}
                         >
                             <option value={true}>Activo</option>
                             <option value={false}>Inactivo</option>
                         </select>
                     </div>
 
-                    {/* Proceso*/}
+                    {/* Proceso */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                             Proceso
@@ -566,12 +549,12 @@ function CrearEditarServicio({ procesosAtencion, cuadros, procesos, modoEdicion,
                             value={formData.idProceso}
                             onChange={(e) => handleInputChange('idProceso', e.target.value)}
                             className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            disabled={saving}
                         >
                             <option value="">Seleccionar proceso</option>
                             {procesos.map(proceso => (
-                                <option key={proceso.id} value={proceso.id}>
-                                    {proceso.nombre
-                                    }
+                                <option key={proceso.idProceso} value={proceso.idProceso}>
+                                    {proceso.nombre}
                                 </option>
                             ))}
                         </select>
@@ -597,7 +580,8 @@ function CrearEditarServicio({ procesosAtencion, cuadros, procesos, modoEdicion,
                     </button>
                     <button
                         onClick={onVolver}
-                        className="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+                        disabled={saving}
+                        className="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors disabled:opacity-50"
                     >
                         Cancelar
                     </button>
@@ -607,38 +591,8 @@ function CrearEditarServicio({ procesosAtencion, cuadros, procesos, modoEdicion,
     );
 }
 
-// Componente para Ver ProcesoAtencion
-function VerProcesoAtencion({ procesosAtencion, onVolver }) {
-    const getcuadroInfo = () => {
-        if (procesosAtencion.idCuadroTurno
-        ) {
-            return {
-                id: procesosAtencion.idCuadroTurno,
-                nombre: procesosAtencion.nombreCuadro
-
-            };
-        }
-        return {
-            id: 'No asignado',
-            nombre: 'Sin Cuadro'
-        };
-    };
-
-    const getprocesoInfo = () => {
-        if (procesosAtencion.idProceso
-        ) {
-            return {
-                id: procesosAtencion.idProceso,
-                nombre: procesosAtencion.nombreProceso
-
-            };
-        }
-        return {
-            id: 'No asignado',
-            nombre: 'Sin proceso'
-        };
-    };
-
+// Componente para Ver Proceso de Atención
+function VerProcesoAtencion({ procesoAtencion, cuadros, procesos, onVolver }) {
     const getEstadoTexto = (estado) => {
         return estado ? 'Activo' : 'Inactivo';
     };
@@ -648,9 +602,10 @@ function VerProcesoAtencion({ procesosAtencion, onVolver }) {
             ? 'text-green-600 bg-green-50 px-3 py-1 rounded-full text-sm font-medium'
             : 'text-red-600 bg-red-50 px-3 py-1 rounded-full text-sm font-medium';
     };
-    const cuadroInfo = getcuadroInfo();
-    const procesoInfo = getprocesoInfo();
 
+    // Usar utilidades para obtener información de dependencias
+    const cuadroInfo = procesoAtencionUtils.getCuadroInfo(procesoAtencion, cuadros);
+    const procesoInfo = procesoAtencionUtils.getProcesoInfo(procesoAtencion, procesos);
 
     return (
         <div className='absolute inset-0 bg-opacity-30 backdrop-blur-sm flex justify-center items-center'>
@@ -658,22 +613,22 @@ function VerProcesoAtencion({ procesosAtencion, onVolver }) {
 
                 {/* Header */}
                 <div className='text-center border-b pb-4'>
-                    <h1 className='text-2xl font-bold text-gray-800 mb-2'>Información del Proceso de Atencion</h1>
+                    <h1 className='text-2xl font-bold text-gray-800 mb-2'>Información del Proceso de Atención</h1>
                 </div>
 
-                {/* Información Principal del Servicio */}
+                {/* Información Principal del Proceso de Atención */}
                 <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
 
                     {/* Columna Izquierda */}
                     <div className='space-y-4'>
                         <div className='flex items-start gap-3 border border-black rounded-xl p-3'>
                             <div className='w-32 font-semibold text-gray-700 text-sm'>ID:</div>
-                            <div className='text-gray-900 font-medium'>{procesosAtencion.idProcesoAtencion}</div>
+                            <div className='text-gray-900 font-medium'>{procesoAtencion.idProcesoAtencion}</div>
                         </div>
 
                         <div className='flex items-start gap-3 border border-black rounded-xl p-3'>
                             <div className='w-32 font-semibold text-gray-700 text-sm'>Detalle:</div>
-                            <div className='text-gray-900'>{procesosAtencion.detalle || 'Sin detalle'}</div>
+                            <div className='text-gray-900'>{procesoAtencion.detalle || 'Sin detalle'}</div>
                         </div>
                     </div>
 
@@ -682,8 +637,8 @@ function VerProcesoAtencion({ procesosAtencion, onVolver }) {
                         <div className='flex items-start gap-3 border border-black rounded-xl p-3'>
                             <div className='w-32 font-semibold text-gray-700 text-sm'>Estado:</div>
                             <div>
-                                <span className={getEstadoColor(procesosAtencion.estado)}>
-                                    {getEstadoTexto(procesosAtencion.estado)}
+                                <span className={getEstadoColor(procesoAtencion.estado)}>
+                                    {getEstadoTexto(procesoAtencion.estado)}
                                 </span>
                             </div>
                         </div>
@@ -699,6 +654,7 @@ function VerProcesoAtencion({ procesosAtencion, onVolver }) {
                         </div>
                     </div>
                 </div>
+
                 {/* Información del Cuadro */}
                 <div className='flex items-start gap-3 border border-black rounded-xl p-3'>
                     <div className='w-32 font-semibold text-gray-700 text-sm'>Cuadro:</div>
@@ -709,6 +665,7 @@ function VerProcesoAtencion({ procesosAtencion, onVolver }) {
                         )}
                     </div>
                 </div>
+
                 {/* Botón de volver */}
                 <div className='flex justify-center gap-4 pt-4 border-t'>
                     <button

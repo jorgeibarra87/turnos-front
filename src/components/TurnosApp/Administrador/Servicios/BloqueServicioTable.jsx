@@ -1,7 +1,10 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Eye, Edit, Trash2, CopyPlus, Users, Settings, ChevronLeft, ChevronRight } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import axios from 'axios';
+import {
+    bloquesServicioService,
+    bloquesValidation,
+    bloquesUtils
+} from '../../Services/apiServiciosService';
 
 export default function BloqueServicioTable() {
     const [bloqueservicio, setBloqueServicio] = useState([]);
@@ -22,19 +25,13 @@ export default function BloqueServicioTable() {
         try {
             setLoading(true);
             setError(null);
-            // llamada a la API
-            const result = await axios.get("http://localhost:8080/bloqueServicio");
-            console.log('BloqueServicio cargadas:', result.data);
-            let bloqueservicioData = [];
-            if (Array.isArray(result.data)) {
-                bloqueservicioData = result.data;
-            } else {
-                bloqueservicioData = result.data.bloqueservicio || [];
-            }
-            setBloqueServicio(bloqueservicioData);
+
+            const bloqueservicioData = await bloquesServicioService.getAll();
+            console.log('BloqueServicio cargados:', bloqueservicioData);
+            setBloqueServicio(Array.isArray(bloqueservicioData) ? bloqueservicioData : []);
         } catch (err) {
             console.error('Error al cargar bloqueservicio:', err);
-            setError('Error al cargar los bloqueservicio');
+            setError(err.message);
             setBloqueServicio([]);
         } finally {
             setLoading(false);
@@ -43,26 +40,17 @@ export default function BloqueServicioTable() {
 
     // Función para manejar la eliminación
     const handleDelete = async (id, nombre) => {
-        if (window.confirm(`¿Estás seguro de que quieres eliminar la bloqueservicio "${nombre}"?`)) {
+        if (window.confirm(`¿Estás seguro de que quieres eliminar el bloque de servicio "${nombre}"?`)) {
             try {
-                const response = await axios.delete(`http://localhost:8080/bloqueServicio/${id}`);
-
-                // eliminación exitosa
-                console.log(`Eliminando bloqueservicio con ID: ${id}`);
+                await bloquesServicioService.delete(id);
+                console.log(`Eliminando bloque de servicio con ID: ${id}`);
 
                 // Actualizar la lista local
                 setBloqueServicio(prev => prev.filter(p => p.idBloqueServicio !== id));
-                alert('BloqueServicio eliminada exitosamente');
+                alert('Bloque de Servicio eliminado exitosamente');
             } catch (error) {
-                console.error('Error al eliminar el bloqueservicio:', error.response?.data || error.message);
-                // Manejar diferentes tipos de errores
-                if (error.response?.status === 409) {
-                    alert('No se puede eliminar la bloqueservicio porque tiene dependencias asociadas');
-                } else if (error.response?.status === 404) {
-                    alert('La bloqueservicio no fue encontrado');
-                } else {
-                    alert('Error al eliminar la bloqueservicio');
-                }
+                console.error('Error al eliminar el bloque de servicio:', error);
+                alert(error.message);
             }
         }
     };
@@ -94,6 +82,7 @@ export default function BloqueServicioTable() {
         setBloqueServicioSeleccionado(null);
         setModoEdicion(false);
     };
+
     // Función para obtener el estado en texto
     const getEstadoTexto = (estado) => {
         return estado ? 'Activo' : 'Inactivo';
@@ -139,7 +128,6 @@ export default function BloqueServicioTable() {
             />
         );
     }
-
 
     // Lógica de paginación
     const totalPages = Math.ceil(bloqueservicio.length / itemsPerPage);
@@ -196,6 +184,7 @@ export default function BloqueServicioTable() {
 
         return rangeWithDots;
     };
+
     return (
         <div className="m-8 p-6 bg-white shadow rounded">
             <div className='m-10 text-5xl text-center font-bold'>Ver Todos los Bloques:</div>
@@ -206,7 +195,7 @@ export default function BloqueServicioTable() {
                 className="mb-1 px-4 py-2 bg-green-500 text-white rounded-2xl hover:bg-green-600 flex items-center gap-2"
             >
                 <CopyPlus size={22} color="white" strokeWidth={2} />
-                Crear Bloques
+                Crear Bloque
             </button>
 
             {/* Mostrar error si existe */}
@@ -266,7 +255,7 @@ export default function BloqueServicioTable() {
                                 {/* Botón Ver */}
                                 <button
                                     onClick={() => handleVerBloqueServicio(bloqueservicio)}
-                                    title={`Ver bloqueservicio: ${bloqueservicio.nombre}`}
+                                    title={`Ver bloque de servicio: ${bloqueservicio.nombre}`}
                                     className="inline-block"
                                 >
                                     <Eye
@@ -278,7 +267,7 @@ export default function BloqueServicioTable() {
                                 {/* Botón Editar */}
                                 <button
                                     onClick={() => handleEditarBloqueServicio(bloqueservicio)}
-                                    title={`Editar bloqueservicio: ${bloqueservicio.nombre}`}
+                                    title={`Editar bloque de servicio: ${bloqueservicio.nombre}`}
                                     className="inline-block"
                                 >
                                     <Edit
@@ -290,7 +279,7 @@ export default function BloqueServicioTable() {
                                 {/* Botón Eliminar */}
                                 <button
                                     onClick={() => handleDelete(bloqueservicio.idBloqueServicio, bloqueservicio.nombre)}
-                                    title={`Eliminar bloqueservicio: ${bloqueservicio.nombre}`}
+                                    title={`Eliminar bloque de servicio: ${bloqueservicio.nombre}`}
                                     className="inline-block"
                                 >
                                     <Trash2
@@ -375,7 +364,6 @@ export default function BloqueServicioTable() {
 // Componente para Crear/Editar BloqueServicio
 function CrearEditarBloqueServicio({ bloqueservicio, modoEdicion, onVolver, onActualizar }) {
     const [formData, setFormData] = useState({
-        idBloqueServicio: bloqueservicio?.idBloqueServicio || '',
         nombre: bloqueservicio?.nombre || '',
         estado: bloqueservicio?.estado ?? true
     });
@@ -399,29 +387,35 @@ function CrearEditarBloqueServicio({ bloqueservicio, modoEdicion, onVolver, onAc
             setSaving(true);
             setError('');
 
-            const bloqueservicioData = {
-                idBloqueServicio: formData.idBloqueServicio || null,
+            const bloqueservicioData = bloquesValidation.cleanBloqueData({
                 nombre: formData.nombre,
                 estado: formData.estado
-            };
+            });
+
+            // Validar datos
+            const validation = bloquesValidation.validateBloqueData(bloqueservicioData);
+            if (!validation.isValid) {
+                setError(validation.errors.join(', '));
+                return;
+            }
 
             console.log('Datos a enviar:', bloqueservicioData);
 
             if (modoEdicion) {
-                await axios.put(`http://localhost:8080/bloqueServicio/${bloqueservicio.idBloqueServicio}`, bloqueservicioData);
-                console.log(`Actualizando bloqueservicio ID: ${bloqueservicio.idBloqueServicio}`);
-                alert('BloqueServicio actualizado exitosamente');
+                await bloquesServicioService.update(bloqueservicio.idBloqueServicio, bloqueservicioData);
+                console.log(`Actualizando bloque de servicio ID: ${bloqueservicio.idBloqueServicio}`);
+                alert('Bloque de Servicio actualizado exitosamente');
             } else {
-                await axios.post('http://localhost:8080/bloqueServicio', bloqueservicioData);
-                console.log('Creando nueva bloqueservicio');
-                alert('BloqueServicio creada exitosamente');
+                await bloquesServicioService.create(bloqueservicioData);
+                console.log('Creando nuevo bloque de servicio');
+                alert('Bloque de Servicio creado exitosamente');
             }
 
             onActualizar();
             onVolver();
 
         } catch (err) {
-            setError(err.response?.data?.message || `Error al ${modoEdicion ? 'actualizar' : 'crear'} la bloqueservicio`);
+            setError(err.message);
             console.error('Error:', err);
         } finally {
             setSaving(false);
@@ -439,7 +433,7 @@ function CrearEditarBloqueServicio({ bloqueservicio, modoEdicion, onVolver, onAc
                     <div className='p-4 text-center bg-orange-50 border border-orange-200 rounded-lg w-full'>
                         <div className='flex items-center justify-center gap-2 mb-2'>
                             <Edit size={16} className="text-orange-600" />
-                            <span className='font-semibold text-orange-800'>Modificando nombre del bloque existente</span>
+                            <span className='font-semibold text-orange-800'>Modificando bloque de servicio existente</span>
                         </div>
                         <div className='text-gray-700'>
                             <div><span className='font-medium'>ID:</span> {bloqueservicio.idBloqueServicio}</div>
@@ -458,9 +452,11 @@ function CrearEditarBloqueServicio({ bloqueservicio, modoEdicion, onVolver, onAc
                             value={formData.nombre}
                             onChange={(e) => handleInputChange('nombre', e.target.value)}
                             className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="Ingrese el nombre de formacion"
+                            placeholder="Ingrese el nombre del bloque"
+                            disabled={saving}
                         />
                     </div>
+
                     {/* Estado */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -470,6 +466,7 @@ function CrearEditarBloqueServicio({ bloqueservicio, modoEdicion, onVolver, onAc
                             value={formData.estado}
                             onChange={(e) => handleInputChange('estado', e.target.value === 'true')}
                             className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            disabled={saving}
                         >
                             <option value={true}>Activo</option>
                             <option value={false}>Inactivo</option>
@@ -496,7 +493,8 @@ function CrearEditarBloqueServicio({ bloqueservicio, modoEdicion, onVolver, onAc
                     </button>
                     <button
                         onClick={onVolver}
-                        className="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+                        disabled={saving}
+                        className="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors disabled:opacity-50"
                     >
                         Cancelar
                     </button>
@@ -527,7 +525,7 @@ function VerBloqueServicio({ bloqueservicio, onVolver }) {
                     <h1 className='text-2xl font-bold text-gray-800 mb-2'>Información del Bloque</h1>
                 </div>
 
-                {/* Información Principal de la BloqueServicio */}
+                {/* Información Principal del BloqueServicio */}
                 <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
 
                     {/* Columna Izquierda */}
@@ -555,7 +553,6 @@ function VerBloqueServicio({ bloqueservicio, onVolver }) {
                         </div>
                     </div>
                 </div>
-
 
                 {/* Botón de volver */}
                 <div className='flex justify-center gap-4 pt-4 border-t'>

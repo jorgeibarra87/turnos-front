@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Edit, Trash2, CopyPlus, Users, ChevronLeft, ChevronRight } from "lucide-react";
-import axios from "axios";
+import { personasRolesService, personasService } from '../../Services/apiPersonasService';
 
 export default function PersonasRolesTable() {
     const [usuariosRoles, setUsuariosRoles] = useState([]);
@@ -10,35 +10,46 @@ export default function PersonasRolesTable() {
     const [editando, setEditando] = useState(null);
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(10);
+    // Estados para manejo de loading y errores
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
 
     useEffect(() => {
-        loadUsuariosRoles();
-        loadPersonas();
-        loadRoles();
+        loadData();
     }, []);
 
-    // Endpoint que usa el mapper UsuariosRolesMapper
-    const loadUsuariosRoles = async () => {
-        const res = await axios.get("http://localhost:8080/usuario/roles");
-        setUsuariosRoles(res.data);
-    };
+    // Función unificada para cargar todos los datos
+    const loadData = async () => {
+        try {
+            setLoading(true);
+            setError(null);
 
-    // Personas (para el select del formulario)
-    const loadPersonas = async () => {
-        const res = await axios.get("http://localhost:8080/persona");
-        setPersonas(res.data);
-    };
+            // Cargar todos los datos en paralelo
+            const [usuariosRolesData, personasData, rolesData] = await Promise.all([
+                personasRolesService.getUsuariosRoles(),
+                personasService.getAll(),
+                personasRolesService.getRoles()
+            ]);
 
-    // Títulos académicos (para el select del formulario)
-    const loadRoles = async () => {
-        const res = await axios.get("http://localhost:8080/roles");
-        setRoles(res.data);
+            setUsuariosRoles(usuariosRolesData);
+            setPersonas(personasData);
+            setRoles(rolesData);
+        } catch (err) {
+            setError(err.message);
+            console.error('Error loading data:', err);
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleDelete = async (idPersona, idRol) => {
         if (window.confirm("¿Eliminar relación?")) {
-            await axios.delete(`http://localhost:8080/usuarios/${idPersona}/rol/${idRol}`);
-            loadUsuariosRoles();
+            try {
+                await personasRolesService.removeRolFromPersona(idPersona, idRol);
+                await loadData(); // Recargar datos
+            } catch (err) {
+                setError(err.message);
+            }
         }
     };
 
@@ -98,6 +109,18 @@ export default function PersonasRolesTable() {
         return rangeWithDots;
     };
 
+    // Mostrar loading si está cargando
+    if (loading) {
+        return (
+            <div className="m-8 p-6 bg-white shadow rounded">
+                <div className="text-center py-8">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+                    <p className="text-lg text-gray-500">Cargando datos...</p>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="m-8 p-6 bg-white shadow rounded">
             <div className="flex justify-between items-center mb-4">
@@ -112,6 +135,13 @@ export default function PersonasRolesTable() {
                     <CopyPlus size={18} /> Nueva Relación
                 </button>
             </div>
+
+            {/* Mostrar error si existe */}
+            {error && (
+                <div className="mb-4 p-3 bg-red-100 border border-red-300 rounded text-red-700">
+                    {error}
+                </div>
+            )}
 
             {/* Selector de elementos por página */}
             <div className="flex items-center justify-end gap-2 pb-1">
@@ -237,7 +267,7 @@ export default function PersonasRolesTable() {
                 </div>
             )}
 
-            {usuariosRoles.length === 0 && (
+            {usuariosRoles.length === 0 && !loading && (
                 <div className="text-center py-6 text-gray-500">
                     <Users size={40} className="mx-auto mb-2" />
                     No hay relaciones registradas
@@ -250,28 +280,34 @@ export default function PersonasRolesTable() {
                     roles={roles}
                     editando={editando}
                     onClose={() => setShowForm(false)}
-                    onSaved={loadUsuariosRoles}
+                    onSaved={loadData}
                 />
             )}
         </div>
     );
 }
 
-// FORMULARIO
+// FORMULARIO actualizado
 function FormularioUsuarioRol({ personas, roles, editando, onClose, onSaved }) {
     const [personaId, setPersonaId] = useState(editando?.idPersona || "");
     const [rolId, setRolId] = useState("");
+    const [saving, setSaving] = useState(false);
+    const [error, setError] = useState("");
 
     const handleGuardar = async () => {
-        if (editando) {
-            // Agregar título a persona ya existente
-            await axios.post(`http://localhost:8080/usuario/${personaId}/rol/${rolId}`);
-        } else {
-            // Crear nueva relación
-            await axios.post(`http://localhost:8080/usuario/${personaId}/rol/${rolId}`);
+        try {
+            setSaving(true);
+            setError("");
+
+            await personasRolesService.addRolToPersona(personaId, rolId);
+
+            onSaved();
+            onClose();
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setSaving(false);
         }
-        onSaved();
-        onClose();
     };
 
     return (
@@ -281,12 +317,19 @@ function FormularioUsuarioRol({ personas, roles, editando, onClose, onSaved }) {
                     {editando ? "Editar Relación" : "Nueva Relación"}
                 </h2>
 
+                {error && (
+                    <div className="mb-4 p-3 bg-red-100 border border-red-300 rounded text-red-700 text-sm">
+                        {error}
+                    </div>
+                )}
+
                 <div className="mb-4">
                     <label className="block text-sm mb-1">Persona</label>
                     <select
                         value={personaId}
                         onChange={(e) => setPersonaId(e.target.value)}
                         className="w-full border px-2 py-1 rounded"
+                        disabled={saving}
                     >
                         <option value="">Seleccione persona</option>
                         {personas.map((p) => (
@@ -303,6 +346,7 @@ function FormularioUsuarioRol({ personas, roles, editando, onClose, onSaved }) {
                         value={rolId}
                         onChange={(e) => setRolId(e.target.value)}
                         className="w-full border px-2 py-1 rounded"
+                        disabled={saving}
                     >
                         <option value="">Seleccione rol</option>
                         {roles.map((t) => (
@@ -314,15 +358,19 @@ function FormularioUsuarioRol({ personas, roles, editando, onClose, onSaved }) {
                 </div>
 
                 <div className="flex justify-end gap-2">
-                    <button onClick={onClose} className="px-3 py-1 bg-gray-500 hover:bg-red-600 text-white rounded">
+                    <button
+                        onClick={onClose}
+                        disabled={saving}
+                        className="px-3 py-1 bg-gray-500 hover:bg-red-600 text-white rounded disabled:opacity-50"
+                    >
                         Cancelar
                     </button>
                     <button
                         onClick={handleGuardar}
-                        disabled={!personaId || !rolId}
-                        className="px-3 py-1 bg-blue-500 text-white rounded"
+                        disabled={!personaId || !rolId || saving}
+                        className="px-3 py-1 bg-blue-500 text-white rounded disabled:opacity-50"
                     >
-                        Guardar
+                        {saving ? 'Guardando...' : 'Guardar'}
                     </button>
                 </div>
             </div>

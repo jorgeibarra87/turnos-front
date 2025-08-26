@@ -1,7 +1,11 @@
 import React from 'react';
 import { Eye, Edit, Trash2, CopyPlus, Users, Settings, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import axios from 'axios';
+import {
+    seccionesService,
+    serviciosService,
+    seccionUtils
+} from '../../Services/apiSeccionesService';
 
 export default function SeccionesTable() {
     const [secciones, setSecciones] = useState([]);
@@ -24,19 +28,13 @@ export default function SeccionesTable() {
         try {
             setLoading(true);
             setError(null);
-            // llamada a la API
-            const result = await axios.get("http://localhost:8080/seccionesServicio");
-            console.log('Secciones cargadas:', result.data);
-            let seccionesData = [];
-            if (Array.isArray(result.data)) {
-                seccionesData = result.data;
-            } else {
-                seccionesData = result.data.secciones || [];
-            }
-            setSecciones(seccionesData);
+
+            const seccionesData = await seccionesService.getAll();
+            console.log('Secciones cargadas:', seccionesData);
+            setSecciones(Array.isArray(seccionesData) ? seccionesData : []);
         } catch (err) {
             console.error('Error al cargar secciones:', err);
-            setError('Error al cargar las secciones');
+            setError(err.message);
             setSecciones([]);
         } finally {
             setLoading(false);
@@ -45,11 +43,9 @@ export default function SeccionesTable() {
 
     const loadServicios = async () => {
         try {
-            //llamada a la API
-            const result = await axios.get("http://localhost:8080/servicio");
-
-
-            setServicios(result.data || []);
+            const serviciosData = await serviciosService.getAll();
+            console.log('Servicios cargados:', serviciosData);
+            setServicios(Array.isArray(serviciosData) ? serviciosData : []);
         } catch (err) {
             console.warn('Error al cargar servicios:', err);
             setServicios([]);
@@ -58,44 +54,35 @@ export default function SeccionesTable() {
 
     // Función para manejar la eliminación
     const handleDelete = async (id, nombreSeccionServicio) => {
-        if (window.confirm(`¿Estás seguro de que quieres eliminar la seccion "${nombreSeccionServicio}"?`)) {
+        if (window.confirm(`¿Estás seguro de que quieres eliminar la sección "${nombreSeccionServicio}"?`)) {
             try {
-                const response = await axios.delete(`http://localhost:8080/seccionesServicio/${id}`);
-
-                // eliminación exitosa
-                console.log(`Eliminando seccion con ID: ${id}`);
+                await seccionesService.delete(id);
+                console.log(`Eliminando sección con ID: ${id}`);
 
                 // Actualizar la lista local
                 setSecciones(prev => prev.filter(p => p.idSeccionServicio !== id));
-                alert('seccion eliminada exitosamente');
+                alert('Sección eliminada exitosamente');
             } catch (error) {
-                console.error('Error al eliminar la seccion:', error.response?.data || error.message);
-                // Manejar diferentes tipos de errores
-                if (error.response?.status === 409) {
-                    alert('No se puede eliminar la seccion porque tiene dependencias asociadas');
-                } else if (error.response?.status === 404) {
-                    alert('La seccion no fue encontrado');
-                } else {
-                    alert('Error al eliminar la seccion');
-                }
+                console.error('Error al eliminar la sección:', error);
+                alert(error.message);
             }
         }
     };
 
-    // Función para manejar ver seccion
+    // Función para manejar ver sección
     const handleVerSeccion = (seccion) => {
         setSeccionSeleccionada(seccion);
         setShowVerSeccion(true);
     };
 
-    // Función para manejar editar seccion
+    // Función para manejar editar sección
     const handleEditarSeccion = (seccion) => {
         setSeccionSeleccionada(seccion);
         setModoEdicion(true);
         setShowCrearSeccion(true);
     };
 
-    // Función para crear nuevo seccion
+    // Función para crear nueva sección
     const handleNuevaSeccion = () => {
         setSeccionSeleccionada(null);
         setModoEdicion(false);
@@ -110,12 +97,9 @@ export default function SeccionesTable() {
         setModoEdicion(false);
     };
 
-    // Función para obtener el nombre del servicio
-    const getSeccionNombre = (seccion) => {
-        if (seccion.nombreServicio) {
-            return seccion.nombreServicio;
-        }
-        return 'Sin servicio';
+    // Función para obtener el nombre del servicio usando utilidades
+    const getServicioNombre = (seccion) => {
+        return seccionUtils.getServicioNombre(seccion, servicios);
     };
 
     // Función para obtener el estado en texto
@@ -142,7 +126,7 @@ export default function SeccionesTable() {
         );
     }
 
-    // Mostrar componente de crear/editar seccion
+    // Mostrar componente de crear/editar sección
     if (showCrearSeccion) {
         return (
             <CrearEditarSeccion
@@ -155,16 +139,16 @@ export default function SeccionesTable() {
         );
     }
 
-    // Mostrar componente de ver seccion
+    // Mostrar componente de ver sección
     if (showVerSeccion && seccionSeleccionada) {
         return (
             <VerSeccion
                 seccion={seccionSeleccionada}
+                servicios={servicios}
                 onVolver={handleCerrarFormularios}
             />
         );
     }
-
 
     // Lógica de paginación
     const totalPages = Math.ceil(secciones.length / itemsPerPage);
@@ -221,17 +205,18 @@ export default function SeccionesTable() {
 
         return rangeWithDots;
     };
+
     return (
         <div className="m-8 p-6 bg-white shadow rounded">
             <div className='m-10 text-5xl text-center font-bold'>Ver Todas las Secciones:</div>
 
-            {/* Botón para crear nueva seccion */}
+            {/* Botón para crear nueva sección */}
             <button
                 onClick={handleNuevaSeccion}
                 className="mb-1 px-4 py-2 bg-green-500 text-white rounded-2xl hover:bg-green-600 flex items-center gap-2"
             >
                 <CopyPlus size={22} color="white" strokeWidth={2} />
-                Crear Seccion
+                Crear Sección
             </button>
 
             {/* Mostrar error si existe */}
@@ -284,7 +269,7 @@ export default function SeccionesTable() {
                                 {seccion.nombre || 'Sin nombre'}
                             </td>
                             <td className="p-3 border border-gray-200 text-sm">
-                                {getSeccionNombre(seccion)}
+                                {getServicioNombre(seccion)}
                             </td>
                             <td className="p-3 border border-gray-200">
                                 <span className={getEstadoColor(seccion.estado)}>
@@ -295,7 +280,7 @@ export default function SeccionesTable() {
                                 {/* Botón Ver */}
                                 <button
                                     onClick={() => handleVerSeccion(seccion)}
-                                    title={`Ver seccion: ${seccion.nombre}`}
+                                    title={`Ver sección: ${seccion.nombre}`}
                                     className="inline-block"
                                 >
                                     <Eye
@@ -307,7 +292,7 @@ export default function SeccionesTable() {
                                 {/* Botón Editar */}
                                 <button
                                     onClick={() => handleEditarSeccion(seccion)}
-                                    title={`Editar seccion: ${seccion.nombre}`}
+                                    title={`Editar sección: ${seccion.nombre}`}
                                     className="inline-block"
                                 >
                                     <Edit
@@ -319,7 +304,7 @@ export default function SeccionesTable() {
                                 {/* Botón Eliminar */}
                                 <button
                                     onClick={() => handleDelete(seccion.idSeccionServicio, seccion.nombre)}
-                                    title={`Eliminar seccion: ${seccion.nombre}`}
+                                    title={`Eliminar sección: ${seccion.nombre}`}
                                     className="inline-block"
                                 >
                                     <Trash2
@@ -394,7 +379,7 @@ export default function SeccionesTable() {
                 <div className="text-center py-8 text-gray-500">
                     <Users size={48} className="mx-auto mb-4 text-gray-300" />
                     <p className="text-lg">No hay secciones disponibles</p>
-                    <p className="text-sm">Crea tu primer seccion usando el botón de arriba</p>
+                    <p className="text-sm">Crea tu primera sección usando el botón de arriba</p>
                 </div>
             )}
         </div>
@@ -404,9 +389,8 @@ export default function SeccionesTable() {
 // Componente para Crear/Editar Secciones
 function CrearEditarSeccion({ seccion, servicios, modoEdicion, onVolver, onActualizar }) {
     const [formData, setFormData] = useState({
-        idSeccionServicio: seccion?.idSeccionServicio || '',
         nombre: seccion?.nombre || '',
-        idServicio: seccion?.servicios?.idServicio || '',
+        idServicio: seccion?.idServicio || '',
         estado: seccion?.estado ?? true
     });
     const [saving, setSaving] = useState(false);
@@ -421,7 +405,7 @@ function CrearEditarSeccion({ seccion, servicios, modoEdicion, onVolver, onActua
 
     const handleGuardar = async () => {
         if (!formData.nombre.trim()) {
-            setError('El nombre de la seccion es requerido');
+            setError('El nombre de la sección es requerido');
             return;
         }
 
@@ -430,7 +414,6 @@ function CrearEditarSeccion({ seccion, servicios, modoEdicion, onVolver, onActua
             setError('');
 
             const seccionData = {
-                idSeccionServicio: formData.idSeccionServicio || null,
                 nombre: formData.nombre,
                 idServicio: formData.idServicio || null,
                 estado: formData.estado
@@ -439,20 +422,20 @@ function CrearEditarSeccion({ seccion, servicios, modoEdicion, onVolver, onActua
             console.log('Datos a enviar:', seccionData);
 
             if (modoEdicion) {
-                await axios.put(`http://localhost:8080/seccionesServicio/${seccion.idSeccionServicio}`, seccionData);
-                console.log(`Actualizando seccion ID: ${seccion.idSeccionServicio}`);
-                alert('Seccion actualizada exitosamente');
+                await seccionesService.update(seccion.idSeccionServicio, seccionData);
+                console.log(`Actualizando sección ID: ${seccion.idSeccionServicio}`);
+                alert('Sección actualizada exitosamente');
             } else {
-                await axios.post('http://localhost:8080/seccionesServicio', seccionData);
-                console.log('Creando nueva seccion');
-                alert('Seccion creada exitosamente');
+                await seccionesService.create(seccionData);
+                console.log('Creando nueva sección');
+                alert('Sección creada exitosamente');
             }
 
             onActualizar();
             onVolver();
 
         } catch (err) {
-            setError(err.response?.data?.message || `Error al ${modoEdicion ? 'actualizar' : 'crear'} la seccion`);
+            setError(err.message);
             console.error('Error:', err);
         } finally {
             setSaving(false);
@@ -463,14 +446,14 @@ function CrearEditarSeccion({ seccion, servicios, modoEdicion, onVolver, onActua
         <div className='absolute inset-0 bg-opacity-30 backdrop-blur-sm flex justify-center items-center'>
             <div className='bg-white p-6 rounded-lg flex flex-col justify-center items-center gap-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto'>
                 <div className='text-3xl font-bold text-gray-800 text-center'>
-                    {modoEdicion ? 'Editar Seccion' : 'Crear Nuevo Seccion'}
+                    {modoEdicion ? 'Editar Sección' : 'Crear Nueva Sección'}
                 </div>
 
                 {modoEdicion && (
                     <div className='p-4 text-center bg-orange-50 border border-orange-200 rounded-lg w-full'>
                         <div className='flex items-center justify-center gap-2 mb-2'>
                             <Edit size={16} className="text-orange-600" />
-                            <span className='font-semibold text-orange-800'>Modificando seccion existente</span>
+                            <span className='font-semibold text-orange-800'>Modificando sección existente</span>
                         </div>
                         <div className='text-gray-700'>
                             <div><span className='font-medium'>ID:</span> {seccion.idSeccionServicio}</div>
@@ -479,17 +462,18 @@ function CrearEditarSeccion({ seccion, servicios, modoEdicion, onVolver, onActua
                 )}
 
                 <div className='w-full grid grid-cols-1 gap-6'>
-                    {/* Nombre de la Seccion */}
+                    {/* Nombre de la Sección */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Nombre de la Seccion *
+                            Nombre de la Sección *
                         </label>
                         <input
                             type="text"
                             value={formData.nombre}
                             onChange={(e) => handleInputChange('nombre', e.target.value)}
                             className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="Ingrese el nombre de la seccion"
+                            placeholder="Ingrese el nombre de la sección"
+                            disabled={saving}
                         />
                     </div>
 
@@ -502,6 +486,7 @@ function CrearEditarSeccion({ seccion, servicios, modoEdicion, onVolver, onActua
                             value={formData.idServicio}
                             onChange={(e) => handleInputChange('idServicio', e.target.value)}
                             className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            disabled={saving}
                         >
                             <option value="">Seleccionar servicio</option>
                             {servicios.map(servicio => (
@@ -521,6 +506,7 @@ function CrearEditarSeccion({ seccion, servicios, modoEdicion, onVolver, onActua
                             value={formData.estado}
                             onChange={(e) => handleInputChange('estado', e.target.value === 'true')}
                             className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            disabled={saving}
                         >
                             <option value={true}>Activo</option>
                             <option value={false}>Inactivo</option>
@@ -547,7 +533,8 @@ function CrearEditarSeccion({ seccion, servicios, modoEdicion, onVolver, onActua
                     </button>
                     <button
                         onClick={onVolver}
-                        className="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+                        disabled={saving}
+                        className="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors disabled:opacity-50"
                     >
                         Cancelar
                     </button>
@@ -557,21 +544,8 @@ function CrearEditarSeccion({ seccion, servicios, modoEdicion, onVolver, onActua
     );
 }
 
-// Componente para Ver Seccion
-function VerSeccion({ seccion, onVolver }) {
-    const getServicioInfo = () => {
-        if (seccion.idServicio) {
-            return {
-                id: seccion.idServicio,
-                nombre: seccion.nombreServicio
-            };
-        }
-        return {
-            id: 'No asignado',
-            nombre: 'Sin servicio'
-        };
-    };
-
+// Componente para Ver Sección
+function VerSeccion({ seccion, servicios, onVolver }) {
     const getEstadoTexto = (estado) => {
         return estado ? 'Activo' : 'Inactivo';
     };
@@ -581,8 +555,9 @@ function VerSeccion({ seccion, onVolver }) {
             ? 'text-green-600 bg-green-50 px-3 py-1 rounded-full text-sm font-medium'
             : 'text-red-600 bg-red-50 px-3 py-1 rounded-full text-sm font-medium';
     };
-    const servicioInfo = getServicioInfo();
 
+    // Usar utilidad para obtener información del servicio
+    const servicioInfo = seccionUtils.getServicioInfo(seccion, servicios);
 
     return (
         <div className='absolute inset-0 bg-opacity-30 backdrop-blur-sm flex justify-center items-center'>
@@ -590,10 +565,10 @@ function VerSeccion({ seccion, onVolver }) {
 
                 {/* Header */}
                 <div className='text-center border-b pb-4'>
-                    <h1 className='text-2xl font-bold text-gray-800 mb-2'>Información de la Seccion</h1>
+                    <h1 className='text-2xl font-bold text-gray-800 mb-2'>Información de la Sección</h1>
                 </div>
 
-                {/* Información Principal de la seccion*/}
+                {/* Información Principal de la sección */}
                 <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
 
                     {/* Columna Izquierda */}

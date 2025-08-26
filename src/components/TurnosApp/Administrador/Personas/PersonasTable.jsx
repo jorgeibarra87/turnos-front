@@ -1,7 +1,7 @@
 import React from 'react';
 import { Eye, Edit, Trash2, CopyPlus, Users, Settings, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import axios from 'axios';
+import { personasService } from '../../Services/apiPersonasService';
 
 export default function PersonasTable() {
     const [personas, setPersonas] = useState([]);
@@ -22,19 +22,13 @@ export default function PersonasTable() {
         try {
             setLoading(true);
             setError(null);
-            // llamada a la API
-            const result = await axios.get("http://localhost:8080/persona");
-            console.log('Personas cargadas:', result.data);
-            let personasData = [];
-            if (Array.isArray(result.data)) {
-                personasData = result.data;
-            } else {
-                personasData = result.data.personas || [];
-            }
-            setPersonas(personasData);
+
+            const personasData = await personasService.getAll();
+            console.log('Personas cargadas:', personasData);
+            setPersonas(Array.isArray(personasData) ? personasData : []);
         } catch (err) {
             console.error('Error al cargar personas:', err);
-            setError('Error al cargar los personas');
+            setError(err.message);
             setPersonas([]);
         } finally {
             setLoading(false);
@@ -45,24 +39,15 @@ export default function PersonasTable() {
     const handleDelete = async (id, nombrePersona) => {
         if (window.confirm(`¿Estás seguro de que quieres eliminar la persona "${nombrePersona}"?`)) {
             try {
-                const response = await axios.delete(`http://localhost:8080/persona/${id}`);
-
-                // eliminación exitosa
+                await personasService.delete(id);
                 console.log(`Eliminando persona con ID: ${id}`);
 
                 // Actualizar la lista local
                 setPersonas(prev => prev.filter(p => p.idPersona !== id));
                 alert('Persona eliminada exitosamente');
             } catch (error) {
-                console.error('Error al eliminar el persona:', error.response?.data || error.message);
-                // Manejar diferentes tipos de errores
-                if (error.response?.status === 409) {
-                    alert('No se puede eliminar la persona porque tiene dependencias asociadas');
-                } else if (error.response?.status === 404) {
-                    alert('La persona no fue encontrado');
-                } else {
-                    alert('Error al eliminar la persona');
-                }
+                console.error('Error al eliminar la persona:', error);
+                alert(error.message);
             }
         }
     };
@@ -94,6 +79,7 @@ export default function PersonasTable() {
         setPersonaSeleccionada(null);
         setModoEdicion(false);
     };
+
     // Función para obtener el estado en texto
     const getEstadoTexto = (estado) => {
         return estado ? 'Activo' : 'Inactivo';
@@ -139,7 +125,6 @@ export default function PersonasTable() {
             />
         );
     }
-
 
     // Lógica de paginación
     const totalPages = Math.ceil(personas.length / itemsPerPage);
@@ -196,6 +181,7 @@ export default function PersonasTable() {
 
         return rangeWithDots;
     };
+
     return (
         <div className="m-8 p-6 bg-white shadow rounded">
             <div className='m-10 text-5xl text-center font-bold'>Ver Todas las Personas:</div>
@@ -432,11 +418,11 @@ function CrearEditarPersona({ persona, modoEdicion, onVolver, onActualizar }) {
             console.log('Datos a enviar:', personaData);
 
             if (modoEdicion) {
-                await axios.put(`http://localhost:8080/persona/${persona.idPersona}`, personaData);
+                await personasService.update(persona.idPersona, personaData);
                 console.log(`Actualizando persona ID: ${persona.idPersona}`);
-                alert('Persona actualizado exitosamente');
+                alert('Persona actualizada exitosamente');
             } else {
-                await axios.post('http://localhost:8080/persona', personaData);
+                await personasService.create(personaData);
                 console.log('Creando nueva persona');
                 alert('Persona creada exitosamente');
             }
@@ -445,7 +431,7 @@ function CrearEditarPersona({ persona, modoEdicion, onVolver, onActualizar }) {
             onVolver();
 
         } catch (err) {
-            setError(err.response?.data?.message || `Error al ${modoEdicion ? 'actualizar' : 'crear'} la persona`);
+            setError(err.message);
             console.error('Error:', err);
         } finally {
             setSaving(false);
@@ -483,6 +469,7 @@ function CrearEditarPersona({ persona, modoEdicion, onVolver, onActualizar }) {
                             onChange={(e) => handleInputChange('nombre', e.target.value)}
                             className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                             placeholder="Ingrese el nombre de la persona"
+                            disabled={saving}
                         />
                     </div>
                     {/* Documento */}
@@ -496,6 +483,7 @@ function CrearEditarPersona({ persona, modoEdicion, onVolver, onActualizar }) {
                             onChange={(e) => handleInputChange('documento', e.target.value)}
                             className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                             placeholder="Ingrese el documento de la persona"
+                            disabled={saving}
                         />
                     </div>
                     {/* Email */}
@@ -504,11 +492,12 @@ function CrearEditarPersona({ persona, modoEdicion, onVolver, onActualizar }) {
                             Email de la Persona
                         </label>
                         <input
-                            type="text"
+                            type="email"
                             value={formData.email}
                             onChange={(e) => handleInputChange('email', e.target.value)}
                             className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                             placeholder="Ingrese el email de la persona"
+                            disabled={saving}
                         />
                     </div>
                     {/* Fecha Nacimiento */}
@@ -517,11 +506,11 @@ function CrearEditarPersona({ persona, modoEdicion, onVolver, onActualizar }) {
                             Fecha Nacimiento de la Persona
                         </label>
                         <input
-                            type="text"
+                            type="date"
                             value={formData.fechaNacimiento}
                             onChange={(e) => handleInputChange('fechaNacimiento', e.target.value)}
                             className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="Ingrese la fecha nacimiento de la persona"
+                            disabled={saving}
                         />
                     </div>
                     {/* Telefono */}
@@ -530,15 +519,14 @@ function CrearEditarPersona({ persona, modoEdicion, onVolver, onActualizar }) {
                             Telefono de la Persona
                         </label>
                         <input
-                            type="text"
+                            type="tel"
                             value={formData.telefono}
                             onChange={(e) => handleInputChange('telefono', e.target.value)}
                             className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                             placeholder="Ingrese el telefono de la persona"
+                            disabled={saving}
                         />
                     </div>
-
-
 
                     {/* Estado */}
                     <div>
@@ -549,6 +537,7 @@ function CrearEditarPersona({ persona, modoEdicion, onVolver, onActualizar }) {
                             value={formData.estado}
                             onChange={(e) => handleInputChange('estado', e.target.value === 'true')}
                             className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            disabled={saving}
                         >
                             <option value={true}>Activo</option>
                             <option value={false}>Inactivo</option>
@@ -575,7 +564,8 @@ function CrearEditarPersona({ persona, modoEdicion, onVolver, onActualizar }) {
                     </button>
                     <button
                         onClick={onVolver}
-                        className="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+                        disabled={saving}
+                        className="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-red-600 transition-colors disabled:opacity-50"
                     >
                         Cancelar
                     </button>
@@ -651,7 +641,6 @@ function VerPersona({ persona, onVolver }) {
 
                     </div>
                 </div>
-
 
                 {/* Botón de volver */}
                 <div className='flex justify-center gap-4 pt-4 border-t'>

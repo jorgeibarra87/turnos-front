@@ -2,6 +2,12 @@ import React from 'react';
 import { Eye, Edit, Trash2, CopyPlus, Users, Settings, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
+import {
+    subseccionesService,
+    seccionesService,
+    subseccionesValidation,
+    subseccionesUtils
+} from '../../Services/apiSubseccionesService';
 
 export default function SubseccionesTable() {
     const [subsecciones, setSubsecciones] = useState([]);
@@ -24,6 +30,20 @@ export default function SubseccionesTable() {
         try {
             setLoading(true);
             setError(null);
+            const data = await apiSubseccionesService.getAll();
+            setSubsecciones(data);
+        } catch (err) {
+            setError('Error al cargar las subsecciones');
+            setSubsecciones([]);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    /* const loadSubsecciones = async () => {
+        try {
+            setLoading(true);
+            setError(null);
             // llamada a la API
             const result = await axios.get("http://localhost:8080/subseccionesServicio");
             console.log('Subsecciones cargadas:', result.data);
@@ -41,9 +61,19 @@ export default function SubseccionesTable() {
         } finally {
             setLoading(false);
         }
-    };
+    }; */
 
     const loadSecciones = async () => {
+        try {
+            const data = await apiSeccionesService.getAll();
+            setSecciones(data);
+        } catch (err) {
+            setSecciones([]);
+        }
+    };
+
+
+    /* const loadSecciones = async () => {
         try {
             //llamada a la API
             const result = await axios.get("http://localhost:8080/seccionesServicio");
@@ -54,10 +84,21 @@ export default function SubseccionesTable() {
             console.warn('Error al cargar secciones:', err);
             setSecciones([]);
         }
-    };
+    }; */
 
     // Función para manejar la eliminación
     const handleDelete = async (id, nombre) => {
+        if (window.confirm(`¿Estás seguro de que quieres eliminar la subseccion "${nombre}"?`)) {
+            try {
+                await apiSubseccionesService.delete(id);
+                setSubsecciones(prev => prev.filter(p => p.idSubseccionServicio !== id));
+                alert('subseccion eliminada exitosamente');
+            } catch (error) {
+                // ...manejo de error igual al actual
+            }
+        }
+    };
+    /* const handleDelete = async (id, nombre) => {
         if (window.confirm(`¿Estás seguro de que quieres eliminar la subseccion "${nombre}"?`)) {
             try {
                 const response = await axios.delete(`http://localhost:8080/subseccionesServicio/${id}`);
@@ -80,7 +121,7 @@ export default function SubseccionesTable() {
                 }
             }
         }
-    };
+    }; */
 
     // Función para manejar ver subseccion
     const handleVerSubseccion = (subseccion) => {

@@ -1,7 +1,13 @@
 import React from 'react';
 import { Eye, Edit, Trash2, CopyPlus, Users, Settings, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import axios from 'axios';
+import {
+    serviciosService,
+    bloquesServicioService,
+    procesosService,
+    serviciosUtils,
+    serviciosValidation
+} from '../../Services/apiServiciosService';
 
 export default function ServiciosTable() {
     const [servicios, setServicios] = useState([]);
@@ -26,19 +32,13 @@ export default function ServiciosTable() {
         try {
             setLoading(true);
             setError(null);
-            // llamada a la API
-            const result = await axios.get("http://localhost:8080/servicio");
-            console.log('Servicios cargados:', result.data);
-            let serviciosData = [];
-            if (Array.isArray(result.data)) {
-                serviciosData = result.data;
-            } else {
-                serviciosData = result.data.servicios || [];
-            }
-            setServicios(serviciosData);
+
+            const serviciosData = await serviciosService.getAll();
+            console.log('Servicios cargados:', serviciosData);
+            setServicios(Array.isArray(serviciosData) ? serviciosData : []);
         } catch (err) {
             console.error('Error al cargar servicios:', err);
-            setError('Error al cargar los servicios');
+            setError(err.message);
             setServicios([]);
         } finally {
             setLoading(false);
@@ -47,11 +47,9 @@ export default function ServiciosTable() {
 
     const loadBloques = async () => {
         try {
-            //llamada a la API
-            const result = await axios.get("http://localhost:8080/bloqueServicio");
-
-
-            setBloques(result.data || []);
+            const bloquesData = await bloquesServicioService.getAll();
+            console.log('Bloques cargados:', bloquesData);
+            setBloques(Array.isArray(bloquesData) ? bloquesData : []);
         } catch (err) {
             console.warn('Error al cargar bloques:', err);
             setBloques([]);
@@ -60,11 +58,9 @@ export default function ServiciosTable() {
 
     const loadProcesos = async () => {
         try {
-            //llamada a la API
-            const result = await axios.get("http://localhost:8080/procesos");
-
-
-            setProcesos(result.data || []);
+            const procesosData = await procesosService.getAll();
+            console.log('Procesos cargados:', procesosData);
+            setProcesos(Array.isArray(procesosData) ? procesosData : []);
         } catch (err) {
             console.warn('Error al cargar procesos:', err);
             setProcesos([]);
@@ -75,24 +71,15 @@ export default function ServiciosTable() {
     const handleDelete = async (id, nombreServicio) => {
         if (window.confirm(`¿Estás seguro de que quieres eliminar el servicio "${nombreServicio}"?`)) {
             try {
-                const response = await axios.delete(`http://localhost:8080/servicio/${id}`);
-
-                // eliminación exitosa
+                await serviciosService.delete(id);
                 console.log(`Eliminando servicio con ID: ${id}`);
 
                 // Actualizar la lista local
                 setServicios(prev => prev.filter(p => p.idServicio !== id));
                 alert('Servicio eliminado exitosamente');
             } catch (error) {
-                console.error('Error al eliminar el servicio:', error.response?.data || error.message);
-                // Manejar diferentes tipos de errores
-                if (error.response?.status === 409) {
-                    alert('No se puede eliminar el servicio porque tiene dependencias asociadas');
-                } else if (error.response?.status === 404) {
-                    alert('El servicio no fue encontrado');
-                } else {
-                    alert('Error al eliminar el servicio');
-                }
+                console.error('Error al eliminar el servicio:', error);
+                alert(error.message);
             }
         }
     };
@@ -125,20 +112,14 @@ export default function ServiciosTable() {
         setModoEdicion(false);
     };
 
-    // Función para obtener el nombre del bloque
+    // Función para obtener el nombre del bloque usando utilidades
     const getBloqueNombre = (servicio) => {
-        if (servicio.nombreBloqueServicio) {
-            return servicio.nombreBloqueServicio;
-        }
-        return 'Sin bloque';
+        return serviciosUtils.getBloqueNombre(servicio, bloques);
     };
 
-    // Función para obtener el nombre del proceso
+    // Función para obtener el nombre del proceso usando utilidades
     const getProcesoNombre = (servicio) => {
-        if (servicio.nombreProceso) {
-            return servicio.nombreProceso;
-        }
-        return 'Sin proceso';
+        return serviciosUtils.getProcesoNombre(servicio, procesos);
     };
 
     // Función para obtener el estado en texto
@@ -184,11 +165,12 @@ export default function ServiciosTable() {
         return (
             <VerServicio
                 servicio={servicioSeleccionado}
+                bloques={bloques}
+                procesos={procesos}
                 onVolver={handleCerrarFormularios}
             />
         );
     }
-
 
     // Lógica de paginación
     const totalPages = Math.ceil(servicios.length / itemsPerPage);
@@ -245,6 +227,7 @@ export default function ServiciosTable() {
 
         return rangeWithDots;
     };
+
     return (
         <div className="m-8 p-6 bg-white shadow rounded">
             <div className='m-10 text-5xl text-center font-bold'>Ver Todos los Servicios:</div>
@@ -290,7 +273,7 @@ export default function ServiciosTable() {
                     <tr>
                         <th className="p-3">ID</th>
                         <th className="p-3">Nombre</th>
-                        <th className="p-3">bloque</th>
+                        <th className="p-3">Bloque</th>
                         <th className="p-3">Estado</th>
                         <th className="p-3">Proceso</th>
                         <th className="p-3 flex items-center justify-centers gap-2">
@@ -433,9 +416,9 @@ export default function ServiciosTable() {
 function CrearEditarServicio({ servicio, bloques, procesos, modoEdicion, onVolver, onActualizar }) {
     const [formData, setFormData] = useState({
         nombre: servicio?.nombre || '',
-        idBloqueServicio: servicio?.bloques?.idBloqueServicio || '',
+        idBloqueServicio: servicio?.idBloqueServicio || '',
         estado: servicio?.estado ?? true,
-        idProceso: servicio?.procesos?.idProceso || '',
+        idProceso: servicio?.idProceso || '',
     });
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
@@ -457,21 +440,28 @@ function CrearEditarServicio({ servicio, bloques, procesos, modoEdicion, onVolve
             setSaving(true);
             setError('');
 
-            const servicioData = {
+            const servicioData = serviciosValidation.cleanServicioData({
                 nombre: formData.nombre,
                 idBloqueServicio: formData.idBloqueServicio || null,
                 estado: formData.estado,
                 idProceso: formData.idProceso || null
-            };
+            });
+
+            // Validar datos
+            const validation = serviciosValidation.validateServicioData(servicioData);
+            if (!validation.isValid) {
+                setError(validation.errors.join(', '));
+                return;
+            }
 
             console.log('Datos a enviar:', servicioData);
 
             if (modoEdicion) {
-                await axios.put(`http://localhost:8080/servicio/${servicio.idServicio}`, servicioData);
+                await serviciosService.update(servicio.idServicio, servicioData);
                 console.log(`Actualizando servicio ID: ${servicio.idServicio}`);
                 alert('Servicio actualizado exitosamente');
             } else {
-                await axios.post('http://localhost:8080/servicio', servicioData);
+                await serviciosService.create(servicioData);
                 console.log('Creando nuevo servicio');
                 alert('Servicio creado exitosamente');
             }
@@ -480,7 +470,7 @@ function CrearEditarServicio({ servicio, bloques, procesos, modoEdicion, onVolve
             onVolver();
 
         } catch (err) {
-            setError(err.response?.data?.message || `Error al ${modoEdicion ? 'actualizar' : 'crear'} el servicio`);
+            setError(err.message);
             console.error('Error:', err);
         } finally {
             setSaving(false);
@@ -518,24 +508,25 @@ function CrearEditarServicio({ servicio, bloques, procesos, modoEdicion, onVolve
                             onChange={(e) => handleInputChange('nombre', e.target.value)}
                             className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                             placeholder="Ingrese el nombre del servicio"
+                            disabled={saving}
                         />
                     </div>
 
-                    {/* bloque */}
+                    {/* Bloque */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                            bloque
+                            Bloque
                         </label>
                         <select
                             value={formData.idBloqueServicio}
                             onChange={(e) => handleInputChange('idBloqueServicio', e.target.value)}
                             className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            disabled={saving}
                         >
                             <option value="">Seleccionar bloque</option>
                             {bloques.map(bloque => (
-                                <option key={bloque.id} value={bloque.id}>
-                                    {bloque.nombre
-                                    }
+                                <option key={bloque.idBloqueServicio || bloque.id} value={bloque.idBloqueServicio || bloque.id}>
+                                    {bloque.nombre}
                                 </option>
                             ))}
                         </select>
@@ -550,13 +541,14 @@ function CrearEditarServicio({ servicio, bloques, procesos, modoEdicion, onVolve
                             value={formData.estado}
                             onChange={(e) => handleInputChange('estado', e.target.value === 'true')}
                             className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            disabled={saving}
                         >
                             <option value={true}>Activo</option>
                             <option value={false}>Inactivo</option>
                         </select>
                     </div>
 
-                    {/* Proceso*/}
+                    {/* Proceso */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                             Proceso
@@ -565,12 +557,12 @@ function CrearEditarServicio({ servicio, bloques, procesos, modoEdicion, onVolve
                             value={formData.idProceso}
                             onChange={(e) => handleInputChange('idProceso', e.target.value)}
                             className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            disabled={saving}
                         >
                             <option value="">Seleccionar proceso</option>
                             {procesos.map(proceso => (
-                                <option key={proceso.id} value={proceso.id}>
-                                    {proceso.nombre
-                                    }
+                                <option key={proceso.idProceso || proceso.id} value={proceso.idProceso || proceso.id}>
+                                    {proceso.nombre}
                                 </option>
                             ))}
                         </select>
@@ -596,7 +588,8 @@ function CrearEditarServicio({ servicio, bloques, procesos, modoEdicion, onVolve
                     </button>
                     <button
                         onClick={onVolver}
-                        className="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+                        disabled={saving}
+                        className="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors disabled:opacity-50"
                     >
                         Cancelar
                     </button>
@@ -607,37 +600,7 @@ function CrearEditarServicio({ servicio, bloques, procesos, modoEdicion, onVolve
 }
 
 // Componente para Ver Servicio
-function VerServicio({ servicio, onVolver }) {
-    const getbloqueInfo = () => {
-        if (servicio.idBloqueServicio
-        ) {
-            return {
-                id: servicio.idBloqueServicio,
-                nombre: servicio.nombreBloqueServicio
-
-            };
-        }
-        return {
-            id: 'No asignado',
-            nombre: 'Sin bloque'
-        };
-    };
-
-    const getprocesoInfo = () => {
-        if (servicio.idProceso
-        ) {
-            return {
-                id: servicio.idProceso,
-                nombre: servicio.nombreProceso
-
-            };
-        }
-        return {
-            id: 'No asignado',
-            nombre: 'Sin proceso'
-        };
-    };
-
+function VerServicio({ servicio, bloques, procesos, onVolver }) {
     const getEstadoTexto = (estado) => {
         return estado ? 'Activo' : 'Inactivo';
     };
@@ -647,9 +610,10 @@ function VerServicio({ servicio, onVolver }) {
             ? 'text-green-600 bg-green-50 px-3 py-1 rounded-full text-sm font-medium'
             : 'text-red-600 bg-red-50 px-3 py-1 rounded-full text-sm font-medium';
     };
-    const bloqueInfo = getbloqueInfo();
-    const procesoInfo = getprocesoInfo();
 
+    // Usar utilidades para obtener información de dependencias
+    const bloqueInfo = serviciosUtils.getBloqueInfo(servicio, bloques);
+    const procesoInfo = serviciosUtils.getProcesoInfo(servicio, procesos);
 
     return (
         <div className='absolute inset-0 bg-opacity-30 backdrop-blur-sm flex justify-center items-center'>
@@ -676,7 +640,7 @@ function VerServicio({ servicio, onVolver }) {
                         </div>
 
                         <div className='flex items-start gap-3 border border-black rounded-xl p-3'>
-                            <div className='w-32 font-semibold text-gray-700 text-sm'>bloque:</div>
+                            <div className='w-32 font-semibold text-gray-700 text-sm'>Bloque:</div>
                             <div className='text-gray-900'>
                                 <div className='font-medium'>{bloqueInfo.nombre}</div>
                                 {bloqueInfo.id !== 'No asignado' && (
@@ -702,7 +666,7 @@ function VerServicio({ servicio, onVolver }) {
                             <div className='w-32 font-semibold text-gray-700 text-sm'>Proceso:</div>
                             <div className='text-gray-900'>
                                 <div className='font-medium'>{procesoInfo.nombre}</div>
-                                {bloqueInfo.id !== 'No asignado' && (
+                                {procesoInfo.id !== 'No asignado' && (
                                     <div className='text-xs text-gray-500 mt-1'>ID: {procesoInfo.id}</div>
                                 )}
                             </div>

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Edit, Trash2, CopyPlus, Users, ChevronLeft, ChevronRight } from "lucide-react";
 import axios from "axios";
+import { personasTitulosService, personasService } from '../../Services/apiPersonasService';
 
 export default function PersonasTitulosTable() {
     const [usuariosTitulos, setUsuariosTitulos] = useState([]);
@@ -10,39 +11,46 @@ export default function PersonasTitulosTable() {
     const [editando, setEditando] = useState(null);
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(10);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
 
     useEffect(() => {
-        loadUsuariosTitulos();
-        loadPersonas();
-        loadTitulos();
+        loadData();
     }, []);
 
-    // Endpoint que usa el mapper UsuariosTituloMapper
-    const loadUsuariosTitulos = async () => {
-        const res = await axios.get("http://localhost:8080/usuario/titulos");
-        setUsuariosTitulos(res.data);
-    };
+    const loadData = async () => {
+        try {
+            setLoading(true);
+            setError(null);
 
-    // Personas (para el select del formulario)
-    const loadPersonas = async () => {
-        const res = await axios.get("http://localhost:8080/persona");
-        setPersonas(res.data);
-    };
+            // Cargar todos los datos en paralelo
+            const [usuariosTitulosData, personasData, titulosData] = await Promise.all([
+                personasTitulosService.getUsuariosTitulos(),
+                personasService.getAll(),
+                personasTitulosService.getTitulos()
+            ]);
 
-    // Títulos académicos (para el select del formulario)
-    const loadTitulos = async () => {
-        const res = await axios.get("http://localhost:8080/titulosFormacionAcademica");
-        setTitulos(res.data);
+            setUsuariosTitulos(usuariosTitulosData);
+            setPersonas(personasData);
+            setTitulos(titulosData);
+        } catch (err) {
+            setError(err.message);
+            console.error('Error loading data:', err);
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleDelete = async (idPersona, idTitulo) => {
         if (window.confirm("¿Eliminar relación?")) {
-            await axios.delete(`http://localhost:8080/usuarios/${idPersona}/titulos/${idTitulo}`);
-            loadUsuariosTitulos();
+            try {
+                await personasTitulosService.removeTituloFromPersona(idPersona, idTitulo);
+                await loadData(); // Recargar datos
+            } catch (err) {
+                setError(err.message);
+            }
         }
     };
-
-
 
     // Lógica de paginación
     const totalPages = Math.ceil(usuariosTitulos.length / itemsPerPage);
@@ -264,17 +272,23 @@ export default function PersonasTitulosTable() {
 function FormularioUsuarioTitulo({ personas, titulos, editando, onClose, onSaved }) {
     const [personaId, setPersonaId] = useState(editando?.idPersona || "");
     const [tituloId, setTituloId] = useState("");
+    const [saving, setSaving] = useState(false);
+    const [error, setError] = useState("");
 
     const handleGuardar = async () => {
-        if (editando) {
-            // Agregar título a persona ya existente
-            await axios.post(`http://localhost:8080/usuario/${personaId}/titulo/${tituloId}`);
-        } else {
-            // Crear nueva relación
-            await axios.post(`http://localhost:8080/usuario/${personaId}/titulo/${tituloId}`);
+        try {
+            setSaving(true);
+            setError("");
+
+            await personasTitulosService.addTituloToPersona(personaId, tituloId);
+
+            onSaved();
+            onClose();
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setSaving(false);
         }
-        onSaved();
-        onClose();
     };
 
     return (

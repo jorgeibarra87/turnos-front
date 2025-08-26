@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Edit, Trash2, CopyPlus, Users, ChevronLeft, ChevronRight } from "lucide-react";
-import axios from "axios";
+import { personasEquiposService, personasService } from '../../Services/apiPersonasService';
 
 export default function PersonasEquiposTable() {
     const [usuariosEquipos, setUsuariosEquipos] = useState([]);
@@ -10,39 +10,48 @@ export default function PersonasEquiposTable() {
     const [editando, setEditando] = useState(null);
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(10);
+    // Estados para manejo de loading y errores
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
 
     useEffect(() => {
-        loadUsuariosEquipos();
-        loadPersonas();
-        loadEquipos();
+        loadData();
     }, []);
 
-    // Endpoint que usa el mapper UsuariosEquipoMapper
-    const loadUsuariosEquipos = async () => {
-        const res = await axios.get("http://localhost:8080/usuario/equipos");
-        setUsuariosEquipos(res.data);
-    };
+    // Función unificada para cargar todos los datos
+    const loadData = async () => {
+        try {
+            setLoading(true);
+            setError(null);
 
-    // Personas (para el select del formulario)
-    const loadPersonas = async () => {
-        const res = await axios.get("http://localhost:8080/persona");
-        setPersonas(res.data);
-    };
+            // Cargar todos los datos en paralelo
+            const [usuariosEquiposData, personasData, equiposData] = await Promise.all([
+                personasEquiposService.getUsuariosEquipos(),
+                personasService.getAll(),
+                personasEquiposService.getEquipos()
+            ]);
 
-    // equipos (para el select del formulario)
-    const loadEquipos = async () => {
-        const res = await axios.get("http://localhost:8080/equipo");
-        setEquipos(res.data);
+            setUsuariosEquipos(usuariosEquiposData);
+            setPersonas(personasData);
+            setEquipos(equiposData);
+        } catch (err) {
+            setError(err.message);
+            console.error('Error loading data:', err);
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleDelete = async (idPersona, idEquipo) => {
         if (window.confirm("¿Eliminar relación?")) {
-            await axios.delete(`http://localhost:8080/usuarios/${idPersona}/equipo/${idEquipo}`);
-            loadUsuariosEquipos();
+            try {
+                await personasEquiposService.removeEquipoFromPersona(idPersona, idEquipo);
+                await loadData(); // Recargar datos
+            } catch (err) {
+                setError(err.message);
+            }
         }
     };
-
-
 
     // Lógica de paginación
     const totalPages = Math.ceil(usuariosEquipos.length / itemsPerPage);
@@ -99,7 +108,19 @@ export default function PersonasEquiposTable() {
 
         return rangeWithDots;
     };
-    /* console.log("usuariosEquipos", usuariosEquipos); */
+
+    // Mostrar loading si está cargando
+    if (loading) {
+        return (
+            <div className="m-8 p-6 bg-white shadow rounded">
+                <div className="text-center py-8">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+                    <p className="text-lg text-gray-500">Cargando datos...</p>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="m-8 p-6 bg-white shadow rounded">
             <div className="flex justify-between items-center mb-4">
@@ -115,6 +136,12 @@ export default function PersonasEquiposTable() {
                 </button>
             </div>
 
+            {/* Mostrar error si existe */}
+            {error && (
+                <div className="mb-4 p-3 bg-red-100 border border-red-300 rounded text-red-700">
+                    {error}
+                </div>
+            )}
 
             {/* Selector de elementos por página */}
             <div className="flex items-center justify-end gap-2 pb-1">
@@ -134,6 +161,7 @@ export default function PersonasEquiposTable() {
                 </select>
                 <span className="text-sm text-gray-600">por página</span>
             </div>
+
             <table className="w-full border-collapse text-sm text-left">
                 <thead className="bg-black text-white">
                     <tr>
@@ -182,12 +210,13 @@ export default function PersonasEquiposTable() {
                     ))}
                 </tbody>
             </table>
+
             {/* Información de paginación y controles */}
-            {personas.length > 0 && (
+            {usuariosEquipos.length > 0 && (
                 <div className="mt-4 flex flex-col sm:flex-row justify-between items-center gap-4">
                     {/* Información de registros */}
                     <div className="text-sm text-gray-600">
-                        Mostrando {startIndex + 1} a {Math.min(endIndex, personas.length)} de {personas.length} registros
+                        Mostrando {startIndex + 1} a {Math.min(endIndex, usuariosEquipos.length)} de {usuariosEquipos.length} registros
                     </div>
 
                     {/* Controles de paginación */}
@@ -238,9 +267,7 @@ export default function PersonasEquiposTable() {
                 </div>
             )}
 
-
-
-            {usuariosEquipos.length === 0 && (
+            {usuariosEquipos.length === 0 && !loading && (
                 <div className="text-center py-6 text-gray-500">
                     <Users size={40} className="mx-auto mb-2" />
                     No hay relaciones registradas
@@ -253,28 +280,34 @@ export default function PersonasEquiposTable() {
                     equipos={equipos}
                     editando={editando}
                     onClose={() => setShowForm(false)}
-                    onSaved={loadUsuariosEquipos}
+                    onSaved={loadData} // Cambiar loadUsuariosEquipos por loadData
                 />
             )}
         </div>
     );
 }
 
-// FORMULARIO
+// FORMULARIO actualizado
 function FormularioUsuarioEquipo({ personas, equipos, editando, onClose, onSaved }) {
     const [personaId, setPersonaId] = useState(editando?.idPersona || "");
     const [equipoId, setEquipoId] = useState("");
+    const [saving, setSaving] = useState(false);
+    const [error, setError] = useState("");
 
     const handleGuardar = async () => {
-        if (editando) {
-            // Agregar título a persona ya existente
-            await axios.post(`http://localhost:8080/usuario/${personaId}/equipo/${equipoId}`);
-        } else {
-            // Crear nueva relación
-            await axios.post(`http://localhost:8080/usuario/${personaId}/equipo/${equipoId}`);
+        try {
+            setSaving(true);
+            setError("");
+
+            await personasEquiposService.addEquipoToPersona(personaId, equipoId);
+
+            onSaved();
+            onClose();
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setSaving(false);
         }
-        onSaved();
-        onClose();
     };
 
     return (
@@ -284,12 +317,19 @@ function FormularioUsuarioEquipo({ personas, equipos, editando, onClose, onSaved
                     {editando ? "Editar Relación" : "Nueva Relación"}
                 </h2>
 
+                {error && (
+                    <div className="mb-4 p-3 bg-red-100 border border-red-300 rounded text-red-700 text-sm">
+                        {error}
+                    </div>
+                )}
+
                 <div className="mb-4">
                     <label className="block text-sm mb-1">Persona</label>
                     <select
                         value={personaId}
                         onChange={(e) => setPersonaId(e.target.value)}
                         className="w-full border px-2 py-1 rounded"
+                        disabled={saving}
                     >
                         <option value="">Seleccione persona</option>
                         {personas.map((p) => (
@@ -306,6 +346,7 @@ function FormularioUsuarioEquipo({ personas, equipos, editando, onClose, onSaved
                         value={equipoId}
                         onChange={(e) => setEquipoId(e.target.value)}
                         className="w-full border px-2 py-1 rounded"
+                        disabled={saving}
                     >
                         <option value="">Seleccione equipo</option>
                         {equipos.map((t) => (
@@ -317,15 +358,19 @@ function FormularioUsuarioEquipo({ personas, equipos, editando, onClose, onSaved
                 </div>
 
                 <div className="flex justify-end gap-2">
-                    <button onClick={onClose} className="px-3 py-1 bg-gray-500 hover:bg-red-600 text-white rounded">
+                    <button
+                        onClick={onClose}
+                        disabled={saving}
+                        className="px-3 py-1 bg-gray-500 hover:bg-red-600 text-white rounded disabled:opacity-50"
+                    >
                         Cancelar
                     </button>
                     <button
                         onClick={handleGuardar}
-                        disabled={!personaId || !equipoId}
-                        className="px-3 py-1 bg-blue-500 text-white rounded"
+                        disabled={!personaId || !equipoId || saving}
+                        className="px-3 py-1 bg-blue-500 text-white rounded disabled:opacity-50"
                     >
-                        Guardar
+                        {saving ? 'Guardando...' : 'Guardar'}
                     </button>
                 </div>
             </div>
