@@ -1,11 +1,10 @@
-// apiCuadroService.js
 import axios from 'axios';
 
 // Usar la misma configuración base
 const API_BASE_URL = import.meta.env.REACT_APP_API_BASE_URL || 'http://localhost:8080';
 const API_TIMEOUT = parseInt(import.meta.env.REACT_APP_API_TIMEOUT || '10000', 10);
 
-// Crear instancia de axios (reutilizar la configuración existente si existe)
+// Crear instancia de axios
 const apiClient = axios.create({
     baseURL: API_BASE_URL,
     timeout: API_TIMEOUT,
@@ -14,7 +13,7 @@ const apiClient = axios.create({
     }
 });
 
-// Interceptores para manejar tokens y errores globales
+// Interceptores para manejar tokens y errores
 apiClient.interceptors.request.use(
     (config) => {
         const token = localStorage.getItem('authToken');
@@ -46,7 +45,7 @@ export const apiCuadroService = {
             return Array.isArray(response.data) ? response.data : response.data.cuadros || [];
         },
 
-        // Obtener cuadros abiertos (filtrado en frontend por ahora)
+        // Obtener cuadros abiertos
         getCuadrosAbiertos: async () => {
             const response = await apiClient.get('/cuadro-turnos');
             const allCuadros = Array.isArray(response.data) ? response.data : response.data.cuadros || [];
@@ -154,7 +153,7 @@ export const apiCuadroService = {
             return response.data || [];
         },
 
-        // Obtener datos por categoría (método unificado)
+        // Obtener datos por categoría
         getDataByCategoria: async (categoria) => {
             const endpoints = {
                 'Macroproceso': '/macroprocesos',

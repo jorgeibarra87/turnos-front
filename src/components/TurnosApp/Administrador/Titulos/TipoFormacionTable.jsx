@@ -1,7 +1,11 @@
 import React from 'react';
 import { Eye, Edit, Trash2, CopyPlus, Users, Settings, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import axios from 'axios';
+import {
+    tiposFormacionService,
+    tiposFormacionValidation,
+    tiposFormacionUtils
+} from '../../Services/apiTitulosService';
 
 export default function TipoFormacionTable() {
     const [tipoformacion, setTipoFormacion] = useState([]);
@@ -22,19 +26,12 @@ export default function TipoFormacionTable() {
         try {
             setLoading(true);
             setError(null);
-            // llamada a la API
-            const result = await axios.get("http://localhost:8080/tipoFormacionAcademica");
-            console.log('TipoFormacion cargadas:', result.data);
-            let tipoformacionData = [];
-            if (Array.isArray(result.data)) {
-                tipoformacionData = result.data;
-            } else {
-                tipoformacionData = result.data.tipoformacion || [];
-            }
-            setTipoFormacion(tipoformacionData);
+            const data = await tiposFormacionService.getAll();
+            console.log('Tipos de formación cargados:', data);
+            setTipoFormacion(data);
         } catch (err) {
-            console.error('Error al cargar tipoformacion:', err);
-            setError('Error al cargar los tipoformacion');
+            console.error('Error al cargar tipos de formación:', err);
+            setError(err.message || 'Error al cargar los tipos de formación');
             setTipoFormacion([]);
         } finally {
             setLoading(false);
@@ -43,44 +40,33 @@ export default function TipoFormacionTable() {
 
     // Función para manejar la eliminación
     const handleDelete = async (id, tipo) => {
-        if (window.confirm(`¿Estás seguro de que quieres eliminar la tipoformacion "${tipo}"?`)) {
+        if (window.confirm(`¿Estás seguro de que quieres eliminar el tipo de formación "${tipo}"?`)) {
             try {
-                const response = await axios.delete(`http://localhost:8080/tipoFormacionAcademica/${id}`);
-
-                // eliminación exitosa
-                console.log(`Eliminando tipoformacion con ID: ${id}`);
-
-                // Actualizar la lista local
+                await tiposFormacionService.delete(id);
+                console.log(`Eliminando tipo de formación con ID: ${id}`);
                 setTipoFormacion(prev => prev.filter(p => p.idTipoFormacionAcademica !== id));
-                alert('TipoFormacion eliminada exitosamente');
+                alert('Tipo de formación eliminado exitosamente');
             } catch (error) {
-                console.error('Error al eliminar el tipoformacion:', error.response?.data || error.message);
-                // Manejar diferentes tipos de errores
-                if (error.response?.status === 409) {
-                    alert('No se puede eliminar la tipoformacion porque tiene dependencias asociadas');
-                } else if (error.response?.status === 404) {
-                    alert('La tipoformacion no fue encontrado');
-                } else {
-                    alert('Error al eliminar la tipoformacion');
-                }
+                console.error('Error al eliminar el tipo de formación:', error);
+                alert(error.message || 'Error al eliminar el tipo de formación');
             }
         }
     };
 
-    // Función para manejar ver tipoformacion
+    // Función para manejar ver tipo de formación
     const handleVerTipoFormacion = (tipoformacion) => {
         setTipoFormacionSeleccionada(tipoformacion);
         setShowVerTipoFormacion(true);
     };
 
-    // Función para manejar editar tipoformacion
+    // Función para manejar editar tipo de formación
     const handleEditarTipoFormacion = (tipoformacion) => {
         setTipoFormacionSeleccionada(tipoformacion);
         setModoEdicion(true);
         setShowCrearTipoFormacion(true);
     };
 
-    // Función para crear nuevo tipoformacion
+    // Función para crear nuevo tipo de formación
     const handleNuevoTipoFormacion = () => {
         setTipoFormacionSeleccionada(null);
         setModoEdicion(false);
@@ -94,6 +80,7 @@ export default function TipoFormacionTable() {
         setTipoFormacionSeleccionada(null);
         setModoEdicion(false);
     };
+
     // Función para obtener el estado en texto
     const getEstadoTexto = (estado) => {
         return estado ? 'Activo' : 'Inactivo';
@@ -109,16 +96,16 @@ export default function TipoFormacionTable() {
     if (loading) {
         return (
             <div className="m-8 p-6 bg-white shadow rounded">
-                <div className='m-10 text-5xl text-center font-bold'>Ver Todos los Tipos de Formacion:</div>
+                <div className='m-10 text-5xl text-center font-bold'>Ver Todos los Tipos de Formación:</div>
                 <div className="text-center py-8">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-                    <p className="text-lg text-gray-500">Cargando tipos de formacion...</p>
+                    <p className="text-lg text-gray-500">Cargando tipos de formación...</p>
                 </div>
             </div>
         );
     }
 
-    // Mostrar componente de crear/editar tipoformacion
+    // Mostrar componente de crear/editar tipo de formación
     if (showCrearTipoFormacion) {
         return (
             <CrearEditarTipoFormacion
@@ -130,7 +117,7 @@ export default function TipoFormacionTable() {
         );
     }
 
-    // Mostrar componente de ver tipoformacion
+    // Mostrar componente de ver tipo de formación
     if (showVerTipoFormacion && tipoformacionSeleccionada) {
         return (
             <VerTipoFormacion
@@ -139,7 +126,6 @@ export default function TipoFormacionTable() {
             />
         );
     }
-
 
     // Lógica de paginación
     const totalPages = Math.ceil(tipoformacion.length / itemsPerPage);
@@ -166,28 +152,24 @@ export default function TipoFormacionTable() {
 
     // Función para generar números de página visibles
     const getVisiblePageNumbers = () => {
-        const delta = 2; // Número de páginas a mostrar a cada lado de la página actual
+        const delta = 2;
         const range = [];
         const rangeWithDots = [];
 
-        // Calcular el rango de páginas a mostrar
         for (let i = Math.max(2, currentPage - delta);
             i <= Math.min(totalPages - 1, currentPage + delta);
             i++) {
             range.push(i);
         }
 
-        // Agregar primera página
         if (currentPage - delta > 2) {
             rangeWithDots.push(1, '...');
         } else {
             rangeWithDots.push(1);
         }
 
-        // Agregar páginas del rango
         rangeWithDots.push(...range);
 
-        // Agregar última página
         if (currentPage + delta < totalPages - 1) {
             rangeWithDots.push('...', totalPages);
         } else if (totalPages > 1) {
@@ -196,17 +178,18 @@ export default function TipoFormacionTable() {
 
         return rangeWithDots;
     };
+
     return (
         <div className="m-8 p-6 bg-white shadow rounded">
             <div className='m-10 text-5xl text-center font-bold'>Ver Todos los Tipos de Formación:</div>
 
-            {/* Botón para crear nueva tipoformacion */}
+            {/* Botón para crear nuevo tipo de formación */}
             <button
                 onClick={handleNuevoTipoFormacion}
                 className="mb-1 px-4 py-2 bg-green-500 text-white rounded-2xl hover:bg-green-600 flex items-center gap-2"
             >
                 <CopyPlus size={22} color="white" strokeWidth={2} />
-                Crear Tipo Formacion
+                Crear Tipo Formación
             </button>
 
             {/* Mostrar error si existe */}
@@ -223,7 +206,7 @@ export default function TipoFormacionTable() {
                     value={itemsPerPage}
                     onChange={(e) => {
                         setItemsPerPage(Number(e.target.value));
-                        setCurrentPage(1); // Resetear a primera página
+                        setCurrentPage(1);
                     }}
                     className="border border-gray-300 rounded px-2 py-1 text-sm"
                 >
@@ -235,7 +218,7 @@ export default function TipoFormacionTable() {
                 <span className="text-sm text-gray-600">por página</span>
             </div>
 
-            {/* Tabla de tipoformacion */}
+            {/* Tabla de tipos de formación */}
             <table className="w-full text-left text-sm border-collapse">
                 <thead className="bg-black text-white">
                     <tr>
@@ -266,7 +249,7 @@ export default function TipoFormacionTable() {
                                 {/* Botón Ver */}
                                 <button
                                     onClick={() => handleVerTipoFormacion(tipoformacion)}
-                                    title={`Ver tipoformacion: ${tipoformacion.tipo}`}
+                                    title={`Ver tipo de formación: ${tipoformacion.tipo}`}
                                     className="inline-block"
                                 >
                                     <Eye
@@ -278,7 +261,7 @@ export default function TipoFormacionTable() {
                                 {/* Botón Editar */}
                                 <button
                                     onClick={() => handleEditarTipoFormacion(tipoformacion)}
-                                    title={`Editar tipoformacion: ${tipoformacion.tipo}`}
+                                    title={`Editar tipo de formación: ${tipoformacion.tipo}`}
                                     className="inline-block"
                                 >
                                     <Edit
@@ -289,8 +272,8 @@ export default function TipoFormacionTable() {
 
                                 {/* Botón Eliminar */}
                                 <button
-                                    onClick={() => handleDelete(tipoformacion.idTipoFormacionAcademica, tipoformacion.nombreCompleto)}
-                                    title={`Eliminar tipoformacion: ${tipoformacion.tipo}`}
+                                    onClick={() => handleDelete(tipoformacion.idTipoFormacionAcademica, tipoformacion.tipo)}
+                                    title={`Eliminar tipo de formación: ${tipoformacion.tipo}`}
                                     className="inline-block"
                                 >
                                     <Trash2
@@ -360,12 +343,12 @@ export default function TipoFormacionTable() {
                 </div>
             )}
 
-            {/* Mensaje cuando no hay tipoformacion */}
+            {/* Mensaje cuando no hay tipos de formación */}
             {tipoformacion.length === 0 && !loading && (
                 <div className="text-center py-8 text-gray-500">
                     <Users size={48} className="mx-auto mb-4 text-gray-300" />
-                    <p className="text-lg">No hay tipos de formacion disponibles</p>
-                    <p className="text-sm">Crea tu primer tipo de formacion usando el botón de arriba</p>
+                    <p className="text-lg">No hay tipos de formación disponibles</p>
+                    <p className="text-sm">Crea tu primer tipo de formación usando el botón de arriba</p>
                 </div>
             )}
         </div>
@@ -375,7 +358,6 @@ export default function TipoFormacionTable() {
 // Componente para Crear/Editar TipoFormacion
 function CrearEditarTipoFormacion({ tipoformacion, modoEdicion, onVolver, onActualizar }) {
     const [formData, setFormData] = useState({
-        idTipoFormacionAcademica: tipoformacion?.idTipoFormacionAcademica || '',
         tipo: tipoformacion?.tipo || '',
         estado: tipoformacion?.estado ?? true
     });
@@ -390,39 +372,37 @@ function CrearEditarTipoFormacion({ tipoformacion, modoEdicion, onVolver, onActu
     };
 
     const handleGuardar = async () => {
-        if (!formData.tipo.trim()) {
-            setError('El tipo del tipo de formacion es requerido');
-            return;
-        }
-
         try {
             setSaving(true);
             setError('');
 
-            const tipoformacionData = {
-                idTipoFormacionAcademica: formData.idTipoFormacionAcademica || null,
-                tipo: formData.tipo,
-                estado: formData.estado
-            };
+            // Limpiar y validar datos usando el servicio
+            const cleanedData = tiposFormacionValidation.cleanTipoData(formData);
+            const validation = tiposFormacionValidation.validateTipoData(cleanedData);
 
-            console.log('Datos a enviar:', tipoformacionData);
+            if (!validation.isValid) {
+                setError(validation.errors.join(', '));
+                return;
+            }
+
+            console.log('Datos a enviar:', cleanedData);
 
             if (modoEdicion) {
-                await axios.put(`http://localhost:8080/tipoFormacionAcademica/${tipoformacion.idTipoFormacionAcademica}`, tipoformacionData);
-                console.log(`Actualizando tipoformacion ID: ${tipoformacion.idTipoFormacionAcademica}`);
-                alert('TipoFormacion actualizado exitosamente');
+                await tiposFormacionService.update(tipoformacion.idTipoFormacionAcademica, cleanedData);
+                console.log(`Actualizando tipo de formación ID: ${tipoformacion.idTipoFormacionAcademica}`);
+                alert('Tipo de formación actualizado exitosamente');
             } else {
-                await axios.post('http://localhost:8080/tipoFormacionAcademica', tipoformacionData);
-                console.log('Creando nueva tipoformacion');
-                alert('TipoFormacion creada exitosamente');
+                await tiposFormacionService.create(cleanedData);
+                console.log('Creando nuevo tipo de formación');
+                alert('Tipo de formación creado exitosamente');
             }
 
             onActualizar();
             onVolver();
 
         } catch (err) {
-            setError(err.response?.data?.message || `Error al ${modoEdicion ? 'actualizar' : 'crear'} la tipoformacion`);
             console.error('Error:', err);
+            setError(err.message || `Error al ${modoEdicion ? 'actualizar' : 'crear'} el tipo de formación`);
         } finally {
             setSaving(false);
         }
@@ -432,7 +412,7 @@ function CrearEditarTipoFormacion({ tipoformacion, modoEdicion, onVolver, onActu
         <div className='absolute inset-0 bg-opacity-30 backdrop-blur-sm flex justify-center items-center'>
             <div className='bg-white p-6 rounded-lg flex flex-col justify-center items-center gap-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto'>
                 <div className='text-3xl font-bold text-gray-800 text-center'>
-                    {modoEdicion ? 'Editar TipoFormacion' : 'Crear Nueva TipoFormacion'}
+                    {modoEdicion ? 'Editar Tipo de Formación' : 'Crear Nuevo Tipo de Formación'}
                 </div>
 
                 {modoEdicion && (
@@ -448,7 +428,7 @@ function CrearEditarTipoFormacion({ tipoformacion, modoEdicion, onVolver, onActu
                 )}
 
                 <div className='w-full grid grid-cols-1 gap-6'>
-                    {/* Nombre */}
+                    {/* Tipo */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                             Tipo *
@@ -458,9 +438,11 @@ function CrearEditarTipoFormacion({ tipoformacion, modoEdicion, onVolver, onActu
                             value={formData.tipo}
                             onChange={(e) => handleInputChange('tipo', e.target.value)}
                             className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="Ingrese el tipo de formacion"
+                            placeholder="Ingrese el tipo de formación"
+                            disabled={saving}
                         />
                     </div>
+
                     {/* Estado */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -470,6 +452,7 @@ function CrearEditarTipoFormacion({ tipoformacion, modoEdicion, onVolver, onActu
                             value={formData.estado}
                             onChange={(e) => handleInputChange('estado', e.target.value === 'true')}
                             className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            disabled={saving}
                         >
                             <option value={true}>Activo</option>
                             <option value={false}>Inactivo</option>
@@ -496,7 +479,8 @@ function CrearEditarTipoFormacion({ tipoformacion, modoEdicion, onVolver, onActu
                     </button>
                     <button
                         onClick={onVolver}
-                        className="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+                        disabled={saving}
+                        className="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors disabled:opacity-50"
                     >
                         Cancelar
                     </button>
@@ -527,7 +511,7 @@ function VerTipoFormacion({ tipoformacion, onVolver }) {
                     <h1 className='text-2xl font-bold text-gray-800 mb-2'>Información del Tipo de Formación</h1>
                 </div>
 
-                {/* Información Principal de la TipoFormacion */}
+                {/* Información Principal del Tipo de Formación */}
                 <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
 
                     {/* Columna Izquierda */}
@@ -555,7 +539,6 @@ function VerTipoFormacion({ tipoformacion, onVolver }) {
                         </div>
                     </div>
                 </div>
-
 
                 {/* Botón de volver */}
                 <div className='flex justify-center gap-4 pt-4 border-t'>

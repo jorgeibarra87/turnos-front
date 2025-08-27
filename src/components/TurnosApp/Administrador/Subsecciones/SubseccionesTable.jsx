@@ -1,7 +1,6 @@
 import React from 'react';
 import { Eye, Edit, Trash2, CopyPlus, Users, Settings, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import axios from 'axios';
 import {
     subseccionesService,
     seccionesService,
@@ -30,98 +29,43 @@ export default function SubseccionesTable() {
         try {
             setLoading(true);
             setError(null);
-            const data = await apiSubseccionesService.getAll();
+            const data = await subseccionesService.getAll();
+            console.log('Subsecciones cargadas:', data);
             setSubsecciones(data);
         } catch (err) {
-            setError('Error al cargar las subsecciones');
+            console.error('Error al cargar subsecciones:', err);
+            setError(err.message || 'Error al cargar las subsecciones');
             setSubsecciones([]);
         } finally {
             setLoading(false);
         }
     };
-
-    /* const loadSubsecciones = async () => {
-        try {
-            setLoading(true);
-            setError(null);
-            // llamada a la API
-            const result = await axios.get("http://localhost:8080/subseccionesServicio");
-            console.log('Subsecciones cargadas:', result.data);
-            let subseccionesData = [];
-            if (Array.isArray(result.data)) {
-                subseccionesData = result.data;
-            } else {
-                subseccionesData = result.data.secciones || [];
-            }
-            setSubsecciones(subseccionesData);
-        } catch (err) {
-            console.error('Error al cargar subsecciones:', err);
-            setError('Error al cargar las subsecciones');
-            setSubsecciones([]);
-        } finally {
-            setLoading(false);
-        }
-    }; */
 
     const loadSecciones = async () => {
         try {
-            const data = await apiSeccionesService.getAll();
+            const data = await seccionesService.getAll();
+            console.log('Secciones cargadas:', data);
             setSecciones(data);
-        } catch (err) {
-            setSecciones([]);
-        }
-    };
-
-
-    /* const loadSecciones = async () => {
-        try {
-            //llamada a la API
-            const result = await axios.get("http://localhost:8080/seccionesServicio");
-
-
-            setSecciones(result.data || []);
         } catch (err) {
             console.warn('Error al cargar secciones:', err);
             setSecciones([]);
         }
-    }; */
+    };
 
     // Función para manejar la eliminación
     const handleDelete = async (id, nombre) => {
-        if (window.confirm(`¿Estás seguro de que quieres eliminar la subseccion "${nombre}"?`)) {
+        if (window.confirm(`¿Estás seguro de que quieres eliminar la subsección "${nombre}"?`)) {
             try {
-                await apiSubseccionesService.delete(id);
+                await subseccionesService.delete(id);
+                console.log(`Eliminando subsección con ID: ${id}`);
                 setSubsecciones(prev => prev.filter(p => p.idSubseccionServicio !== id));
-                alert('subseccion eliminada exitosamente');
+                alert('Subsección eliminada exitosamente');
             } catch (error) {
-                // ...manejo de error igual al actual
+                console.error('Error al eliminar la subsección:', error);
+                alert(error.message || 'Error al eliminar la subsección');
             }
         }
     };
-    /* const handleDelete = async (id, nombre) => {
-        if (window.confirm(`¿Estás seguro de que quieres eliminar la subseccion "${nombre}"?`)) {
-            try {
-                const response = await axios.delete(`http://localhost:8080/subseccionesServicio/${id}`);
-
-                // eliminación exitosa
-                console.log(`Eliminando subseccion con ID: ${id}`);
-
-                // Actualizar la lista local
-                setSubsecciones(prev => prev.filter(p => p.idSubseccionServicio !== id));
-                alert('subseccion eliminada exitosamente');
-            } catch (error) {
-                console.error('Error al eliminar la subseccion:', error.response?.data || error.message);
-                // Manejar diferentes tipos de errores
-                if (error.response?.status === 409) {
-                    alert('No se puede eliminar la subseccion porque tiene dependencias asociadas');
-                } else if (error.response?.status === 404) {
-                    alert('La subseccion no fue encontrado');
-                } else {
-                    alert('Error al eliminar la subseccion');
-                }
-            }
-        }
-    }; */
 
     // Función para manejar ver subseccion
     const handleVerSubseccion = (subseccion) => {
@@ -151,12 +95,9 @@ export default function SubseccionesTable() {
         setModoEdicion(false);
     };
 
-    // Función para obtener el nombre de la subseccion
-    const getSubseccionNombre = (subseccion) => {
-        if (subseccion.nombreSeccion) {
-            return subseccion.nombreSeccion;
-        }
-        return 'Sin seccion';
+    // Función para obtener el nombre de la sección usando utilidades
+    const getSeccionNombre = (subseccion) => {
+        return subseccionesUtils.getSeccionNombre(subseccion, secciones);
     };
 
     // Función para obtener el estado en texto
@@ -206,9 +147,8 @@ export default function SubseccionesTable() {
         );
     }
 
-
     // Lógica de paginación
-    const totalPages = Math.ceil(secciones.length / itemsPerPage);
+    const totalPages = Math.ceil(subsecciones.length / itemsPerPage);
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
     const currentSubsecciones = subsecciones.slice(startIndex, endIndex);
@@ -232,28 +172,24 @@ export default function SubseccionesTable() {
 
     // Función para generar números de página visibles
     const getVisiblePageNumbers = () => {
-        const delta = 2; // Número de páginas a mostrar a cada lado de la página actual
+        const delta = 2;
         const range = [];
         const rangeWithDots = [];
 
-        // Calcular el rango de páginas a mostrar
         for (let i = Math.max(2, currentPage - delta);
             i <= Math.min(totalPages - 1, currentPage + delta);
             i++) {
             range.push(i);
         }
 
-        // Agregar primera página
         if (currentPage - delta > 2) {
             rangeWithDots.push(1, '...');
         } else {
             rangeWithDots.push(1);
         }
 
-        // Agregar páginas del rango
         rangeWithDots.push(...range);
 
-        // Agregar última página
         if (currentPage + delta < totalPages - 1) {
             rangeWithDots.push('...', totalPages);
         } else if (totalPages > 1) {
@@ -262,6 +198,7 @@ export default function SubseccionesTable() {
 
         return rangeWithDots;
     };
+
     return (
         <div className="m-8 p-6 bg-white shadow rounded">
             <div className='m-10 text-5xl text-center font-bold'>Ver Todas las Subsecciones:</div>
@@ -289,7 +226,7 @@ export default function SubseccionesTable() {
                     value={itemsPerPage}
                     onChange={(e) => {
                         setItemsPerPage(Number(e.target.value));
-                        setCurrentPage(1); // Resetear a primera página
+                        setCurrentPage(1);
                     }}
                     className="border border-gray-300 rounded px-2 py-1 text-sm"
                 >
@@ -301,7 +238,7 @@ export default function SubseccionesTable() {
                 <span className="text-sm text-gray-600">por página</span>
             </div>
 
-            {/* Tabla de secciones */}
+            {/* Tabla de subsecciones */}
             <table className="w-full text-left text-sm border-collapse">
                 <thead className="bg-black text-white">
                     <tr>
@@ -325,7 +262,7 @@ export default function SubseccionesTable() {
                                 {subseccion.nombre || 'Sin nombre'}
                             </td>
                             <td className="p-3 border border-gray-200 text-sm">
-                                {getSubseccionNombre(subseccion)}
+                                {getSeccionNombre(subseccion)}
                             </td>
                             <td className="p-3 border border-gray-200">
                                 <span className={getEstadoColor(subseccion.estado)}>
@@ -357,9 +294,9 @@ export default function SubseccionesTable() {
                                     />
                                 </button>
 
-                                {/* Botón Eliminar */}
+                                {/* Botón Eliminar*/}
                                 <button
-                                    onClick={() => handleDelete(subseccion.idSeccionServicio, subseccion.nombre)}
+                                    onClick={() => handleDelete(subseccion.idSubseccionServicio, subseccion.nombre)}
                                     title={`Eliminar subseccion: ${subseccion.nombre}`}
                                     className="inline-block"
                                 >
@@ -375,7 +312,7 @@ export default function SubseccionesTable() {
             </table>
 
             {/* Información de paginación y controles */}
-            {secciones.length > 0 && (
+            {subsecciones.length > 0 && (
                 <div className="mt-4 flex flex-col sm:flex-row justify-between items-center gap-4">
                     {/* Información de registros */}
                     <div className="text-sm text-gray-600">
@@ -431,7 +368,7 @@ export default function SubseccionesTable() {
             )}
 
             {/* Mensaje cuando no hay subsecciones */}
-            {secciones.length === 0 && !loading && (
+            {subsecciones.length === 0 && !loading && (
                 <div className="text-center py-8 text-gray-500">
                     <Users size={48} className="mx-auto mb-4 text-gray-300" />
                     <p className="text-lg">No hay subsecciones disponibles</p>
@@ -442,12 +379,11 @@ export default function SubseccionesTable() {
     );
 }
 
-// Componente para Crear/Editar Secciones
+// Componente para Crear/Editar Subsecciones
 function CrearEditarSubseccion({ subseccion, secciones, modoEdicion, onVolver, onActualizar }) {
     const [formData, setFormData] = useState({
-        idSubseccionServicio: subseccion?.idSubseccionServicio || '',
         nombre: subseccion?.nombre || '',
-        idSeccion: subseccion?.secciones?.idSeccionServicio || '',
+        idSeccionServicio: subseccion?.idSeccionServicio || '',
         estado: subseccion?.estado ?? true
     });
     const [saving, setSaving] = useState(false);
@@ -461,40 +397,37 @@ function CrearEditarSubseccion({ subseccion, secciones, modoEdicion, onVolver, o
     };
 
     const handleGuardar = async () => {
-        if (!formData.nombre.trim()) {
-            setError('El nombre de la subseccion es requerido');
-            return;
-        }
-
         try {
             setSaving(true);
             setError('');
 
-            const subseccionData = {
-                idSubseccionServicio: formData.idSubseccionServicio || null,
-                nombre: formData.nombre,
-                idSeccionServicio: formData.idSeccionServicio || null,
-                estado: formData.estado
-            };
+            // Limpiar y validar datos usando el servicio
+            const cleanedData = subseccionesValidation.cleanSubseccionData(formData);
+            const validation = subseccionesValidation.validateSubseccionData(cleanedData);
 
-            console.log('Datos a enviar:', subseccionData);
+            if (!validation.isValid) {
+                setError(validation.errors.join(', '));
+                return;
+            }
+
+            console.log('Datos a enviar:', cleanedData);
 
             if (modoEdicion) {
-                await axios.put(`http://localhost:8080/seccionesServicio/${subseccion.idSeccionServicio}`, subseccionData);
-                console.log(`Actualizando subseccion ID: ${subseccion.idSeccionServicio}`);
-                alert('Subseccion actualizada exitosamente');
+                await subseccionesService.update(subseccion.idSubseccionServicio, cleanedData);
+                console.log(`Actualizando subseccion ID: ${subseccion.idSubseccionServicio}`);
+                alert('Subsección actualizada exitosamente');
             } else {
-                await axios.post('http://localhost:8080/seccionesServicio', subseccionData);
-                console.log('Creando nueva subseccion');
-                alert('Subseccion creada exitosamente');
+                await subseccionesService.create(cleanedData);
+                console.log('Creando nueva subsección');
+                alert('Subsección creada exitosamente');
             }
 
             onActualizar();
             onVolver();
 
         } catch (err) {
-            setError(err.response?.data?.message || `Error al ${modoEdicion ? 'actualizar' : 'crear'} la subseccion`);
             console.error('Error:', err);
+            setError(err.message || `Error al ${modoEdicion ? 'actualizar' : 'crear'} la subsección`);
         } finally {
             setSaving(false);
         }
@@ -504,47 +437,49 @@ function CrearEditarSubseccion({ subseccion, secciones, modoEdicion, onVolver, o
         <div className='absolute inset-0 bg-opacity-30 backdrop-blur-sm flex justify-center items-center'>
             <div className='bg-white p-6 rounded-lg flex flex-col justify-center items-center gap-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto'>
                 <div className='text-3xl font-bold text-gray-800 text-center'>
-                    {modoEdicion ? 'Editar Subseccion' : 'Crear Nuevo Subseccion'}
+                    {modoEdicion ? 'Editar Subsección' : 'Crear Nueva Subsección'}
                 </div>
 
                 {modoEdicion && (
                     <div className='p-4 text-center bg-orange-50 border border-orange-200 rounded-lg w-full'>
                         <div className='flex items-center justify-center gap-2 mb-2'>
                             <Edit size={16} className="text-orange-600" />
-                            <span className='font-semibold text-orange-800'>Modificando subseccion existente</span>
+                            <span className='font-semibold text-orange-800'>Modificando subsección existente</span>
                         </div>
                         <div className='text-gray-700'>
-                            <div><span className='font-medium'>ID:</span> {subseccion.idSeccionServicio}</div>
+                            <div><span className='font-medium'>ID:</span> {subseccion.idSubseccionServicio}</div>
                         </div>
                     </div>
                 )}
 
                 <div className='w-full grid grid-cols-1 gap-6'>
-                    {/* Nombre de la Subseccion */}
+                    {/* Nombre de la Subsección */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Nombre de la Subseccion *
+                            Nombre de la Subsección *
                         </label>
                         <input
                             type="text"
                             value={formData.nombre}
                             onChange={(e) => handleInputChange('nombre', e.target.value)}
                             className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="Ingrese el nombre de la subseccion"
+                            placeholder="Ingrese el nombre de la subsección"
+                            disabled={saving}
                         />
                     </div>
 
-                    {/* Seccion */}
+                    {/* Sección */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Seccion
+                            Sección
                         </label>
                         <select
                             value={formData.idSeccionServicio}
                             onChange={(e) => handleInputChange('idSeccionServicio', e.target.value)}
                             className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            disabled={saving}
                         >
-                            <option value="">Seleccionar seccion</option>
+                            <option value="">Seleccionar sección</option>
                             {secciones.map(seccion => (
                                 <option key={seccion.idSeccionServicio} value={seccion.idSeccionServicio}>
                                     {seccion.nombre}
@@ -562,6 +497,7 @@ function CrearEditarSubseccion({ subseccion, secciones, modoEdicion, onVolver, o
                             value={formData.estado}
                             onChange={(e) => handleInputChange('estado', e.target.value === 'true')}
                             className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            disabled={saving}
                         >
                             <option value={true}>Activo</option>
                             <option value={false}>Inactivo</option>
@@ -588,7 +524,8 @@ function CrearEditarSubseccion({ subseccion, secciones, modoEdicion, onVolver, o
                     </button>
                     <button
                         onClick={onVolver}
-                        className="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+                        disabled={saving}
+                        className="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors disabled:opacity-50"
                     >
                         Cancelar
                     </button>
@@ -598,20 +535,10 @@ function CrearEditarSubseccion({ subseccion, secciones, modoEdicion, onVolver, o
     );
 }
 
-// Componente para Ver Subseccion
+// Componente para Ver Subsección
 function VerSubseccion({ subseccion, onVolver }) {
-    const getSeccionInfo = () => {
-        if (subseccion.idSeccionServicio) {
-            return {
-                id: subseccion.idSeccionServicio,
-                nombre: subseccion.nombreSeccion
-            };
-        }
-        return {
-            id: 'No asignado',
-            nombre: 'Sin seccion'
-        };
-    };
+    // Usar utilidades para obtener información de la sección
+    const seccionInfo = subseccionesUtils.getSeccionInfo(subseccion);
 
     const getEstadoTexto = (estado) => {
         return estado ? 'Activo' : 'Inactivo';
@@ -622,8 +549,6 @@ function VerSubseccion({ subseccion, onVolver }) {
             ? 'text-green-600 bg-green-50 px-3 py-1 rounded-full text-sm font-medium'
             : 'text-red-600 bg-red-50 px-3 py-1 rounded-full text-sm font-medium';
     };
-    const seccionInfo = getSeccionInfo();
-
 
     return (
         <div className='absolute inset-0 bg-opacity-30 backdrop-blur-sm flex justify-center items-center'>
@@ -631,10 +556,10 @@ function VerSubseccion({ subseccion, onVolver }) {
 
                 {/* Header */}
                 <div className='text-center border-b pb-4'>
-                    <h1 className='text-2xl font-bold text-gray-800 mb-2'>Información de la Subseccion</h1>
+                    <h1 className='text-2xl font-bold text-gray-800 mb-2'>Información de la Subsección</h1>
                 </div>
 
-                {/* Información Principal de la subseccion*/}
+                {/* Información Principal de la subsección */}
                 <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
 
                     {/* Columna Izquierda */}
@@ -662,7 +587,7 @@ function VerSubseccion({ subseccion, onVolver }) {
                         </div>
 
                         <div className='flex items-start gap-3 border border-black rounded-xl p-3'>
-                            <div className='w-32 font-semibold text-gray-700 text-sm'>Seccion:</div>
+                            <div className='w-32 font-semibold text-gray-700 text-sm'>Sección:</div>
                             <div className='text-gray-900'>
                                 <div className='font-medium'>{seccionInfo.nombre}</div>
                                 {seccionInfo.id !== 'No asignado' && (

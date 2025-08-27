@@ -78,7 +78,7 @@ export const apiTurnoService = {
     },
 
     auxiliares: {
-        // Obtener cuadros de turno (reutilizando lógica de otros servicios)
+        // Obtener cuadros de turno
         getCuadrosTurno: async () => {
             const response = await apiClient.get('/cuadro-turnos');
             return Array.isArray(response.data) ? response.data : response.data.cuadros || [];
@@ -100,7 +100,7 @@ export const apiTurnoService = {
             return response.data || [];
         },
 
-        // Obtener miembros con perfil de un equipo (para gestión)
+        // Obtener miembros con perfil de un equipo
         getMiembrosPerfilEquipo: async (equipoId) => {
             const response = await apiClient.get(`/equipo/${equipoId}/miembros-perfil`);
             return response.data || [];

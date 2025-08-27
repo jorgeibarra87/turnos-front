@@ -58,9 +58,9 @@ export const apiEquipoService = {
             return response.data; // Retorna el objeto completo del equipo
         },
 
-        // FUNCIONES FALTANTES PARA CrearEquipo:
+        // FUNCIONES PARA CrearEquipo:
 
-        // Crear equipo completamente, con nombre, categoría, subcategoría
+        // Crear equipo, con nombre, categoría, subcategoría
         createCompleto: async ({ nombre, categoria, subcategoria }) => {
             const equipoData = { nombre, categoria, subcategoria };
             // Endpoint: POST /equipo/equipoNombre
@@ -93,7 +93,7 @@ export const apiEquipoService = {
             return response.data;
         },
 
-        // Obtener cuadros asociados a un equipo (para validación antes de eliminar)
+        // Obtener cuadros asociados a un equipo (antes de eliminar)
         getCuadros: async (id) => {
             const response = await apiClient.get(`/equipo/${id}/cuadros`);
             return response.data || [];
@@ -110,8 +110,6 @@ export const apiEquipoService = {
             const response = await apiClient.get(`/equipo/${id}/miembros-perfil`);
             return response.data || [];
         },
-
-        // NUEVAS FUNCIONES QUE FALTABAN:
 
         // Obtener usuarios del equipo (para edición)
         getUsuariosEquipo: async (idEquipo) => {
@@ -144,7 +142,7 @@ export const apiEquipoService = {
         }
     },
 
-    // SECCIÓN COMPLETAMENTE NUEVA - Servicios auxiliares
+    //Servicios auxiliares
     auxiliares: {
         // Obtener opciones por categoría (para selects dinámicos)
         getByCategoria: async (categoria) => {

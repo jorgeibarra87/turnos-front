@@ -1,12 +1,13 @@
 import axios from 'axios';
 
-// Configuración base
-const BASE_URL = 'http://localhost:8080';
+// Configuración de variables de entorno
+const API_BASE_URL = import.meta.env.REACT_APP_API_BASE_URL || 'http://localhost:8080';
+const API_TIMEOUT = parseInt(import.meta.env.REACT_APP_API_TIMEOUT || '10000', 10);
 
-// Configuración de axios
+// Crear instancia de axios
 const api = axios.create({
-    baseURL: BASE_URL,
-    timeout: 10000,
+    baseURL: API_BASE_URL,
+    timeout: API_TIMEOUT,
     headers: {
         'Content-Type': 'application/json',
     }
@@ -50,8 +51,7 @@ export const macroprocesosService = {
         try {
             const response = await api.get('/macroprocesos');
             console.log('Macroprocesos obtenidos:', response.data);
-
-            // Asegurar que siempre retorne un array
+            // Validar que retorne un array
             if (Array.isArray(response.data)) {
                 return response.data;
             } else if (response.data && Array.isArray(response.data.macroprocesos)) {
@@ -151,11 +151,6 @@ export const macroprocesosService = {
     }
 };
 
-// Servicio para relaciones de Macroprocesos (si las hay)
-export const macroprocesosRelacionesService = {
-
-};
-
 //Validación
 export const macroprocesosValidation = {
     // Validar datos del macroproceso antes de enviar
@@ -194,5 +189,5 @@ export const macroprocesosValidation = {
     }
 };
 
-// Exportar servicios individualmente para mayor flexibilidad
+// Exportar servicios individualmente
 export { macroprocesosService as default };

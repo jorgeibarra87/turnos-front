@@ -1,7 +1,6 @@
 import axios from 'axios';
 
 // Configuración de variables de entorno
-
 const API_BASE_URL = import.meta.env.REACT_APP_API_BASE_URL || 'http://localhost:8080';
 const API_TIMEOUT = parseInt(import.meta.env.REACT_APP_API_TIMEOUT || '10000', 10);
 

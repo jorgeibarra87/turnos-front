@@ -1,17 +1,20 @@
 import axios from "axios";
 
-const BASE_URL = "http://localhost:8080";
+// Configuración de variables de entorno
 
-// Configuración base de axios
+const API_BASE_URL = import.meta.env.REACT_APP_API_BASE_URL || 'http://localhost:8080';
+const API_TIMEOUT = parseInt(import.meta.env.REACT_APP_API_TIMEOUT || '10000', 10);
+
+// Crear instancia de axios
 const api = axios.create({
-    baseURL: BASE_URL,
-    timeout: 10000,
+    baseURL: API_BASE_URL,
+    timeout: API_TIMEOUT,
     headers: {
         'Content-Type': 'application/json',
     }
 });
 
-// Interceptor para manejo de errores global
+// Interceptor para manejo de errores
 api.interceptors.response.use(
     (response) => response,
     (error) => {
@@ -207,7 +210,7 @@ export const personasEquiposService = {
     }
 };
 
-// Exportar todo junto para facilidad de uso
+// Exportar todo
 export const apiPersonasService = {
     personas: personasService,
     personasTitulos: personasTitulosService,

@@ -1,13 +1,13 @@
-// apiProcesosAtencionService.js
 import axios from 'axios';
 
-// Configuración base
-const BASE_URL = 'http://localhost:8080';
+// Configuración de variables de entorno
+const API_BASE_URL = import.meta.env.REACT_APP_API_BASE_URL || 'http://localhost:8080';
+const API_TIMEOUT = parseInt(import.meta.env.REACT_APP_API_TIMEOUT || '10000', 10);
 
-// Configuración de axios
+// Crear instancia de axios
 const api = axios.create({
-    baseURL: BASE_URL,
-    timeout: 10000,
+    baseURL: API_BASE_URL,
+    timeout: API_TIMEOUT,
     headers: {
         'Content-Type': 'application/json',
     }
@@ -52,7 +52,7 @@ export const procesosAtencionService = {
             const response = await api.get('/procesosAtencion');
             console.log('Procesos de atención obtenidos:', response.data);
 
-            // Asegurar que siempre retorne un array
+            // Validar que retorne un array
             if (Array.isArray(response.data)) {
                 return response.data;
             } else if (response.data && Array.isArray(response.data.procesosAtencion)) {
@@ -174,7 +174,7 @@ export const procesosAtencionService = {
     }
 };
 
-// Servicio para Cuadros de Turno (dependencia)
+// Servicio para Cuadros de Turno
 export const cuadrosTurnoService = {
     // Obtener todos los cuadros de turno (para el formulario)
     getAll: async () => {
@@ -191,7 +191,7 @@ export const cuadrosTurnoService = {
             }
         } catch (error) {
             console.error('Error al obtener cuadros de turno:', error);
-            // En caso de error, retornamos array vacío para que no rompa el formulario
+            // En caso de error, retorna array vacío
             return [];
         }
     },
@@ -208,7 +208,7 @@ export const cuadrosTurnoService = {
     }
 };
 
-// Servicio para Procesos (dependencia)
+// Servicio para Procesos
 export const procesosService = {
     // Obtener todos los procesos (para el formulario)
     getAll: async () => {
@@ -225,7 +225,7 @@ export const procesosService = {
             }
         } catch (error) {
             console.error('Error al obtener procesos:', error);
-            // En caso de error, retornamos array vacío para que no rompa el formulario
+            // En caso de error, retorna array vacío
             return [];
         }
     },
@@ -289,7 +289,7 @@ export const procesosAtencionValidation = {
     }
 };
 
-// Utilidades para obtener información de dependencias
+// Utilidades para obtener información adicional
 export const procesoAtencionUtils = {
     // Obtener nombre del cuadro por ID
     getCuadroNombre: (procesoAtencion, cuadros) => {

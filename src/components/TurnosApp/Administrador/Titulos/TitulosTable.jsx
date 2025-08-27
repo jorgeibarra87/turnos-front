@@ -1,7 +1,12 @@
 import React from 'react';
 import { Eye, Edit, Trash2, CopyPlus, Users, Settings, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import axios from 'axios';
+import {
+    titulosService,
+    tiposFormacionService,
+    titulosValidation,
+    titulosUtils
+} from '../../Services/apiTitulosService';
 
 export default function TitulosTable() {
     const [titulos, setTitulos] = useState([]);
@@ -24,19 +29,12 @@ export default function TitulosTable() {
         try {
             setLoading(true);
             setError(null);
-            // llamada a la API
-            const result = await axios.get("http://localhost:8080/titulosFormacionAcademica");
-            console.log('Titulos cargados:', result.data);
-            let titulosData = [];
-            if (Array.isArray(result.data)) {
-                titulosData = result.data;
-            } else {
-                titulosData = result.data.titulos || [];
-            }
-            setTitulos(titulosData);
+            const data = await titulosService.getAll();
+            console.log('Títulos cargados:', data);
+            setTitulos(data);
         } catch (err) {
-            console.error('Error al cargar titulos:', err);
-            setError('Error al cargar los titulos');
+            console.error('Error al cargar títulos:', err);
+            setError(err.message || 'Error al cargar los títulos');
             setTitulos([]);
         } finally {
             setLoading(false);
@@ -45,57 +43,44 @@ export default function TitulosTable() {
 
     const loadTiposFormacionAcademica = async () => {
         try {
-            //llamada a la API
-            const result = await axios.get("http://localhost:8080/tipoFormacionAcademica");
-
-
-            setTiposFormacionAcademica(result.data || []);
+            const data = await tiposFormacionService.getAll();
+            console.log('Tipos de formación cargados:', data);
+            setTiposFormacionAcademica(data);
         } catch (err) {
-            console.warn('Error al cargar tipos de formacion:', err);
+            console.warn('Error al cargar tipos de formación:', err);
             setTiposFormacionAcademica([]);
         }
     };
 
     // Función para manejar la eliminación
     const handleDelete = async (id, nombreTitulo) => {
-        if (window.confirm(`¿Estás seguro de que quieres eliminar el titulo "${nombreTitulo}"?`)) {
+        if (window.confirm(`¿Estás seguro de que quieres eliminar el título "${nombreTitulo}"?`)) {
             try {
-                const response = await axios.delete(`http://localhost:8080/titulosFormacionAcademica/${id}`);
-
-                // eliminación exitosa
-                console.log(`Eliminando titulo con ID: ${id}`);
-
-                // Actualizar la lista local
+                await titulosService.delete(id);
+                console.log(`Eliminando título con ID: ${id}`);
                 setTitulos(prev => prev.filter(p => p.idTitulo !== id));
-                alert('Titulo eliminado exitosamente');
+                alert('Título eliminado exitosamente');
             } catch (error) {
-                console.error('Error al eliminar el titulo:', error.response?.data || error.message);
-                // Manejar diferentes tipos de errores
-                if (error.response?.status === 409) {
-                    alert('No se puede eliminar el titulo porque tiene dependencias asociadas');
-                } else if (error.response?.status === 404) {
-                    alert('El titulo no fue encontrado');
-                } else {
-                    alert('Error al eliminar el titulo');
-                }
+                console.error('Error al eliminar el título:', error);
+                alert(error.message || 'Error al eliminar el título');
             }
         }
     };
 
-    // Función para manejar ver titulo
+    // Función para manejar ver título
     const handleVerTitulo = (titulo) => {
         setTituloSeleccionado(titulo);
         setShowVerTitulo(true);
     };
 
-    // Función para manejar editar titulo
+    // Función para manejar editar título
     const handleEditarTitulo = (titulo) => {
         setTituloSeleccionado(titulo);
         setModoEdicion(true);
         setShowCrearTitulo(true);
     };
 
-    // Función para crear nuevo titulo
+    // Función para crear nuevo título
     const handleNuevoTitulo = () => {
         setTituloSeleccionado(null);
         setModoEdicion(false);
@@ -110,12 +95,9 @@ export default function TitulosTable() {
         setModoEdicion(false);
     };
 
-    // Función para obtener el nombre del macroproceso
-    const getTpoFormacioinNombre = (titulo) => {
-        if (titulo.nombreTipo) {
-            return titulo.nombreTipo;
-        }
-        return 'Sin tipo de formacion';
+    // Función para obtener el nombre del tipo de formación usando las utilidades
+    const getTipoFormacionNombre = (titulo) => {
+        return titulosUtils.getTipoFormacionNombre(titulo, tiposformacionacademica);
     };
 
     // Función para obtener el estado en texto
@@ -133,16 +115,16 @@ export default function TitulosTable() {
     if (loading) {
         return (
             <div className="m-8 p-6 bg-white shadow rounded">
-                <div className='m-10 text-5xl text-center font-bold'>Ver Todos los Titulos:</div>
+                <div className='m-10 text-5xl text-center font-bold'>Ver Todos los Títulos:</div>
                 <div className="text-center py-8">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-                    <p className="text-lg text-gray-500">Cargando titulos...</p>
+                    <p className="text-lg text-gray-500">Cargando títulos...</p>
                 </div>
             </div>
         );
     }
 
-    // Mostrar componente de crear/editar titulo
+    // Mostrar componente de crear/editar título
     if (showCrearTitulo) {
         return (
             <CrearEditarTitulo
@@ -155,7 +137,7 @@ export default function TitulosTable() {
         );
     }
 
-    // Mostrar componente de ver titulo
+    // Mostrar componente de ver título
     if (showVerTitulo && tituloSeleccionado) {
         return (
             <VerTitulo
@@ -164,7 +146,6 @@ export default function TitulosTable() {
             />
         );
     }
-
 
     // Lógica de paginación
     const totalPages = Math.ceil(titulos.length / itemsPerPage);
@@ -191,28 +172,24 @@ export default function TitulosTable() {
 
     // Función para generar números de página visibles
     const getVisiblePageNumbers = () => {
-        const delta = 2; // Número de páginas a mostrar a cada lado de la página actual
+        const delta = 2;
         const range = [];
         const rangeWithDots = [];
 
-        // Calcular el rango de páginas a mostrar
         for (let i = Math.max(2, currentPage - delta);
             i <= Math.min(totalPages - 1, currentPage + delta);
             i++) {
             range.push(i);
         }
 
-        // Agregar primera página
         if (currentPage - delta > 2) {
             rangeWithDots.push(1, '...');
         } else {
             rangeWithDots.push(1);
         }
 
-        // Agregar páginas del rango
         rangeWithDots.push(...range);
 
-        // Agregar última página
         if (currentPage + delta < totalPages - 1) {
             rangeWithDots.push('...', totalPages);
         } else if (totalPages > 1) {
@@ -221,17 +198,18 @@ export default function TitulosTable() {
 
         return rangeWithDots;
     };
+
     return (
         <div className="m-8 p-6 bg-white shadow rounded">
-            <div className='m-10 text-5xl text-center font-bold'>Ver Todos los Titulos:</div>
+            <div className='m-10 text-5xl text-center font-bold'>Ver Todos los Títulos:</div>
 
-            {/* Botón para crear nuevo titulo */}
+            {/* Botón para crear nuevo título */}
             <button
                 onClick={handleNuevoTitulo}
                 className="mb-1 px-4 py-2 bg-green-500 text-white rounded-2xl hover:bg-green-600 flex items-center gap-2"
             >
                 <CopyPlus size={22} color="white" strokeWidth={2} />
-                Crear Titulo
+                Crear Título
             </button>
 
             {/* Mostrar error si existe */}
@@ -248,7 +226,7 @@ export default function TitulosTable() {
                     value={itemsPerPage}
                     onChange={(e) => {
                         setItemsPerPage(Number(e.target.value));
-                        setCurrentPage(1); // Resetear a primera página
+                        setCurrentPage(1);
                     }}
                     className="border border-gray-300 rounded px-2 py-1 text-sm"
                 >
@@ -260,13 +238,13 @@ export default function TitulosTable() {
                 <span className="text-sm text-gray-600">por página</span>
             </div>
 
-            {/* Tabla de titulos */}
+            {/* Tabla de títulos */}
             <table className="w-full text-left text-sm border-collapse">
                 <thead className="bg-black text-white">
                     <tr>
                         <th className="p-3">ID</th>
-                        <th className="p-3">Titulo</th>
-                        <th className="p-3">Tipo Formacion</th>
+                        <th className="p-3">Título</th>
+                        <th className="p-3">Tipo Formación</th>
                         <th className="p-3">Estado</th>
                         <th className="p-3 flex items-center justify-centers gap-2">
                             <Settings size={16} />
@@ -281,10 +259,10 @@ export default function TitulosTable() {
                                 {titulo.idTitulo}
                             </td>
                             <td className="p-3 border border-gray-200">
-                                {titulo.titulo || 'Sin titulo'}
+                                {titulo.titulo || 'Sin título'}
                             </td>
                             <td className="p-3 border border-gray-200 text-sm">
-                                {getTpoFormacioinNombre(titulo)}
+                                {getTipoFormacionNombre(titulo)}
                             </td>
                             <td className="p-3 border border-gray-200">
                                 <span className={getEstadoColor(titulo.estado)}>
@@ -295,7 +273,7 @@ export default function TitulosTable() {
                                 {/* Botón Ver */}
                                 <button
                                     onClick={() => handleVerTitulo(titulo)}
-                                    title={`Ver titulo: ${titulo.titulo}`}
+                                    title={`Ver título: ${titulo.titulo}`}
                                     className="inline-block"
                                 >
                                     <Eye
@@ -307,7 +285,7 @@ export default function TitulosTable() {
                                 {/* Botón Editar */}
                                 <button
                                     onClick={() => handleEditarTitulo(titulo)}
-                                    title={`Editar titulo: ${titulo.titulo}`}
+                                    title={`Editar título: ${titulo.titulo}`}
                                     className="inline-block"
                                 >
                                     <Edit
@@ -319,7 +297,7 @@ export default function TitulosTable() {
                                 {/* Botón Eliminar */}
                                 <button
                                     onClick={() => handleDelete(titulo.idTitulo, titulo.titulo)}
-                                    title={`Eliminar titulo: ${titulo.nombre}`}
+                                    title={`Eliminar título: ${titulo.titulo}`}
                                     className="inline-block"
                                 >
                                     <Trash2
@@ -389,23 +367,23 @@ export default function TitulosTable() {
                 </div>
             )}
 
-            {/* Mensaje cuando no hay titulos */}
+            {/* Mensaje cuando no hay títulos */}
             {titulos.length === 0 && !loading && (
                 <div className="text-center py-8 text-gray-500">
                     <Users size={48} className="mx-auto mb-4 text-gray-300" />
-                    <p className="text-lg">No hay titulos disponibles</p>
-                    <p className="text-sm">Crea tu primer titulo usando el botón de arriba</p>
+                    <p className="text-lg">No hay títulos disponibles</p>
+                    <p className="text-sm">Crea tu primer título usando el botón de arriba</p>
                 </div>
             )}
         </div>
     );
 }
 
-// Componente para Crear/Editar Titulo
+// Componente para Crear/Editar Título (REFACTORIZADO)
 function CrearEditarTitulo({ titulo, tiposformacionacademica, modoEdicion, onVolver, onActualizar }) {
     const [formData, setFormData] = useState({
         nombre: titulo?.titulo || '',
-        idTipoFormacionAcademica: titulo?.tiposformacionacademica?.idTipoFormacionAcademica || '',
+        idTipoFormacionAcademica: titulo?.idTipoFormacionAcademica || '',
         estado: titulo?.estado ?? true
     });
     const [saving, setSaving] = useState(false);
@@ -419,39 +397,37 @@ function CrearEditarTitulo({ titulo, tiposformacionacademica, modoEdicion, onVol
     };
 
     const handleGuardar = async () => {
-        if (!formData.nombre.trim()) {
-            setError('El nombre del titulo es requerido');
-            return;
-        }
-
         try {
             setSaving(true);
             setError('');
 
-            const tituloData = {
-                nombre: formData.nombre,
-                idTipoFormacionAcademica: formData.idTipoFormacionAcademica || null,
-                estado: formData.estado
-            };
+            // Limpiar y validar datos usando el servicio
+            const cleanedData = titulosValidation.cleanTituloData(formData);
+            const validation = titulosValidation.validateTituloData(cleanedData);
 
-            console.log('Datos a enviar:', tituloData);
+            if (!validation.isValid) {
+                setError(validation.errors.join(', '));
+                return;
+            }
+
+            console.log('Datos a enviar:', cleanedData);
 
             if (modoEdicion) {
-                await axios.put(`http://localhost:8080/titulosFormacionAcademica/${titulo.idTitulo}`, tituloData);
-                console.log(`Actualizando titulo ID: ${titulo.idTitulo}`);
-                alert('Titulo actualizado exitosamente');
+                await titulosService.update(titulo.idTitulo, cleanedData);
+                console.log(`Actualizando título ID: ${titulo.idTitulo}`);
+                alert('Título actualizado exitosamente');
             } else {
-                await axios.post('http://localhost:8080/titulosFormacionAcademica', tituloData);
-                console.log('Creando nuevo titulo');
-                alert('Titulo creado exitosamente');
+                await titulosService.create(cleanedData);
+                console.log('Creando nuevo título');
+                alert('Título creado exitosamente');
             }
 
             onActualizar();
             onVolver();
 
         } catch (err) {
-            setError(err.response?.data?.message || `Error al ${modoEdicion ? 'actualizar' : 'crear'} el titulo`);
             console.error('Error:', err);
+            setError(err.message || `Error al ${modoEdicion ? 'actualizar' : 'crear'} el título`);
         } finally {
             setSaving(false);
         }
@@ -461,14 +437,14 @@ function CrearEditarTitulo({ titulo, tiposformacionacademica, modoEdicion, onVol
         <div className='absolute inset-0 bg-opacity-30 backdrop-blur-sm flex justify-center items-center'>
             <div className='bg-white p-6 rounded-lg flex flex-col justify-center items-center gap-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto'>
                 <div className='text-3xl font-bold text-gray-800 text-center'>
-                    {modoEdicion ? 'Editar Titulo' : 'Crear Nuevo Titulo'}
+                    {modoEdicion ? 'Editar Título' : 'Crear Nuevo Título'}
                 </div>
 
                 {modoEdicion && (
                     <div className='p-4 text-center bg-orange-50 border border-orange-200 rounded-lg w-full'>
                         <div className='flex items-center justify-center gap-2 mb-2'>
                             <Edit size={16} className="text-orange-600" />
-                            <span className='font-semibold text-orange-800'>Modificando titulo existente</span>
+                            <span className='font-semibold text-orange-800'>Modificando título existente</span>
                         </div>
                         <div className='text-gray-700'>
                             <div><span className='font-medium'>ID:</span> {titulo.idTitulo}</div>
@@ -477,31 +453,33 @@ function CrearEditarTitulo({ titulo, tiposformacionacademica, modoEdicion, onVol
                 )}
 
                 <div className='w-full grid grid-cols-1 gap-6'>
-                    {/* Nombre del Titulo */}
+                    {/* Nombre del Título */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Nombre del Titulo *
+                            Nombre del Título *
                         </label>
                         <input
                             type="text"
                             value={formData.nombre}
                             onChange={(e) => handleInputChange('nombre', e.target.value)}
                             className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="Ingrese el nombre del titulo"
+                            placeholder="Ingrese el nombre del título"
+                            disabled={saving}
                         />
                     </div>
 
-                    {/* TipoFormacionAcademica */}
+                    {/* Tipo Formación Académica */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Tipo Formacion Academica
+                            Tipo Formación Académica
                         </label>
                         <select
                             value={formData.idTipoFormacionAcademica}
                             onChange={(e) => handleInputChange('idTipoFormacionAcademica', e.target.value)}
                             className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            disabled={saving}
                         >
-                            <option value="">Seleccionar Tipo Formacion Academica</option>
+                            <option value="">Seleccionar Tipo Formación Académica</option>
                             {tiposformacionacademica.map(tipo => (
                                 <option key={tipo.idTipoFormacionAcademica} value={tipo.idTipoFormacionAcademica}>
                                     {tipo.tipo}
@@ -519,6 +497,7 @@ function CrearEditarTitulo({ titulo, tiposformacionacademica, modoEdicion, onVol
                             value={formData.estado}
                             onChange={(e) => handleInputChange('estado', e.target.value === 'true')}
                             className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            disabled={saving}
                         >
                             <option value={true}>Activo</option>
                             <option value={false}>Inactivo</option>
@@ -545,7 +524,8 @@ function CrearEditarTitulo({ titulo, tiposformacionacademica, modoEdicion, onVol
                     </button>
                     <button
                         onClick={onVolver}
-                        className="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+                        disabled={saving}
+                        className="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors disabled:opacity-50"
                     >
                         Cancelar
                     </button>
@@ -555,20 +535,10 @@ function CrearEditarTitulo({ titulo, tiposformacionacademica, modoEdicion, onVol
     );
 }
 
-// Componente para Ver Titulo
+// Componente para Ver Título (MEJORADO CON UTILS)
 function VerTitulo({ titulo, onVolver }) {
-    const getTipoFormacionInfo = () => {
-        if (titulo.idTipoFormacionAcademica) {
-            return {
-                id: titulo.idTipoFormacionAcademica,
-                nombre: titulo.nombreTipo
-            };
-        }
-        return {
-            id: 'No asignado',
-            nombre: 'Sin tipo de formacion'
-        };
-    };
+    // Usar utilidades para obtener información del tipo de formación
+    const tipoFormacionInfo = titulosUtils.getTipoFormacionInfo(titulo);
 
     const getEstadoTexto = (estado) => {
         return estado ? 'Activo' : 'Inactivo';
@@ -579,8 +549,6 @@ function VerTitulo({ titulo, onVolver }) {
             ? 'text-green-600 bg-green-50 px-3 py-1 rounded-full text-sm font-medium'
             : 'text-red-600 bg-red-50 px-3 py-1 rounded-full text-sm font-medium';
     };
-    const tipoFormacionInfo = getTipoFormacionInfo();
-
 
     return (
         <div className='absolute inset-0 bg-opacity-30 backdrop-blur-sm flex justify-center items-center'>
@@ -588,21 +556,21 @@ function VerTitulo({ titulo, onVolver }) {
 
                 {/* Header */}
                 <div className='text-center border-b pb-4'>
-                    <h1 className='text-2xl font-bold text-gray-800 mb-2'>Información del Titulo</h1>
+                    <h1 className='text-2xl font-bold text-gray-800 mb-2'>Información del Título</h1>
                 </div>
 
-                {/* Información Principal del Titulo */}
+                {/* Información Principal del Título */}
                 <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
 
                     {/* Columna Izquierda */}
                     <div className='space-y-4'>
                         <div className='flex items-start gap-3 border border-black rounded-xl p-3'>
-                            <div className='w-32 font-semibold text-gray-700 text-sm'>ID Titulo:</div>
+                            <div className='w-32 font-semibold text-gray-700 text-sm'>ID Título:</div>
                             <div className='text-gray-900 font-medium'>{titulo.idTitulo}</div>
                         </div>
 
                         <div className='flex items-start gap-3 border border-black rounded-xl p-3'>
-                            <div className='w-32 font-semibold text-gray-700 text-sm'>Titulo:</div>
+                            <div className='w-32 font-semibold text-gray-700 text-sm'>Título:</div>
                             <div className='text-gray-900'>{titulo.titulo || 'Sin nombre'}</div>
                         </div>
                     </div>
@@ -619,7 +587,7 @@ function VerTitulo({ titulo, onVolver }) {
                         </div>
 
                         <div className='flex items-start gap-3 border border-black rounded-xl p-3'>
-                            <div className='w-32 font-semibold text-gray-700 text-sm'>Tipo Formacion:</div>
+                            <div className='w-32 font-semibold text-gray-700 text-sm'>Tipo Formación:</div>
                             <div className='text-gray-900'>
                                 <div className='font-medium'>{tipoFormacionInfo.nombre}</div>
                                 {tipoFormacionInfo.id !== 'No asignado' && (

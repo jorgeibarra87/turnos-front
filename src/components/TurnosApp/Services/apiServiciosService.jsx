@@ -1,13 +1,13 @@
-// apiServiciosService.js
 import axios from 'axios';
 
-// Configuración base
-const BASE_URL = 'http://localhost:8080';
+// Configuración de variables de entorno
+const API_BASE_URL = import.meta.env.REACT_APP_API_BASE_URL || 'http://localhost:8080';
+const API_TIMEOUT = parseInt(import.meta.env.REACT_APP_API_TIMEOUT || '10000', 10);
 
-// Configuración de axios
+// Crear instancia de axios
 const api = axios.create({
-    baseURL: BASE_URL,
-    timeout: 10000,
+    baseURL: API_BASE_URL,
+    timeout: API_TIMEOUT,
     headers: {
         'Content-Type': 'application/json',
     }
@@ -281,7 +281,7 @@ export const bloquesServicioService = {
     }
 };
 
-// Servicio para Procesos (dependencia)
+// Servicio para Procesos
 export const procesosService = {
     // Obtener todos los procesos (para el formulario)
     getAll: async () => {
@@ -298,7 +298,7 @@ export const procesosService = {
             }
         } catch (error) {
             console.error('Error al obtener procesos:', error);
-            // En caso de error, retornamos array vacío para que no rompa el formulario
+            // En caso de error, retorna array vacío
             return [];
         }
     },
@@ -399,7 +399,7 @@ export const bloquesValidation = {
     }
 };
 
-// Utilidades para obtener información de dependencias
+// Utilidades para obtener información adicional
 export const serviciosUtils = {
     // Obtener nombre del bloque por ID
     getBloqueNombre: (servicio, bloques) => {
@@ -511,7 +511,7 @@ export const serviciosUtils = {
     },
 
     // Obtener estadísticas de servicios
-    getEstadisticasServicios: (servicios) => {
+    /* getEstadisticasServicios: (servicios) => {
         if (!servicios || !Array.isArray(servicios)) {
             return {
                 total: 0,
@@ -533,7 +533,7 @@ export const serviciosUtils = {
             conProceso: servicios.filter(s => s.idProceso).length,
             sinProceso: servicios.filter(s => !s.idProceso).length
         };
-    }
+    } */
 };
 
 // Utilidades para bloques de servicio
@@ -580,7 +580,7 @@ export const bloquesUtils = {
     },
 
     // Obtener estadísticas de bloques
-    getEstadisticasBloques: (bloques) => {
+    /* getEstadisticasBloques: (bloques) => {
         if (!bloques || !Array.isArray(bloques)) {
             return {
                 total: 0,
@@ -594,7 +594,7 @@ export const bloquesUtils = {
             activos: bloques.filter(b => b.estado === true).length,
             inactivos: bloques.filter(b => b.estado === false).length
         };
-    }
+    } */
 };
 
 // Exportar servicios principales

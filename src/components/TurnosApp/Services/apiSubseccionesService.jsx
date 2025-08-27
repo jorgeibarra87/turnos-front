@@ -1,12 +1,13 @@
-// apiSubseccionesService.jsx
 import axios from 'axios';
 
-const BASE_URL = 'http://localhost:8080';
+// Configuración de variables de entorno
+const API_BASE_URL = import.meta.env.REACT_APP_API_BASE_URL || 'http://localhost:8080';
+const API_TIMEOUT = parseInt(import.meta.env.REACT_APP_API_TIMEOUT || '10000', 10);
 
-// Configuración de axios con interceptores
+// Crear instancia de axios
 const api = axios.create({
-    baseURL: BASE_URL,
-    timeout: 10000,
+    baseURL: API_BASE_URL,
+    timeout: API_TIMEOUT,
     headers: {
         'Content-Type': 'application/json',
     }
@@ -111,7 +112,7 @@ export const subseccionesService = {
     }
 };
 
-// Servicio para Secciones (dependencia para el formulario)
+// Servicio para Secciones (para el formulario)
 export const seccionesService = {
     // Obtener todas las secciones
     getAll: async () => {
@@ -128,7 +129,7 @@ export const seccionesService = {
             }
         } catch (error) {
             console.error('Error al obtener secciones:', error);
-            // En caso de error, retornamos array vacío para que no rompa el formulario
+            // En caso de error, retorna array vacío
             return [];
         }
     },

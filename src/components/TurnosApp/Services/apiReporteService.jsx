@@ -93,7 +93,7 @@ export const apiReporteService = {
         }
     },
 
-    // Funciones de exportación (si el backend las maneja)
+    // Funciones de exportación
     exportacion: {
         // Exportar reporte a Excel
         exportToExcel: async (anio, mes, cuadroId) => {
