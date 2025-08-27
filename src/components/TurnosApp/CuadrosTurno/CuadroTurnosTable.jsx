@@ -1,5 +1,5 @@
 import React from 'react';
-import { Eye, Edit, Trash2, CopyPlus, UsersIcon, BoxesIcon, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Eye, Edit, Trash2, CopyPlus, UsersIcon, BoxesIcon, ChevronLeft, ChevronRight, CalendarX, CalendarCog } from 'lucide-react';
 import { useEffect, useState, useCallback } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
@@ -21,7 +21,7 @@ export default function TurnosTable() {
             setLoading(true);
             setError(null);
 
-            const cuadrosAbiertos = await apiCuadroService.cuadros.getCuadrosAbiertos();
+            const cuadrosAbiertos = await apiCuadroService.cuadros.getCuadros();
             setCuadros(cuadrosAbiertos);
 
             // Resetear página si es necesario
@@ -122,7 +122,12 @@ export default function TurnosTable() {
 
     return (
         <div className="m-8 p-6 bg-white shadow rounded">
-            <div className='m-10 text-5xl text-center font-bold'>Gestion Cuadros de Turno</div>
+            <div className="flex items-center justify-center gap-3 rounded-2xl border-b-4  border-primary-green-husj pl-4 pr-4 pb-1 pt-1 mb-6 w-fit mx-auto">
+                <CalendarCog size={40} className="text-primary-green-husj" />
+                <h1 className="text-4xl font-extrabold text-gray-800">
+                    Gestion Cuadros de Turno
+                </h1>
+            </div>
 
             <div className="flex justify-between items-center mb-4">
                 <Link to="/crearCuadro">
@@ -188,16 +193,19 @@ export default function TurnosTable() {
                                     />
                                 </Link>
 
-                                <button
-                                    onClick={() => handleDelete(cuadro.idCuadroTurno, cuadro.nombre)}
-                                    title={`Eliminar cuadro: ${cuadro.nombre}`}
-                                    className="inline-block"
-                                >
-                                    <Trash2
-                                        size={18}
-                                        className="text-red-600 hover:text-red-800 cursor-pointer transition-colors"
-                                    />
-                                </button>
+                                {/* Botón cerrar cuadro */}
+                                {cuadro.estadoCuadro === 'abierto' && (
+                                    <button
+                                        onClick={() => handleDelete(cuadro.idCuadroTurno, cuadro.nombre)}
+                                        title={`Eliminar cuadro: ${cuadro.nombre}`}
+                                        className="inline-block"
+                                    >
+                                        <CalendarX
+                                            size={18}
+                                            className="text-red-600 hover:text-red-800 cursor-pointer transition-colors"
+                                        />
+                                    </button>
+                                )}
                             </td>
                         </tr>
                     ))}

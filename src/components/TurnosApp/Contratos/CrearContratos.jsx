@@ -74,31 +74,6 @@ export default function CrearContrato() {
     const [loadingData, setLoadingData] = useState(false);
 
 
-    /* // Cargar datos del contrato para edición cuando los datos iniciales estén listos
-    useEffect(() => {
-        if (isEditMode && contratoId && especialidades.length > 0 && procesos.length > 0) {
-            loadContratoForEdit();
-        }
-    }, [isEditMode, contratoId, especialidades.length, procesos.length]);
-
-    const loadInitialData = async () => {
-        try {
-            setLoading(true);
-            const [especialidadesRes, procesosRes] = await Promise.all([
-                axios.get('http://localhost:8080/titulosFormacionAcademica'),
-                axios.get('http://localhost:8080/procesos')
-            ]);
-
-            setEspecialidades(especialidadesRes.data || []);
-            setProcesos(procesosRes.data || []);
-        } catch (err) {
-            setError('Error al cargar datos iniciales');
-            console.error('Error:', err);
-        } finally {
-            setLoading(false);
-        }
-    }; */
-
     // Cargar datos iniciales usando apiService
     const loadInitialData = async () => {
         try {
@@ -120,53 +95,6 @@ export default function CrearContrato() {
         }
     };
 
-    /*  const loadContratoForEdit = async () => {
-         try {
-             setLoadingData(true);
- 
-             // Cargar datos básicos del contrato
-             const contratoResponse = await axios.get(`http://localhost:8080/contrato/contratoTotal/${contratoId}`);
-             const contratoCompleto = contratoResponse.data;
- 
-             setContratoData({
-                 numContrato: contratoCompleto.numContrato || '',
-                 supervisor: contratoCompleto.supervisor || '',
-                 apoyoSupervision: contratoCompleto.apoyoSupervision || '',
-                 objeto: contratoCompleto.objeto || '',
-                 contratista: contratoCompleto.contratista || '',
-                 fechaInicio: contratoCompleto.fechaInicio || '',
-                 fechaTerminacion: contratoCompleto.fechaTerminacion || '',
-                 anio: contratoCompleto.anio || new Date().getFullYear(),
-                 observaciones: contratoCompleto.observaciones || ''
-             });
- 
-             // Cargar especialidades relacionadas
-             try {
-                 const especialidadesResponse = await axios.get(`http://localhost:8080/contrato/${contratoId}/titulos`);
-                 const especialidadesDelContrato = especialidadesResponse.data || [];
-                 setEspecialidadesSeleccionadas(especialidadesDelContrato);
-             } catch (error) {
-                 console.warn('Error al cargar especialidades del contrato:', error);
-                 setEspecialidadesSeleccionadas([]);
-             }
- 
-             // Cargar procesos relacionados
-             try {
-                 const procesosResponse = await axios.get(`http://localhost:8080/contrato/${contratoId}/procesos`);
-                 const procesosDelContrato = procesosResponse.data || [];
-                 setProcesosSeleccionados(procesosDelContrato);
-             } catch (error) {
-                 console.warn('Error al cargar procesos del contrato:', error);
-                 setProcesosSeleccionados([]);
-             }
- 
-         } catch (err) {
-             setError('Error al cargar datos del contrato');
-             console.error('Error:', err);
-         } finally {
-             setLoadingData(false);
-         }
-     }; */
 
     const loadContratoForEdit = async () => {
         try {
@@ -408,12 +336,21 @@ export default function CrearContrato() {
             {showMainForm ? (
                 // Formulario principal del contrato
                 <div className='bg-white p-6 rounded-lg flex flex-col justify-center items-center gap-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto'>
-                    <div className='text-3xl font-bold text-gray-800 text-center'>
-                        {isEditMode ? 'Editar Contrato' : 'Crear Nuevo Contrato'}
+                    <div className="flex items-center justify-center gap-2 rounded-2xl border-b-4  border-primary-green-husj pl-4 pr-4 pb- pt-4 mb-6 w-fit mx-auto">
+                        <FileText size={30} className="text-primary-green-husj" />
+                        <h1 className="text-2xl font-extrabold text-gray-800">
+                            {isEditMode ? 'Editar Contrato' : 'Crear Nuevo Contrato'}
+                        </h1>
                     </div>
 
                     {isEditMode && (
-                        <div className='p-4 text-2xl text-center font-bold'>Editar Contrato:
+                        <div className='p-4 text-2xl text-center font-bold'>
+                            <div className="flex items-center justify-center gap-2 rounded-2xl border-b-4  border-primary-green-husj pl-4 pr-4 pb-1 pt-1 mb-6 w-fit mx-auto">
+                                <FileText size={30} className="text-primary-green-husj" />
+                                <h1 className="text-2xl font-extrabold text-gray-800">
+                                    Editar Contrato:
+                                </h1>
+                            </div>
                             <div className='text-sm bg-orange-50 border border-orange-200 px-4 py-2 rounded-lg'>
 
                                 <div className='flex items-center justify-center gap-2 mb-1'>
@@ -589,8 +526,12 @@ export default function CrearContrato() {
             ) : showRelatedManager && !showSelector ? (
                 // Gestor de elementos relacionados
                 <div className='bg-white p-6 rounded-lg flex flex-col justify-center items-center gap-6 max-w-6xl w-full mx-4 max-h-[90vh] overflow-y-auto'>
-                    <div className='text-3xl font-bold text-gray-800 text-center'>
-                        Gestión de Elementos Relacionados
+
+                    <div className="flex items-center justify-center gap-2 rounded-2xl border-b-4  border-primary-green-husj pl-4 pr-4 pb-1 pt-1 mb-6 w-fit mx-auto">
+                        <FileText size={30} className="text-primary-green-husj" />
+                        <h1 className="text-2xl font-extrabold text-gray-800">
+                            Gestión de Elementos Relacionados
+                        </h1>
                     </div>
 
                     <div className='w-full grid grid-cols-1 md:grid-cols-2 gap-6'>
@@ -747,8 +688,11 @@ export default function CrearContrato() {
             ) : showSelector ? (
                 // Selector de elementos
                 <div className='bg-white p-6 rounded-lg flex flex-col justify-center items-center gap-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto'>
-                    <div className='text-2xl font-bold text-gray-800 text-center'>
-                        Seleccionar {selectorData.title}
+                    <div className="flex items-center justify-center gap-2 rounded-2xl border-b-4  border-primary-green-husj pl-4 pr-4 pb-1 pt-1 mb-6 w-fit mx-auto">
+                        <FileText size={30} className="text-primary-green-husj" />
+                        <h1 className="text-2xl font-extrabold text-gray-800">
+                            Seleccionar {selectorData.title}
+                        </h1>
                     </div>
 
                     <div className='text-center text-sm text-gray-600'>

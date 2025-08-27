@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Save, CircleXIcon, User, Edit } from 'lucide-react';
+import { ArrowLeft, Save, CircleXIcon, User, Edit, CalendarClock } from 'lucide-react';
 import { apiCuadroService } from '../Services/apiCuadroService';
 
 export default function CrearCuadroMulti3() {
@@ -177,8 +177,11 @@ export default function CrearCuadroMulti3() {
         <div className='absolute inset-0 bg-opacity-30 backdrop-blur-sm flex justify-center items-center'>
             <div className='bg-white p-8 rounded-lg flex flex-col justify-center items-center gap-6 max-w-4xl w-full mx-4'>
                 {/* Header */}
-                <div className='text-3xl font-bold text-gray-800 text-center'>
-                    {isEditMode ? 'Editando Cuadro Multiproceso' : 'Crear Cuadro Multiproceso'}
+                <div className="flex items-center justify-center gap-3 rounded-2xl border-b-4  border-primary-green-husj pl-4 pr-4 pb-1 pt-1 mb-1 w-fit mx-auto">
+                    <CalendarClock size={40} className="text-primary-green-husj" />
+                    <h1 className="text-2xl font-extrabold text-gray-800">
+                        {isEditMode ? 'Editando Cuadro Multiproceso' : 'Crear Cuadro Multiproceso'}
+                    </h1>
                 </div>
 
                 {/* Información de edición */}

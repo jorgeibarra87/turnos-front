@@ -15,53 +15,6 @@ export default function VerContrato() {
     const [error, setError] = useState(null);
     const [verMasObservaciones, setVerMasObservaciones] = useState(false);
 
-    /* // Obtener datos completos del contrato
-    useEffect(() => {
-        const fetchContratoCompleto = async () => {
-            try {
-                setLoading(true);
-                setError(null);
-
-                // Obtener información completa del contrato
-                const contratoResponse = await axios.get(`http://localhost:8080/contrato/contratoTotal/${id}`);
-
-                if (contratoResponse.data) {
-                    setContrato(contratoResponse.data);
-
-                    // Obtener especialidades
-                    try {
-                        const especialidadesResponse = await axios.get(`http://localhost:8080/contrato/${id}/titulos`);
-                        setEspecialidades(especialidadesResponse.data || []);
-                    } catch (error) {
-                        console.warn('Error al cargar especialidades:', error);
-                        setEspecialidades([]);
-                    }
-
-                    // Obtener procesos
-                    try {
-                        const procesosResponse = await axios.get(`http://localhost:8080/contrato/${id}/procesos`);
-                        setProcesos(procesosResponse.data || []);
-                    } catch (error) {
-                        console.warn('Error al cargar procesos:', error);
-                        setProcesos([]);
-                    }
-                } else {
-                    setContrato(null);
-                    console.warn('No se recibió información del contrato');
-                }
-
-            } catch (err) {
-                setError('Error al cargar el contrato');
-                console.error('Error al cargar contrato:', err);
-                setContrato(null);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        if (id) fetchContratoCompleto();
-    }, [id]); */
-
     // Obtener datos completos del contrato usando apiService
     const fetchContratoCompleto = async () => {
         try {
@@ -161,7 +114,12 @@ export default function VerContrato() {
 
                 {/* Header */}
                 <div className='text-center border-b pb-4'>
-                    <h1 className='text-2xl font-bold text-gray-800 mb-2'>Información de Contrato</h1>
+                    <div className="flex items-center justify-center gap-2 rounded-2xl border-b-4  border-primary-green-husj pl-4 pr-4 pb- pt-4 mb-6 w-fit mx-auto">
+                        <FileText size={30} className="text-primary-green-husj" />
+                        <h1 className="text-2xl font-extrabold text-gray-800">
+                            Información de Contrato
+                        </h1>
+                    </div>
                 </div>
 
                 {/* Información Principal del Contrato */}

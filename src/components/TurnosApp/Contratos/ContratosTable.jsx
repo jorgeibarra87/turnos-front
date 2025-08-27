@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { Eye, Edit, Trash2, CopyPlus, Users, Settings } from 'lucide-react';
+import { Eye, Edit, Trash2, CopyPlus, Users, Settings, FileText } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { apiService } from '../Services/apiContratoService';
 
@@ -112,7 +112,12 @@ export default function ContratosTable() {
 
     return (
         <div className="m-8 p-6 bg-white shadow rounded">
-            <div className='m-10 text-5xl text-center font-bold'>Ver Todos los Contratos:</div>
+            <div className="flex items-center justify-center gap-3 rounded-2xl border-b-4  border-primary-green-husj pl-4 pr-4 pb-1 pt-1 mb-6 w-fit mx-auto">
+                <FileText size={40} className="text-primary-green-husj" />
+                <h1 className="text-4xl font-extrabold text-gray-800">
+                    Ver Todos los Contratos
+                </h1>
+            </div>
 
             {/* Header con botón crear y contador */}
             <div className="mb-6 flex justify-between items-center">
@@ -192,13 +197,13 @@ export default function ContratosTable() {
                                             </Link>
 
                                             {/* Eliminar */}
-                                            <button
+                                            {/* <button
                                                 onClick={() => handleDelete(contrato.idContrato, contrato.numContrato)}
                                                 title={`Eliminar contrato: ${contrato.numContrato}`}
                                                 className="text-red-500 hover:text-red-700 transition-colors"
                                             >
                                                 <Trash2 size={18} />
-                                            </button>
+                                            </button> */}
                                         </div>
                                     </td>
                                 </tr>

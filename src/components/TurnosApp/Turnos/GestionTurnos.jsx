@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
-import { User, ArrowLeft, Eye, Users, CalendarPlus, Calendar, Edit, CalendarSearch, CalendarSync, ChevronLeft, ChevronRight } from 'lucide-react';
+import { User, ArrowLeft, Eye, Users, CalendarPlus, Calendar, Edit, CalendarSearch, CalendarSync, ChevronLeft, ChevronRight, CalendarClock } from 'lucide-react';
 import { apiTurnoService } from '../Services/apiTurnoService';
 //import { turnosData } from '../../data/turnosData';
 
@@ -192,11 +192,16 @@ export default function GestionTurnos() {
 
     return (
         <div className='absolute inset-0 bg-opacity-30 backdrop-blur-sm flex justify-center items-center'>
-            <div className='bg-white p-4 rounded-lg flex flex-col gap-6 max-w-6xl w-full mx-4 max-h-[90vh] overflow-y-auto'>
-                <div className='text-3xl text-center font-bold'>Gestion de Turnos</div>
+            <div className='bg-white p-4 rounded-lg flex flex-col gap-2 max-w-6xl w-full mx-4 max-h-[90vh] overflow-y-auto'>
+                <div className="flex items-center justify-center gap-3 rounded-2xl border-b-4  border-primary-green-husj pl-4 pr-4 pb-1 pt-1 mb-6 w-fit mx-auto">
+                    <CalendarClock size={40} className="text-primary-green-husj" />
+                    <h1 className="text-4xl font-extrabold text-gray-800">
+                        Gestion de Turnos
+                    </h1>
+                </div>
 
                 {/* Header */}
-                <div className='flex items-center justify-center border-b mb-0'>
+                <div className='flex items-center justify-center mb-0'>
                     <div className='flex items-center gap-2'>
                         <div>
                             <p className='text-gray-600'>Visualización de datos del Cuadro seleccionado</p>

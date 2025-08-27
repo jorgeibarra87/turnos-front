@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
-import { CheckIcon, CircleXIcon, Save, User, ArrowLeft, Edit } from 'lucide-react';
+import { CheckIcon, CircleXIcon, Save, User, ArrowLeft, Edit, CalendarClock } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { apiCuadroService } from '../Services/apiCuadroService';
 
@@ -423,8 +423,11 @@ export default function CrearCuadro() {
             {!showCuadro ? (
                 // Vista de selecciones
                 <div className='bg-white p-4 rounded-lg flex flex-col justify-center items-center gap-4 max-w-xl w-full mx-4'>
-                    <div className='text-3xl text-center font-bold'>
-                        {isEditMode ? 'Editar Cuadro de Turno' : 'Gestión Cuadros de Turno'}
+                    <div className="flex items-center justify-center gap-3 rounded-2xl border-b-4  border-primary-green-husj pl-4 pr-4 pb-1 pt-1 mb-1 w-fit mx-auto">
+                        <CalendarClock size={40} className="text-primary-green-husj" />
+                        <h1 className="text-2xl font-extrabold text-gray-800">
+                            {isEditMode ? 'Editar Cuadro de Turno' : 'Gestión Cuadros de Turno'}
+                        </h1>
                     </div>
                     <div className='text-lg text-center font-semibold'>
                         {isEditMode ? 'Modifica los datos del cuadro' : 'Seleccione una categoría para Cuadros de Turno'}
@@ -578,13 +581,17 @@ export default function CrearCuadro() {
                 // Vista del cuadro de turno
                 <div className='bg-white p-8 rounded-lg flex flex-col justify-center items-center gap-6 max-w-4xl w-full mx-4'>
                     {/* Header */}
-                    <div className='text-3xl font-bold text-gray-800 text-center'>
-                        {isEditMode ? 'Editando Cuadro de Turno' : 'Gestión de Turnos'}:
+                    <div className="flex items-center justify-center gap-3 rounded-2xl border-b-4  border-primary-green-husj pl-4 pr-4 pb-1 pt-1 mb-1 w-fit mx-auto">
+                        <CalendarClock size={40} className="text-primary-green-husj" />
+                        <h1 className="text-2xl font-extrabold text-gray-800">
+                            {isEditMode ? 'Editar Cuadro de Turno' : 'Gestión Cuadros de Turno'}
+                        </h1>
                     </div>
+
 
                     {/* Cuadro de Turno Info */}
                     <div className='text-center'>
-                        <div className='text-2xl font-bold text-gray-800'>Crear Cuadro de Turno:</div>
+                        {/* <div className='text-2xl font-bold text-gray-800'>Crear Cuadro de Turno:</div> */}
                         {/* Información de edición*/}
                         {isEditMode && (
                             <div className='text-sm bg-orange-50 border border-orange-200 px-4 py-2 rounded-lg mt-3'>

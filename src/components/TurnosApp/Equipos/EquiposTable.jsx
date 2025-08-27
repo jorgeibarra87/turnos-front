@@ -108,7 +108,13 @@ export default function EquiposTable() {
     if (loading) {
         return (
             <div className="m-8 p-6 bg-white shadow rounded">
-                <div className='m-10 text-5xl text-center font-bold'>Gestión de Equipos</div>
+                <div className="flex items-center justify-center gap-3 rounded-2xl border-b-4  border-primary-green-husj pl-4 pr-4 pb-1 pt-1 mb-6 w-fit mx-auto">
+                    <Users size={40} className="text-primary-green-husj" />
+                    <h1 className="text-4xl font-extrabold text-gray-800">
+                        Gestión de Equipos
+                    </h1>
+                </div>
+
                 <div className="text-center py-8">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
                     <p className="text-lg text-gray-500">Cargando equipos...</p>
@@ -176,7 +182,12 @@ export default function EquiposTable() {
 
     return (
         <div className="m-8 p-6 bg-white shadow rounded">
-            <div className='m-10 text-5xl text-center font-bold'>Gestión de Equipos</div>
+            <div className="flex items-center justify-center gap-3 rounded-2xl border-b-4  border-primary-green-husj pl-4 pr-4 pb-1 pt-1 mb-6 w-fit mx-auto">
+                <Users size={40} className="text-primary-green-husj" />
+                <h1 className="text-4xl font-extrabold text-gray-800">
+                    Gestión de Equipos
+                </h1>
+            </div>
 
             {/* Botón para crear nuevo equipo */}
             <div className="flex justify-between items-center mb-4">

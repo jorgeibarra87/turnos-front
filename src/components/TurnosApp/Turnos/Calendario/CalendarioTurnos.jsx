@@ -1,6 +1,6 @@
 // components/CalendarioTurnos.js
 import React, { useState } from 'react';
-import { Calendar, ChevronLeft, ChevronRight, Eye, Edit, User, Clock, Filter } from 'lucide-react';
+import { Calendar, ChevronLeft, ChevronRight, Eye, Edit, User, Clock, Filter, CalendarClock, Calendar1 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useCalendarioTurnos } from '../Calendario/hooks/useCalendarioTurnos';
 import { useCuadrosTurno } from '../Calendario/hooks/useCuadrosTurno';
@@ -198,14 +198,20 @@ export default function CalendarioTurnos() {
     }
 
     return (
-        <div className="p-6 bg-gray-50 min-h-screen">
+        <div className="p-6 bg-gray-300 min-h-screen">
             {/* Header */}
             <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
                 <div className="flex items-center justify-between mb-6">
-                    <h1 className="text-3xl font-bold flex items-center gap-2">
+                    <div className="flex items-center justify-center gap-3 rounded-2xl border-b-4  border-primary-green-husj pl-4 pr-4 pb-1 pt-1 mb-4 w-fit mx-2">
+                        <Calendar1 size={40} className="text-primary-green-husj" />
+                        <h1 className="text-4xl font-extrabold text-gray-800">
+                            Calendario de Turnos
+                        </h1>
+                    </div>
+                    {/* <h1 className="text-3xl font-bold flex items-center gap-2">
                         <Calendar className="text-blue-600" size={32} />
                         Calendario de Turnos
-                    </h1>
+                    </h1> */}
 
                     <div className="flex items-center gap-4">
                         <button onClick={() => navegarMes(-1)} className="p-2 hover:bg-gray-100 rounded-lg">

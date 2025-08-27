@@ -39,29 +39,9 @@ apiClient.interceptors.response.use(
 // Servicio de reportes
 export const apiReporteService = {
     reportes: {
-        // Obtener reporte por año, mes y cuadro
+        // Obtener reporte por año, mes y cuadro (ÚNICO ENDPOINT NECESARIO)
         getReporte: async (anio, mes, cuadroId) => {
             const response = await apiClient.get(`/reportes/${anio}/${mes}/${cuadroId}`);
-            return response.data;
-        },
-
-        // Obtener reportes por rango de fechas
-        getReporteByDateRange: async (fechaInicio, fechaFin, cuadroId) => {
-            const response = await apiClient.get(`/reportes/rango`, {
-                params: { fechaInicio, fechaFin, cuadroId }
-            });
-            return response.data;
-        },
-
-        // Obtener reporte consolidado por período
-        getReporteConsolidado: async (anio, mes) => {
-            const response = await apiClient.get(`/reportes/consolidado/${anio}/${mes}`);
-            return response.data;
-        },
-
-        // Obtener estadísticas generales
-        getEstadisticas: async (anio) => {
-            const response = await apiClient.get(`/reportes/estadisticas/${anio}`);
             return response.data;
         }
     },
@@ -78,45 +58,6 @@ export const apiReporteService = {
         getCuadrosActivos: async () => {
             const cuadros = await apiReporteService.auxiliares.getCuadrosTurno();
             return cuadros.filter(cuadro => cuadro.estadoCuadro === 'abierto');
-        },
-
-        // Obtener años disponibles para reportes
-        getAniosDisponibles: async () => {
-            const response = await apiClient.get('/reportes/anios-disponibles');
-            return response.data || [];
-        },
-
-        // Obtener meses disponibles para un año específico
-        getMesesDisponibles: async (anio) => {
-            const response = await apiClient.get(`/reportes/meses-disponibles/${anio}`);
-            return response.data || [];
-        }
-    },
-
-    // Funciones de exportación
-    exportacion: {
-        // Exportar reporte a Excel
-        exportToExcel: async (anio, mes, cuadroId) => {
-            const response = await apiClient.get(`/reportes/export/excel/${anio}/${mes}/${cuadroId}`, {
-                responseType: 'blob'
-            });
-            return response.data;
-        },
-
-        // Exportar reporte a PDF
-        exportToPDF: async (anio, mes, cuadroId) => {
-            const response = await apiClient.get(`/reportes/export/pdf/${anio}/${mes}/${cuadroId}`, {
-                responseType: 'blob'
-            });
-            return response.data;
-        },
-
-        // Generar reporte personalizado
-        exportCustom: async (params, format = 'excel') => {
-            const response = await apiClient.post(`/reportes/export/${format}`, params, {
-                responseType: 'blob'
-            });
-            return response.data;
         }
     }
 };

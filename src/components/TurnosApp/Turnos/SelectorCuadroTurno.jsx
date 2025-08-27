@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { CheckIcon, CircleXIcon } from 'lucide-react';
+import { CalendarClock, CheckIcon, CircleXIcon } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { apiTurnoService } from '../Services/apiTurnoService';
 
@@ -68,7 +68,12 @@ export function SelectorCuadroTurno() {
     return (
         <div className='absolute inset-0 bg-opacity-30 backdrop-blur-sm flex justify-center items-center'>
             <div className='bg-white p-8 rounded-lg flex flex-col justify-center items-center gap-5 max-w-xl w-full mx-4'>
-                <div className='text-3xl text-center font-bold'>Gestión de Turnos</div>
+                <div className="flex items-center justify-center gap-3 rounded-2xl border-b-4  border-primary-green-husj pl-4 pr-4 pb-1 pt-1 mb-6 w-fit mx-auto">
+                    <CalendarClock size={40} className="text-primary-green-husj" />
+                    <h1 className="text-4xl font-extrabold text-gray-800">
+                        Gestión de Turnos
+                    </h1>
+                </div>
 
                 <div className='text-center space-y-2'>
                     <div className='text-lg font-semibold text-blue-600'>

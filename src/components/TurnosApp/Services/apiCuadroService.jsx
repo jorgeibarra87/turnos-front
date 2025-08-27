@@ -45,11 +45,12 @@ export const apiCuadroService = {
             return Array.isArray(response.data) ? response.data : response.data.cuadros || [];
         },
 
-        // Obtener cuadros abiertos
-        getCuadrosAbiertos: async () => {
+        // Obtener cuadros
+        getCuadros: async () => {
             const response = await apiClient.get('/cuadro-turnos');
             const allCuadros = Array.isArray(response.data) ? response.data : response.data.cuadros || [];
-            return allCuadros.filter(cuadro => cuadro.estadoCuadro === 'abierto');
+            /* return allCuadros.filter(cuadro => cuadro.estadoCuadro === 'abierto'); */
+            return allCuadros;
         },
 
         // Obtener cuadro por ID

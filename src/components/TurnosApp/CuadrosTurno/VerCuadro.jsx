@@ -143,12 +143,11 @@ export default function VerCuadro() {
 
                 {/* Header */}
                 <div className='flex items-center justify-between border-b pb-2'>
-                    <div className='flex items-center gap-4'>
-                        <Eye size={32} className="text-blue-600" />
-                        <div>
-                            <h1 className='text-3xl font-bold text-gray-800'>Ver Cuadro de Turno</h1>
-                            <p className='text-gray-600'>Visualización de datos del cuadro</p>
-                        </div>
+                    <div className="flex items-center justify-center gap-3 rounded-2xl border-b-4  border-primary-green-husj pl-4 pr-4 pb-1 pt-1 mb-1 w-fit mx-auto">
+                        <Eye size={40} className="text-primary-green-husj" />
+                        <h1 className="text-2xl font-extrabold text-gray-800">
+                            Ver Cuadro de Turno
+                        </h1>
                     </div>
                     <div className='text-sm'>
                         ID: {id}

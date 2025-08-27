@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate, useLocation, useParams } from 'react-router-dom';
 import axios from 'axios';
-import { Save, User, ArrowLeft, Edit, CircleXIcon, Clock, FileText } from 'lucide-react';
+import { Save, User, ArrowLeft, Edit, CircleXIcon, Clock, FileText, CalendarClock } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { apiTurnoService } from '../Services/apiTurnoService';
 
@@ -302,8 +302,11 @@ export function FormularioTurno() {
     return (
         <div className='absolute inset-0 bg-opacity-30 backdrop-blur-sm flex justify-center items-center'>
             <div className='bg-white p-6 rounded-lg flex flex-col justify-center items-center gap-4 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto'>
-                <div className='text-3xl font-bold text-gray-800 text-center'>
-                    {isEditMode ? 'Editar Turno' : 'Crear Turno'}
+                <div className="flex items-center justify-center gap-3 rounded-2xl border-b-4  border-primary-green-husj pl-4 pr-4 pb-1 pt-1 mb-1 w-fit mx-auto">
+                    <CalendarClock size={40} className="text-primary-green-husj" />
+                    <h1 className="text-2xl font-extrabold text-gray-800">
+                        {isEditMode ? 'Editar Turno' : 'Crear Turno'}
+                    </h1>
                 </div>
 
                 {isEditMode && turnoId && (

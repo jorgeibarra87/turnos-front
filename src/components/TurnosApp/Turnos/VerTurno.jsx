@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
-import { ArrowLeft, CircleXIcon, User, Clock, Calendar, Edit } from 'lucide-react';
+import { ArrowLeft, CircleXIcon, User, Clock, Calendar, Edit, CalendarClock } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { apiTurnoService } from '../Services/apiTurnoService';
 
@@ -86,10 +86,13 @@ export function VerTurno() {
 
                 {/* Header */}
                 <div className='text-center mb-6'>
-                    <div className='text-3xl font-bold text-gray-800 mb-2 flex items-center justify-center gap-2'>
-                        <Calendar size={36} className="text-blue-600" />
-                        Detalles del Turno
+                    <div className="flex items-center justify-center gap-3 rounded-2xl border-b-4  border-primary-green-husj pl-4 pr-4 pb-1 pt-1 mb-1 w-fit mx-auto">
+                        <CalendarClock size={40} className="text-primary-green-husj" />
+                        <h1 className="text-2xl font-extrabold text-gray-800">
+                            Detalles del Turno
+                        </h1>
                     </div>
+
                     <div className='text-sm text-gray-600'>ID: {turnoId}</div>
                 </div>
 

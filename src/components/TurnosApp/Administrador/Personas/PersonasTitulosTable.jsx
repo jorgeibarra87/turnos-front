@@ -108,6 +108,18 @@ export default function PersonasTitulosTable() {
         return rangeWithDots;
     };
 
+    // Mostrar loading si está cargando
+    if (loading) {
+        return (
+            <div className="m-8 p-6 bg-white shadow rounded">
+                <div className="text-center py-8">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+                    <p className="text-lg text-gray-500">Cargando datos...</p>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="m-8 p-6 bg-white shadow rounded">
             <div className="flex justify-between items-center mb-4">

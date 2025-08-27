@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
-import { CheckIcon, CircleXIcon, Save, User, ArrowLeft, Edit, Plus, UserPlus, X } from 'lucide-react';
+import { CheckIcon, CircleXIcon, Save, User, ArrowLeft, Edit, Plus, UserPlus, X, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { apiEquipoService } from '../Services/apiEquipoService';
 import { apiCuadroService } from '../Services/apiCuadroService';
@@ -341,8 +341,11 @@ export default function CrearEquipo() {
             {!showEquipoForm && !showPersonasManager ? (
                 // Vista de selecciones inicial
                 <div className='bg-white p-4 rounded-lg flex flex-col justify-center items-center gap-4 max-w-xl w-full mx-4'>
-                    <div className='text-3xl text-center font-bold'>
-                        {isEditMode ? 'Editar Equipo' : 'Gestión de Equipos'}
+                    <div className="flex items-center justify-center gap-3 rounded-2xl border-b-4  border-primary-green-husj pl-4 pr-4 pb-1 pt-1 mb-1 w-fit mx-auto">
+                        <Users size={40} className="text-primary-green-husj" />
+                        <h1 className="text-2xl font-extrabold text-gray-800">
+                            {isEditMode ? 'Editar Equipo' : 'Gestión de Equipos'}
+                        </h1>
                     </div>
                     <div className='text-lg text-center font-semibold'>
                         {isEditMode ? 'Modifica los datos del equipo' : 'Selecciona una categoría para el equipo'}
@@ -449,8 +452,11 @@ export default function CrearEquipo() {
             ) : showPersonasManager && !showPerfilSelector ? (
                 // VISTA DEL GESTOR DE PERSONAS
                 <div className='bg-white p-6 rounded-lg flex flex-col justify-center items-center gap-6 max-w-5xl w-full mx-4 max-h-[90vh] overflow-y-auto'>
-                    <div className='text-3xl font-bold text-gray-800 text-center'>
-                        {isEditMode ? 'Editando Equipo' : 'Creando Nuevo Equipo'}
+                    <div className="flex items-center justify-center gap-3 rounded-2xl border-b-4  border-primary-green-husj pl-4 pr-4 pb-1 pt-1 mb-1 w-fit mx-auto">
+                        <Users size={40} className="text-primary-green-husj" />
+                        <h1 className="text-2xl font-extrabold text-gray-800">
+                            {isEditMode ? 'Editando Equipo' : 'Creando Nuevo Equipo'}
+                        </h1>
                     </div>
 
                     {isEditMode && (
@@ -566,8 +572,12 @@ export default function CrearEquipo() {
             ) : showPerfilSelector ? (
                 // VISTA DEL SELECTOR DE PERFIL Y USUARIOS
                 <div className='bg-white p-6 rounded-lg flex flex-col justify-center items-center gap-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto'>
-                    <div className='text-2xl font-bold text-gray-800 text-center'>
-                        Seleccionar Perfil y Usuario
+
+                    <div className="flex items-center justify-center gap-3 rounded-2xl border-b-4  border-primary-green-husj pl-4 pr-4 pb-1 pt-1 mb-1 w-fit mx-auto">
+                        <Users size={40} className="text-primary-green-husj" />
+                        <h1 className="text-2xl font-extrabold text-gray-800">
+                            Seleccionar Perfil y Usuario
+                        </h1>
                     </div>
 
                     <div className='text-center text-sm text-gray-600'>
