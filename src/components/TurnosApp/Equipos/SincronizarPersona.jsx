@@ -1,0 +1,458 @@
+import React, { useState } from 'react';
+import { UserPlus, Search, Save, X, User, ArrowLeft, CheckCircle, AlertCircle } from 'lucide-react';
+
+export default function SincronizarPersona({ onClose, onPersonaSincronizada }) {
+    const [documento, setDocumento] = useState('');
+    const [datosPersona, setDatosPersona] = useState(null);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
+    const [saving, setSaving] = useState(false);
+
+    // Estados del formulario
+    const [formData, setFormData] = useState({
+        nombreCompleto: '',
+        email: '',
+        telefono: '',
+        titulo: '',
+        tipoFormacion: '',
+        fechaNacimiento: '',
+        apellidos: '',
+        nombres: ''
+    });
+
+    // Opciones para tipo de formación
+    const tiposFormacion = [
+        { id: 1, tipo: 'ESPECIALISTA' },
+        { id: 2, tipo: 'PROFESIONAL' },
+        { id: 3, tipo: 'NO PROFESIONAL' }
+    ];
+
+    // Datos simulados de la consulta
+    const datosSimulados = {
+        "987654321": {
+            persona: {
+                "fechaNacimiento": null,
+                "apellidos": null,
+                "documento": "987654321",
+                "email": "pruebas1@gmail.com",
+                "nombreCompleto": "PRUEBAS 1",
+                "nombres": null,
+                "telefono": null
+            },
+            titulo: {
+                "idTitulo": 43,
+                "titulo": "PROCTOLOGÍA",
+                "idTipoFormacionAcademica": 1,
+                "estado": true,
+                "nombreTipo": "ESPECIALISTA"
+            }
+        },
+        "12345678": {
+            persona: {
+                "fechaNacimiento": "1985-03-15",
+                "apellidos": "GARCÍA LÓPEZ",
+                "documento": "12345678",
+                "email": null,
+                "nombreCompleto": "MARÍA GARCÍA LÓPEZ",
+                "nombres": "MARÍA",
+                "telefono": "3001234567"
+            },
+            titulo: {
+                "idTitulo": 25,
+                "titulo": "MEDICINA GENERAL",
+                "idTipoFormacionAcademica": 2,
+                "estado": true,
+                "nombreTipo": "PROFESIONAL"
+            }
+        },
+        "11223344": {
+            persona: {
+                "fechaNacimiento": "1990-07-22",
+                "apellidos": "RODRÍGUEZ MARTÍN",
+                "documento": "11223344",
+                "email": "carlos.rodriguez@hospital.com",
+                "nombreCompleto": "CARLOS RODRÍGUEZ MARTÍN",
+                "nombres": "CARLOS",
+                "telefono": null
+            },
+            titulo: {
+                "idTitulo": 67,
+                "titulo": "CARDIOLOGÍA",
+                "idTipoFormacionAcademica": 1,
+                "estado": true,
+                "nombreTipo": "ESPECIALISTA"
+            }
+        }
+    };
+
+    // Simular consulta GET
+    const handleSincronizar = async () => {
+        if (!documento.trim()) {
+            setError('Por favor ingresa un número de documento');
+            return;
+        }
+
+        setLoading(true);
+        setError('');
+        setDatosPersona(null);
+
+        try {
+            // Simular delay de API
+            await new Promise(resolve => setTimeout(resolve, 1500));
+
+            // Buscar datos simulados
+            const datos = datosSimulados[documento.trim()];
+
+            if (!datos) {
+                throw new Error('No se encontraron datos para este documento');
+            }
+
+            setDatosPersona(datos);
+
+            // Prellenar formulario con datos obtenidos
+            setFormData({
+                nombreCompleto: datos.persona.nombreCompleto || '',
+                email: datos.persona.email || '',
+                telefono: datos.persona.telefono || '',
+                titulo: datos.titulo.titulo || '',
+                tipoFormacion: datos.titulo.idTipoFormacionAcademica.toString(),
+                fechaNacimiento: datos.persona.fechaNacimiento || '',
+                apellidos: datos.persona.apellidos || '',
+                nombres: datos.persona.nombres || ''
+            });
+
+        } catch (err) {
+            setError(err.message || 'Error al consultar los datos');
+            setDatosPersona(null);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Manejar cambios en el formulario
+    const handleInputChange = (e) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({
+            ...prev,
+            [name]: value
+        }));
+    };
+
+    // Guardar persona sincronizada
+    const handleGuardar = async () => {
+        setSaving(true);
+        try {
+            // Validaciones básicas
+            if (!formData.nombreCompleto.trim()) {
+                throw new Error('El nombre completo es requerido');
+            }
+            if (!formData.tipoFormacion) {
+                throw new Error('El tipo de formación es requerido');
+            }
+
+            // Simular guardado
+            await new Promise(resolve => setTimeout(resolve, 1000));
+
+            // Preparar datos para enviar a componente padre
+            const personaSincronizada = {
+                idPersona: `temp_${Date.now()}`, // ID temporal
+                nombreCompleto: formData.nombreCompleto,
+                documento: documento,
+                email: formData.email,
+                telefono: formData.telefono,
+                titulo: formData.titulo,
+                tipoFormacion: tiposFormacion.find(t => t.id.toString() === formData.tipoFormacion)?.tipo,
+                fechaNacimiento: formData.fechaNacimiento,
+                apellidos: formData.apellidos,
+                nombres: formData.nombres,
+                sincronizado: true
+            };
+
+            // Llamar callback del componente padre
+            if (onPersonaSincronizada) {
+                onPersonaSincronizada(personaSincronizada);
+            }
+
+            // Cerrar modal
+            onClose();
+
+        } catch (err) {
+            setError(err.message || 'Error al guardar la persona');
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    return (
+        <div className='absolute inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex justify-center items-center z-50'>
+            <div className='bg-white p-6 rounded-lg flex flex-col gap-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto'>
+
+                {/* Header */}
+                <div className="flex items-center justify-center gap-3 rounded-2xl border-b-4 border-primary-green-husj pl-4 pr-4 pb-1 pt-1 mb-1 w-fit mx-auto">
+                    <UserPlus size={40} className="text-primary-green-husj" />
+                    <h1 className="text-2xl font-extrabold text-gray-800">
+                        Sincronizar Persona
+                    </h1>
+                </div>
+
+                {/* Sección de consulta por documento */}
+                <div className='bg-gray-50 p-4 rounded-lg border'>
+                    <h3 className='text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2'>
+                        <Search size={20} className="text-blue-600" />
+                        Consultar por Documento
+                    </h3>
+
+                    <div className='flex gap-4 items-end'>
+                        <div className='flex-1'>
+                            <label htmlFor="documento" className="block text-sm font-medium text-gray-700 mb-2">
+                                Número de Documento *
+                            </label>
+                            <input
+                                type="text"
+                                id="documento"
+                                value={documento}
+                                onChange={(e) => setDocumento(e.target.value)}
+                                placeholder="Ej: 987654321"
+                                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                disabled={loading}
+                            />
+                        </div>
+                        <button
+                            onClick={handleSincronizar}
+                            disabled={loading || !documento.trim()}
+                            className={`px-6 py-2 rounded-lg flex items-center gap-2 transition-colors ${loading || !documento.trim()
+                                ? 'bg-gray-400 cursor-not-allowed text-white'
+                                : 'bg-blue-500 hover:bg-blue-600 text-white'
+                                }`}
+                        >
+                            <Search size={20} />
+                            {loading ? 'Consultando...' : 'Sincronizar'}
+                        </button>
+                    </div>
+
+                    {/* Documentos de ejemplo */}
+                    <div className='mt-4 text-sm text-gray-600'>
+                        <p className='font-medium mb-1'>Documentos de prueba disponibles:</p>
+                        <div className='flex gap-4 flex-wrap'>
+                            {Object.keys(datosSimulados).map(doc => (
+                                <button
+                                    key={doc}
+                                    onClick={() => setDocumento(doc)}
+                                    className='px-2 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors text-xs'
+                                >
+                                    {doc}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Mostrar error */}
+                {error && (
+                    <div className='bg-red-50 border border-red-300 rounded-lg p-4 flex items-center gap-2 text-red-700'>
+                        <AlertCircle size={20} />
+                        {error}
+                    </div>
+                )}
+
+                {/* Mostrar loading */}
+                {loading && (
+                    <div className='bg-blue-50 border border-blue-300 rounded-lg p-4 flex items-center gap-3'>
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
+                        <span className='text-blue-700'>Consultando datos del personal médico...</span>
+                    </div>
+                )}
+
+                {/* Formulario de datos */}
+                {datosPersona && (
+                    <div className='bg-green-50 border border-green-300 rounded-lg p-6'>
+                        <div className='flex items-center gap-2 mb-4'>
+                            <CheckCircle size={20} className="text-green-600" />
+                            <h3 className='text-lg font-semibold text-green-800'>
+                                Datos Sincronizados Correctamente
+                            </h3>
+                        </div>
+
+                        <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+                            {/* Nombre Completo */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Nombre Completo *
+                                </label>
+                                <input
+                                    type="text"
+                                    name="nombreCompleto"
+                                    value={formData.nombreCompleto}
+                                    onChange={handleInputChange}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-green-100"
+                                    readOnly
+                                />
+                            </div>
+
+                            {/* Documento */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Documento
+                                </label>
+                                <input
+                                    type="text"
+                                    value={documento}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-md bg-green-100"
+                                    readOnly
+                                />
+                            </div>
+
+                            {/* Email */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Email {!datosPersona.persona.email && '*'}
+                                </label>
+                                <input
+                                    type="email"
+                                    name="email"
+                                    value={formData.email}
+                                    onChange={handleInputChange}
+                                    placeholder={!datosPersona.persona.email ? "Ingresa el email manualmente" : ""}
+                                    className={`w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 ${datosPersona.persona.email ? 'bg-green-100' : 'bg-yellow-50 border-yellow-300'
+                                        }`}
+                                    readOnly={!!datosPersona.persona.email}
+                                />
+                            </div>
+
+                            {/* Teléfono */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Teléfono {!datosPersona.persona.telefono && '*'}
+                                </label>
+                                <input
+                                    type="tel"
+                                    name="telefono"
+                                    value={formData.telefono}
+                                    onChange={handleInputChange}
+                                    placeholder={!datosPersona.persona.telefono ? "Ingresa el teléfono manualmente" : ""}
+                                    className={`w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 ${datosPersona.persona.telefono ? 'bg-green-100' : 'bg-yellow-50 border-yellow-300'
+                                        }`}
+                                    readOnly={!!datosPersona.persona.telefono}
+                                />
+                            </div>
+
+                            {/* Título */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Título/Especialidad
+                                </label>
+                                <input
+                                    type="text"
+                                    name="titulo"
+                                    value={formData.titulo}
+                                    onChange={handleInputChange}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-green-100"
+                                    readOnly
+                                />
+                            </div>
+
+                            {/* Tipo de Formación */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Tipo de Formación *
+                                </label>
+                                <select
+                                    name="tipoFormacion"
+                                    value={formData.tipoFormacion}
+                                    onChange={handleInputChange}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                >
+                                    <option value="">-- Seleccionar tipo --</option>
+                                    {tiposFormacion.map(tipo => (
+                                        <option key={tipo.id} value={tipo.id}>
+                                            {tipo.tipo}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            {/* Nombres */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Nombres
+                                </label>
+                                <input
+                                    type="text"
+                                    name="nombres"
+                                    value={formData.nombres}
+                                    onChange={handleInputChange}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                    placeholder={!datosPersona.persona.nombres ? "Opcional" : ""}
+                                />
+                            </div>
+
+                            {/* Apellidos */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Apellidos
+                                </label>
+                                <input
+                                    type="text"
+                                    name="apellidos"
+                                    value={formData.apellidos}
+                                    onChange={handleInputChange}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                    placeholder={!datosPersona.persona.apellidos ? "Opcional" : ""}
+                                />
+                            </div>
+
+                            {/* Fecha de Nacimiento */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Fecha de Nacimiento
+                                </label>
+                                <input
+                                    type="date"
+                                    name="fechaNacimiento"
+                                    value={formData.fechaNacimiento}
+                                    onChange={handleInputChange}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                />
+                            </div>
+                        </div>
+
+                        {/* Información adicional */}
+                        {/* <div className='mt-4 text-xs text-gray-600 bg-blue-50 p-3 rounded-lg'>
+                            <h4 className='font-semibold mb-2'>Información de la consulta:</h4>
+                            <div className='space-y-1'>
+                                <p><span className='font-medium'>ID Título:</span> {datosPersona.titulo.idTitulo}</p>
+                                <p><span className='font-medium'>Tipo Formación ID:</span> {datosPersona.titulo.idTipoFormacionAcademica}</p>
+                                <p><span className='font-medium'>Estado:</span> {datosPersona.titulo.estado ? 'Activo' : 'Inactivo'}</p>
+                            </div>
+                        </div> */}
+                    </div>
+                )}
+
+                {/* Botones de acción */}
+                <div className='flex justify-center items-center gap-4 pt-4 border-t'>
+                    {datosPersona ? (
+                        <button
+                            onClick={handleGuardar}
+                            disabled={saving}
+                            className={`px-6 py-2 rounded-lg flex items-center gap-2 transition-colors ${saving
+                                ? 'bg-gray-400 cursor-not-allowed text-white'
+                                : 'bg-green-500 hover:bg-green-600 text-white'
+                                }`}
+                        >
+                            <Save size={20} />
+                            {saving ? 'Guardando...' : 'Guardar Persona'}
+                        </button>
+                    ) : null}
+
+                    <button
+                        onClick={onClose}
+                        className="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 flex items-center gap-2 transition-colors"
+                    >
+                        <ArrowLeft size={20} />
+                        Cancelar
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}

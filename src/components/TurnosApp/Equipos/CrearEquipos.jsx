@@ -4,11 +4,20 @@ import { CheckIcon, CircleXIcon, Save, User, ArrowLeft, Edit, Plus, UserPlus, X,
 import { Link } from 'react-router-dom';
 import { apiEquipoService } from '../Services/apiEquipoService';
 import { apiCuadroService } from '../Services/apiCuadroService';
+import SincronizarPersona from './SincronizarPersona';
 
 export default function CrearEquipo() {
     const navigate = useNavigate();
     const location = useLocation();
     const [searchParams] = useSearchParams();
+    const [showSincronizarPersona, setShowSincronizarPersona] = useState(false);
+
+    // Función para manejar persona sincronizada
+    const handlePersonaSincronizada = (personaSincronizada) => {
+        // Agregar la persona sincronizada al equipo
+        setPersonasEquipo(prev => [...prev, personaSincronizada]);
+        setShowSincronizarPersona(false);
+    };
 
     // Detectar modo edición e id
     const detectEditMode = () => {
@@ -616,6 +625,13 @@ export default function CrearEquipo() {
                             <h3 className='text-lg font-semibold text-gray-800 mb-4'>
                                 Usuarios Disponibles
                             </h3>
+                            <button
+                                onClick={() => setShowSincronizarPersona(true)}
+                                className="mx-auto px-4 py-2 my-2 bg-green-500 text-white rounded-lg hover:bg-green-600 flex items-center gap-2 transition-colors"
+                            >
+                                <UserPlus size={16} />
+                                Sincronizar Persona
+                            </button>
 
                             {loadingUsuarios ? (
                                 <div className='bg-gray-50 border border-gray-300 rounded-lg p-4 text-center'>
@@ -623,14 +639,6 @@ export default function CrearEquipo() {
                                 </div>
                             ) : usuariosDisponibles.length === 0 ? (
                                 <div className='bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg p-6 text-center'>
-                                    <User size={32} className="mx-auto text-gray-400 mb-2" />
-                                    <button
-                                        onClick="/#"
-                                        className="mx-auto px-4 py-2 my-2 bg-green-500 text-white rounded-lg hover:bg-green-600 flex items-center gap-2 transition-colors"
-                                    >
-                                        <UserPlus size={16} />
-                                        Sincronizar Persona
-                                    </button>
                                     <p className='text-gray-500'>No hay usuarios disponibles con este perfil</p>
                                     <p className='text-sm text-gray-400'>O todos los usuarios ya están en el equipo</p>
                                 </div>
@@ -758,6 +766,12 @@ export default function CrearEquipo() {
                         </Link>
                     </div>
                 </div>
+            )}
+            {showSincronizarPersona && (
+                <SincronizarPersona
+                    onClose={() => setShowSincronizarPersona(false)}
+                    onPersonaSincronizada={handlePersonaSincronizada}
+                />
             )}
         </div>
     );
