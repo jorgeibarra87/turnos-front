@@ -38,39 +38,6 @@ export default function CrearTurnos() {
         fetchCuadros();
     }, []);
 
-    /* useEffect(() => {
-        const fetchCuadros = async () => {
-            try {
-                setLoading(true);
-                setError(null);
-                const response = await axios.get('http://localhost:8080/cuadro-turnos');
-
-                if (response.data && Array.isArray(response.data)) {
-                    // si los cuadros tienen idCuadroTurno y nombre
-                    const cuadrosFormateados = response.data.map(cuadro => ({
-                        idCuadroTurno: cuadro.idCuadroTurno || cuadro.id || "",
-                        nombre: cuadro.nombre || cuadro.descripcion || "Sin nombre",
-                        idEquipo: cuadro.idEquipo || null
-                    }));
-                    setCuadros(cuadrosFormateados);
-                } else {
-                    setCuadros([]);
-                    console.warn('La respuesta no contiene un array de cuadros');
-                }
-
-            } catch (err) {
-                setError('Error al cargar los cuadros');
-                console.error('Error al cargar cuadros:', err);
-                setCuadros([]);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchCuadros();
-    }, []); */
-
-
     // Función para manejar el cambio en el select de cuadros;
     const handleCuadroChange = (e) => {
         const cuadroId = e.target.value;
