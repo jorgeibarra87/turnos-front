@@ -118,6 +118,12 @@ export const apiCuadroService = {
             return response.data || [];
         },
 
+        // Obtener procesos de atención por cuadro
+        getProcesosAtencionByCuadro: async (cuadroId) => {
+            const response = await apiClient.get(`/procesosAtencion/cuadro/${cuadroId}`);
+            return response.data || [];
+        },
+
         // Obtener servicios
         getServicios: async () => {
             const response = await apiClient.get('/servicio');
@@ -177,6 +183,12 @@ export const apiCuadroService = {
         // Obtener proceso específico por ID
         getProcesoById: async (id) => {
             const response = await apiClient.get(`/procesos/${id}`);
+            return response.data;
+        },
+
+        // Obtener Historial de Cambios cuadro de turno por ID
+        getHistorialById: async (id) => {
+            const response = await apiClient.get(`/${id}/historial`);
             return response.data;
         },
     }

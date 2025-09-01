@@ -11,6 +11,7 @@ import VerCuadro from './components/TurnosApp/CuadrosTurno/VerCuadro';
 import CrearCuadroMulti from './components/TurnosApp/CuadrosTurno/CrearCuadroMulti';
 import CrearCuadroMulti2 from './components/TurnosApp/CuadrosTurno/CrearCuadroMulti2';
 import CrearCuadroMulti3 from './components/TurnosApp/CuadrosTurno/CrearCuadroMulti3';
+import { SelectorCuadroHistorial } from './components/TurnosApp/CuadrosTurno/SelectorCuadroHistorial';
 import CrearEquipo from './components/TurnosApp/Equipos/CrearEquipos';
 import EquiposTable from './components/TurnosApp/Equipos/EquiposTable';
 import VerEquipo from './components/TurnosApp/Equipos/VerEquipo';
@@ -40,6 +41,7 @@ import PersonasTitulosTable from './components/TurnosApp/Administrador/Personas/
 import PersonasRolesTable from './components/TurnosApp/Administrador/Personas/PersonaRolesTable';
 import PersonasEquiposTable from './components/TurnosApp/Administrador/Personas/PersonasEquiposTable';
 import ReportesFiltro from './components/TurnosApp/Reportes/ReportesFiltro';
+import GestionCuadroHistoria from './components/TurnosApp/CuadrosTurno/GestionCuadroHistoria';
 
 const App = () => (
   <div className="flex h-screen bg-primary-blue-backwround">
@@ -63,6 +65,8 @@ const App = () => (
           <Route exact path="/CrearCuadroMulti/" element={<CrearCuadroMulti />} />
           <Route exact path="/CrearCuadroMulti2/" element={<CrearCuadroMulti2 />} />
           <Route exact path="/CrearCuadroMulti3/" element={<CrearCuadroMulti3 />} />
+          <Route exact path="/selectorCuadroHistorial/" element={<SelectorCuadroHistorial />} />
+          <Route exact path="/gestionCuadroHistoria/:id" element={<GestionCuadroHistoria />} />
           <Route exact path="/Pruebas/" element={<Pruebas />} />
           {/* Nueva ruta para manejar edición con parámetro ID */}
           <Route exact path="/Pruebas/editar/:id" element={<Pruebas />} />

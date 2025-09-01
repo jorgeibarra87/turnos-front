@@ -91,6 +91,7 @@ export const apiTurnoService = {
                 idCuadroTurno: cuadro.idCuadroTurno || cuadro.id || "",
                 nombre: cuadro.nombre || cuadro.descripcion || "Sin nombre",
                 idEquipo: cuadro.idEquipo || null
+                , version: cuadro.version || ""
             }));
         },
 

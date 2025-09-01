@@ -5,17 +5,20 @@ import { User, ArrowLeft, Eye, Calendar, Users, Tag } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { apiCuadroService } from '../Services/apiCuadroService';
 
-export default function VerCuadro() {
+export default function GestionCuadroHistoria() {
     const { id } = useParams(); // Obtener ID desde la URL
     const navigate = useNavigate();
 
     // Estados
     const [cuadroData, setCuadroData] = useState(null);
     const [miembros, setMiembros] = useState([]);
+    const [historial, setHistorial] = useState([]);
     const [loading, setLoading] = useState(true);
     const [loadingMiembros, setLoadingMiembros] = useState(false);
+    const [loadingHistorial, setLoadingHistorial] = useState(false);
     const [error, setError] = useState(null);
     const [errorMiembros, setErrorMiembros] = useState(null);
+    const [errorHistorial, setErrorHistorial] = useState(null);
 
     const [procesos, setProcesos] = useState([]);
     const [loadingProcesos, setLoadingProcesos] = useState(false);
@@ -102,6 +105,24 @@ export default function VerCuadro() {
         }
     };
 
+    // Cargar historial del cuadro
+    const loadHistorial = async (id) => {
+        try {
+            setLoadingHistorial(true);
+            setErrorHistorial(null);
+            const historialData = await apiCuadroService.auxiliares.getHistorialById(id);
+            setHistorial(historialData);
+        } catch (error) {
+            console.error("Error al obtener historial:", error);
+            setErrorHistorial("Error al cargar historial");
+            setHistorial([]);
+        } finally {
+            setLoadingHistorial(false);
+        }
+    };
+    /* const his = historial.map(h => ({ idCuadroTurno: h.idCuadroTurno }));
+    console.log('Historial del cuadro:', his); */
+
     // Función para formatear la categoría
     const formatearCategoria = (categoria) => {
         return categoria ? categoria.charAt(0).toUpperCase() + categoria.slice(1) : '';
@@ -125,7 +146,7 @@ export default function VerCuadro() {
                 <div className='bg-white p-8 rounded-lg flex flex-col justify-center items-center gap-5 max-w-lg w-full mx-4'>
                     <div className='text-2xl font-bold text-red-600'>Error</div>
                     <div className='text-center text-gray-600'>{error}</div>
-                    <Link to="/">
+                    <Link to="/selectorCuadroHistorial">
                         <button className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 flex justify-center items-center gap-2 transition-colors">
                             <ArrowLeft size={20} color="white" strokeWidth={2} />
                             Volver
@@ -145,7 +166,7 @@ export default function VerCuadro() {
                     <div className="flex items-center justify-center gap-3 rounded-2xl border-b-4  border-primary-green-husj pl-4 pr-4 pb-1 pt-1 mb-1 w-fit mx-auto">
                         <Eye size={40} className="text-primary-green-husj" />
                         <h1 className="text-2xl font-extrabold text-gray-800">
-                            Ver Cuadro de Turno
+                            Gestion Historial Cuadro de Turno
                         </h1>
                     </div>
                     <div className='text-sm'>
@@ -165,6 +186,13 @@ export default function VerCuadro() {
                             <div className='text-sm text-gray-500 mb-1'>Nombre del Cuadro</div>
                             <div className=' text-gray-800 break-all text-xs'>
                                 {cuadroData?.nombre || 'No disponible'}
+                            </div>
+                        </div>
+
+                        <div className='bg-white p-4 rounded-lg border'>
+                            <div className='text-sm text-gray-500 mb-1'>Version</div>
+                            <div className=' text-gray-800 break-all text-xs'>
+                                {cuadroData?.version || 'No disponible'}
                             </div>
                         </div>
 
@@ -354,7 +382,7 @@ export default function VerCuadro() {
 
                 {/* Botones de Acción */}
                 <div className='flex justify-center gap-4 pt-4 border-t'>
-                    <Link to="/">
+                    <Link to="/selectorCuadroHistorial">
                         <button className="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 flex justify-center items-center gap-2 transition-colors">
                             <ArrowLeft size={20} color="white" strokeWidth={2} />
                             Volver al Listado
