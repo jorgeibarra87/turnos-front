@@ -188,7 +188,13 @@ export const apiCuadroService = {
 
         // Obtener Historial de Cambios cuadro de turno por ID
         getHistorialById: async (id) => {
-            const response = await apiClient.get(`/${id}/historial`);
+            const response = await apiClient.get(`/cuadro-turnos/${id}/historial`);
+            return response.data;
+        },
+
+        // Obtener Historial de Cambios en turnos por cuadro de turno ID
+        getHistorialTurnosById: async (id) => {
+            const response = await apiClient.get(`/cuadro-turnos/${id}/historialturnos`);
             return response.data;
         },
     }
