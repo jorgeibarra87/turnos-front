@@ -65,7 +65,9 @@ const Sidebar = () => {
                 { name: 'Historial Cuadros', route: '/selectorCuadroHistorial' },
                 { name: 'Equipos', route: '/equipos' },
                 { name: 'Bloque Servicio', route: '/bloqueservicio' },
-                { name: 'Reportes', route: '/reportesfiltro' }
+                { name: 'Reportes', route: '/reportesfiltro' },
+                { name: 'Notificaciones Correo', route: '/notificaionCorreo' },
+                { name: 'Notificaciones Automaticas', route: '/notificacionAutomatica' }
             ]
         }
     ];

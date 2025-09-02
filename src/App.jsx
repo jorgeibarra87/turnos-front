@@ -42,6 +42,8 @@ import PersonasRolesTable from './components/TurnosApp/Administrador/Personas/Pe
 import PersonasEquiposTable from './components/TurnosApp/Administrador/Personas/PersonasEquiposTable';
 import ReportesFiltro from './components/TurnosApp/Reportes/ReportesFiltro';
 import GestionCuadroHistoria from './components/TurnosApp/CuadrosTurno/GestionCuadroHistoria';
+import GestionNotificaciones from './components/TurnosApp/Notificaciones/GestionNotificaciones';
+import NotificacionAutomatica from './components/TurnosApp/Notificaciones/NotificacionAutomatica';
 
 const App = () => (
   <div className="flex h-screen bg-primary-blue-backwround">
@@ -120,6 +122,8 @@ const App = () => (
           <Route exact path="/bloqueservicio" element={<BloqueServicioTable />} />
           <Route exact path="/calendarioturnos" element={<CalendarioTurnos />} />
           <Route exact path="/reportesfiltro" element={<ReportesFiltro />} />
+          <Route exact path="/notificaionCorreo" element={<GestionNotificaciones />} />
+          <Route exact path="/notificacionAutomatica" element={<NotificacionAutomatica />} />
 
         </Routes>
       </main>
