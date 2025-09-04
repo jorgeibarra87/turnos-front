@@ -1,8 +1,8 @@
 import axios from "axios";
 
 // Configuración de variables de entorno
-const API_BASE_URL = import.meta.env.REACT_APP_API_BASE_URL || 'http://localhost:8080';
-const API_TIMEOUT = parseInt(import.meta.env.REACT_APP_API_TIMEOUT || '10000', 10);
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+const API_TIMEOUT = parseInt(import.meta.env.VITE_API_TIMEOUT || '10000', 10);
 
 // Crear instancia de axios
 const api = axios.create({
@@ -64,19 +64,6 @@ export const notificacionesService = {
         }
     },
 
-    // Eliminar notificación
-    delete: async (id) => {
-        try {
-            const response = await api.delete(`/notificaciones/${id}`);
-            return response.data;
-        } catch (error) {
-            if (error.response?.status === 404) {
-                throw new Error('La notificación no fue encontrada');
-            }
-            throw new Error(`Error al eliminar notificación: ${error.response?.data?.message || error.message}`);
-        }
-    },
-
     // Enviar notificaciones automáticas
     enviarNotificacionesAutomaticas: async (notificaciones) => {
         try {
@@ -97,13 +84,33 @@ export const notificacionesService = {
         }
     },
 
-    // Obtener historial de notificaciones
-    getHistorial: async () => {
+    // Probar correo
+    probarCorreo: async (destinatario) => {
         try {
-            const response = await api.get('/notificaciones/historial');
+            const response = await api.post(`/notificaciones/probar-correo?destinatario=${destinatario}`);
             return response.data;
         } catch (error) {
-            throw new Error(`Error al obtener historial: ${error.response?.data?.message || error.message}`);
+            throw new Error(`Error al probar correo: ${error.response?.data?.message || error.message}`);
+        }
+    },
+
+    // Agregar correo a la configuración (NO al historial)
+    agregarCorreoConfiguracion: async (notificacionData) => {
+        try {
+            const response = await api.post('/notificaciones/agregar-correo-configuracion', notificacionData);
+            return response.data;
+        } catch (error) {
+            throw new Error(`Error al agregar correo a configuración: ${error.response?.data?.message || error.message}`);
+        }
+    },
+
+    // Validar configuración
+    validarConfiguracion: async () => {
+        try {
+            const response = await api.get('/notificaciones/validar-configuracion-correo');
+            return response.data;
+        } catch (error) {
+            throw new Error(`Error al validar configuración: ${error.response?.data?.message || error.message}`);
         }
     }
 };
@@ -169,6 +176,15 @@ export const configuracionCorreosService = {
             return response.data;
         } catch (error) {
             throw new Error(`Error al actualizar estados: ${error.response?.data?.message || error.message}`);
+        }
+    },
+
+    agregarCorreoConfiguracion: async (notificacionData) => {
+        try {
+            const response = await api.post('/notificaciones/agregar-correo-configuracion', notificacionData);
+            return response.data;
+        } catch (error) {
+            throw new Error(`Error al agregar correo a configuración: ${error.response?.data?.message || error.message}`);
         }
     },
 

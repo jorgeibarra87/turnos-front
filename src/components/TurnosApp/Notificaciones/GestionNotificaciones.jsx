@@ -106,8 +106,48 @@ export default function GestionNotificaciones() {
         }
     };
 
-
     // Función para agregar nuevo correo seleccionable
+    const agregarCorreo = async () => {
+        if (!nuevoCorreo || !nuevoCorreo.includes('@')) {
+            setMensajeEstado('Por favor ingrese un correo válido');
+            setTipoMensaje('error');
+            return;
+        }
+
+        try {
+            // Insertar nuevo correo en la configuración como seleccionable
+            const nuevaNotificacion = {
+                correo: nuevoCorreo,
+                estado: true,
+                permanente: false, // Seleccionable
+                automatico: false
+            };
+
+            // ✅ USAR EL MÉTODO CORRECTO
+            const response = await apiNotificacionService.configuracion.agregarCorreoConfiguracion(nuevaNotificacion);
+
+            // Actualizar lista local
+            setCorreosSeleccionables(prev => [
+                ...prev,
+                {
+                    id: response.idNotificacion,
+                    correo: nuevoCorreo,
+                    seleccionado: false
+                }
+            ]);
+
+            setNuevoCorreo('');
+            setMensajeEstado('Correo agregado exitosamente');
+            setTipoMensaje('success');
+
+        } catch (error) {
+            console.error('Error al agregar correo:', error);
+            setMensajeEstado('Error al agregar el correo');
+            setTipoMensaje('error');
+        }
+    };
+
+    /* // Función para agregar nuevo correo seleccionable
     const agregarCorreo = async () => {
         if (!nuevoCorreo || !nuevoCorreo.includes('@')) {
             setMensajeEstado('Por favor ingrese un correo válido');
@@ -147,7 +187,7 @@ export default function GestionNotificaciones() {
             setMensajeEstado('Error al agregar el correo');
             setTipoMensaje('error');
         }
-    };
+    }; */
 
 
     // Función para enviar notificaciones manuales
