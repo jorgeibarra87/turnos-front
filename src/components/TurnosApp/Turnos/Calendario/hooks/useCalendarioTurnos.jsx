@@ -8,7 +8,6 @@ export const useCalendarioTurnos = (filtros, fechaActual) => {
 
     useEffect(() => {
         const fetchTurnos = async () => {
-            // Si no hay cuadro seleccionado, limpiar turnos
             if (!filtros.cuadroTurno) {
                 setTurnos([]);
                 return;
@@ -18,23 +17,26 @@ export const useCalendarioTurnos = (filtros, fechaActual) => {
                 setLoading(true);
                 setError(null);
 
-                console.log('Cargando turnos para cuadro:', filtros.cuadroTurno);
-                console.log('Fecha actual del calendario:', fechaActual);
+                console.log('🔄 Cargando turnos para cuadro:', filtros.cuadroTurno);
+                console.log('📅 Fecha actual del calendario:', fechaActual);
+                console.log('🔍 Filtros aplicados:', filtros);
 
                 // Cargar TODOS los turnos
-                const response = await axios.get('http://localhost:8080/turnos');
-                console.log('Todos los turnos obtenidos:', response.data);
+                const response = await axios.get('http://localhost:8081/turnos');
+                console.log('✅ Todos los turnos obtenidos:', response.data);
 
                 let turnosFiltrados = response.data || [];
+                console.log('📊 Total turnos inicial:', turnosFiltrados.length);
 
                 // FILTRO PRINCIPAL: Por cuadro de turno
                 turnosFiltrados = turnosFiltrados.filter(turno => {
                     const coincideCuadro = turno.idCuadroTurno?.toString() === filtros.cuadroTurno.toString();
-                    console.log(`Turno ${turno.idTurno}: Cuadro ${turno.idCuadroTurno} vs Filtro ${filtros.cuadroTurno} = ${coincideCuadro}`);
+                    if (coincideCuadro) {
+                        console.log(`✓ Turno ${turno.idTurno} pertenece al cuadro ${filtros.cuadroTurno}`);
+                    }
                     return coincideCuadro;
                 });
-
-                console.log('Turnos después de filtrar por cuadro:', turnosFiltrados);
+                console.log('📋 Turnos después de filtrar por cuadro:', turnosFiltrados.length);
 
                 // Filtro por mes y año actual del calendario
                 const añoActual = fechaActual.getFullYear();
@@ -43,45 +45,101 @@ export const useCalendarioTurnos = (filtros, fechaActual) => {
                 turnosFiltrados = turnosFiltrados.filter(turno => {
                     if (!turno.fechaInicio) return false;
 
-                    //  formato de fecha
                     let fechaTurno;
                     if (turno.fechaInicio.includes('T')) {
-                        // Si viene como datetime: "2025-08-05T07:00:00"
                         fechaTurno = new Date(turno.fechaInicio);
                     } else {
-                        // Si viene como fecha: "2025-08-05"
                         fechaTurno = new Date(turno.fechaInicio + 'T00:00:00');
                     }
 
                     const cumpleFecha = fechaTurno.getFullYear() === añoActual &&
                         fechaTurno.getMonth() === mesActual;
 
-                    console.log(`Turno ${turno.idTurno}: Fecha ${turno.fechaInicio} -> Año: ${fechaTurno.getFullYear()}, Mes: ${fechaTurno.getMonth()} vs Calendario: ${añoActual}-${mesActual} = ${cumpleFecha}`);
                     return cumpleFecha;
                 });
+                console.log('📅 Turnos después de filtrar por fecha:', turnosFiltrados.length);
 
-                console.log('Turnos después de filtrar por fecha:', turnosFiltrados);
+                // FILTRO POR PROCESO
+                if (filtros.proceso && filtros.proceso.trim() !== '') {
+                    const procesoFiltro = filtros.proceso.toString();
+                    const turnosAntesProceso = turnosFiltrados.length;
 
-                // Filtros adicionales solo si están seleccionados
-                if (filtros.proceso) {
-                    turnosFiltrados = turnosFiltrados.filter(turno =>
-                        turno.idProceso?.toString() === filtros.proceso.toString()
-                    );
-                    console.log('Turnos después de filtrar por proceso:', turnosFiltrados);
+                    turnosFiltrados = turnosFiltrados.filter(turno => {
+                        const coincide = turno.idProceso?.toString() === procesoFiltro;
+                        if (coincide) {
+                            console.log(`✓ Turno ${turno.idTurno} coincide con proceso ${procesoFiltro}`);
+                        }
+                        return coincide;
+                    });
+                    console.log(`⚙️ Filtro proceso (${procesoFiltro}): ${turnosAntesProceso} → ${turnosFiltrados.length} turnos`);
                 }
 
+                // FILTRO POR PERFIL
                 if (filtros.perfil) {
-                    turnosFiltrados = turnosFiltrados.filter(turno =>
-                        turno.perfil?.toLowerCase().includes(filtros.perfil.toLowerCase())
-                    );
-                    console.log('Turnos después de filtrar por perfil:', turnosFiltrados);
+                    try {
+                        console.log('🔍 Aplicando filtro de perfil:', filtros.perfil);
+
+                        // Obtener cuadro específico para acceder al equipo
+                        const cuadroResponse = await axios.get(`http://localhost:8081/cuadro-turnos/${filtros.cuadroTurno}`);
+                        const equipoId = cuadroResponse.data.idEquipo;
+
+                        if (equipoId) {
+                            // Obtener miembros con sus perfiles
+                            const miembrosResponse = await axios.get(`http://localhost:8081/equipo/${equipoId}/miembros-perfil`);
+                            const miembrosConPerfil = miembrosResponse.data || [];
+
+                            console.log('👥 Miembros con perfil obtenidos:', miembrosConPerfil);
+
+                            // Crear mapa: idPersona -> perfiles
+                            const mapaPersonaPerfiles = {};
+                            miembrosConPerfil.forEach(miembro => {
+                                const personaId = miembro.idPersona || miembro.id;
+                                if (personaId && miembro.titulos) {
+                                    mapaPersonaPerfiles[personaId.toString()] = miembro.titulos;
+                                }
+                            });
+
+                            console.log('🗺️ Mapa persona-perfiles:', mapaPersonaPerfiles);
+
+                            // Filtrar turnos por perfil
+                            turnosFiltrados = turnosFiltrados.filter(turno => {
+                                const personaId = turno.idPersona;
+
+                                if (!personaId) {
+                                    console.log(`⚠️ Turno ${turno.idTurno} sin idPersona asignado - se excluye del filtro de perfil`);
+                                    return false;
+                                }
+
+                                const perfilesPersona = mapaPersonaPerfiles[personaId.toString()] || [];
+                                const tienePerfil = perfilesPersona.some(perfil =>
+                                    perfil.toLowerCase().includes(filtros.perfil.toLowerCase())
+                                );
+
+                                console.log(`👤 Turno ${turno.idTurno} - Persona ${personaId}: Perfiles [${perfilesPersona.join(', ')}] vs Filtro "${filtros.perfil}" = ${tienePerfil}`);
+
+                                return tienePerfil;
+                            });
+
+                            console.log(`👤 Filtro perfil ("${filtros.perfil}"): ${turnosFiltrados.length} turnos encontrados`);
+                        }
+                    } catch (error) {
+                        console.error('❌ Error al aplicar filtro de perfil:', error);
+                    }
                 }
 
-                console.log('Turnos finales a mostrar:', turnosFiltrados);
+                console.log('✨ Turnos finales para mostrar:', turnosFiltrados);
+                console.log('📊 Resumen final:', {
+                    cuadroTurno: filtros.cuadroTurno,
+                    proceso: filtros.proceso || 'sin filtro',
+                    perfil: filtros.perfil || 'sin filtro',
+                    totalTurnos: turnosFiltrados.length,
+                    fechas: turnosFiltrados.map(t => t.fechaInicio).slice(0, 5) // Primeras 5 fechas
+                });
+
                 setTurnos(turnosFiltrados);
 
             } catch (err) {
-                console.error('Error al cargar turnos:', err);
+                console.error('❌ Error al cargar turnos:', err);
                 setError('Error al cargar turnos: ' + err.message);
                 setTurnos([]);
             } finally {
@@ -90,7 +148,7 @@ export const useCalendarioTurnos = (filtros, fechaActual) => {
         };
 
         fetchTurnos();
-    }, [filtros, fechaActual]); // Ejecutar cuando cambien filtros o fecha
+    }, [filtros, fechaActual]);
 
     return { turnos, loading, error };
 };

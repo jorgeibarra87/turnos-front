@@ -92,8 +92,8 @@ export default function CalendarioTurnos() {
 
     // Función para obtener turnos por fecha
     const obtenerTurnosPorFecha = (fechaString) => {
-        console.log('Buscando turnos para fecha:', fechaString);
-        console.log('Total turnos disponibles:', turnos.length);
+        //console.log('Buscando turnos para fecha:', fechaString);
+        //console.log('Total turnos disponibles:', turnos.length);
 
         const turnosDelDia = turnos.filter(turno => {
             if (!turno.fechaInicio) return false;
@@ -107,12 +107,12 @@ export default function CalendarioTurnos() {
 
             const coincide = fechaTurnoString === fechaString;
             if (coincide) {
-                console.log(`✓ Turno encontrado para ${fechaString}:`, turno);
+                //console.log(`✓ Turno encontrado para ${fechaString}:`, turno);
             }
             return coincide;
         });
 
-        console.log(`Turnos encontrados para ${fechaString}:`, turnosDelDia);
+        //console.log(`Turnos encontrados para ${fechaString}:`, turnosDelDia);
         return turnosDelDia;
     };
 
@@ -180,6 +180,10 @@ export default function CalendarioTurnos() {
 
     const aplicarFiltros = () => {
         console.log('Filtros aplicados:', filtros);
+        // Forzar recarga si es necesario
+        if (filtros.cuadroTurno) {
+            setFiltros({ ...filtros }); // Trigger useEffect
+        }
     };
 
     const semanas = obtenerSemanasDelMes();

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import { apiTurnoService } from '../../../Services/apiTurnoService';
 
 export const usePerfiles = (cuadroId) => {
     const [perfiles, setPerfiles] = useState([]);
@@ -17,33 +17,43 @@ export const usePerfiles = (cuadroId) => {
                 setLoading(true);
                 setError(null);
 
+                console.log('🔄 Cargando perfiles para cuadro:', cuadroId);
+
                 // Obtener cuadro específico para acceder al equipo
-                const cuadroResponse = await axios.get(`http://localhost:8080/cuadro-turnos/${cuadroId}`);
-                const equipoId = cuadroResponse.data.idEquipo;
+                const cuadroResponse = await apiTurnoService.auxiliares.getCuadrosTurno();
+                const cuadroSeleccionado = cuadroResponse.find(c => c.idCuadroTurno?.toString() === cuadroId.toString());
 
-                if (equipoId) {
-                    // USAR EL MISMO ENDPOINT QUE EN TU CÓDIGO EJEMPLAR
-                    const response = await axios.get(`http://localhost:8080/equipo/${equipoId}/miembros-perfil`);
-                    console.log('Datos de miembros-perfil:', response.data);
-
-                    // Extraer perfiles únicos de los títulos
-                    const todosLosPerfiles = response.data.flatMap(miembro =>
-                        miembro.titulos || []
-                    );
-
-                    const perfilesUnicos = [...new Set(todosLosPerfiles)]
-                        .filter(perfil => perfil && perfil.trim())
-                        .map(perfil => ({
-                            id: perfil,
-                            nombre: perfil.trim()
-                        }))
-                        .sort((a, b) => a.nombre.localeCompare(b.nombre));
-
-                    setPerfiles(perfilesUnicos);
-                    console.log('Perfiles únicos encontrados:', perfilesUnicos);
+                if (!cuadroSeleccionado?.idEquipo) {
+                    console.log('⚠️ No se encontró equipo para el cuadro:', cuadroId);
+                    setPerfiles([]);
+                    return;
                 }
+
+                const equipoId = cuadroSeleccionado.idEquipo;
+                console.log('🏢 Equipo ID encontrado:', equipoId);
+
+                // USAR SERVICIO API
+                const miembrosData = await apiTurnoService.auxiliares.getMiembrosPerfilEquipo(equipoId);
+                console.log('👥 Datos de miembros-perfil:', miembrosData);
+
+                // Extraer perfiles únicos de los títulos
+                const todosLosPerfiles = miembrosData.flatMap(miembro =>
+                    miembro.titulos || []
+                );
+
+                const perfilesUnicos = [...new Set(todosLosPerfiles)]
+                    .filter(perfil => perfil && perfil.trim())
+                    .map(perfil => ({
+                        id: perfil,
+                        nombre: perfil.trim()
+                    }))
+                    .sort((a, b) => a.nombre.localeCompare(b.nombre));
+
+                setPerfiles(perfilesUnicos);
+                console.log('✅ Perfiles únicos encontrados:', perfilesUnicos);
+
             } catch (err) {
-                console.error('Error al cargar perfiles:', err);
+                console.error('❌ Error al cargar perfiles:', err);
                 setError('Error al cargar perfiles');
                 setPerfiles([]);
             } finally {

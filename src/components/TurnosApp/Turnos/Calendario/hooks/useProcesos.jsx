@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import { apiTurnoService } from '../../../Services/apiTurnoService';
 
 export const useProcesos = (cuadroId) => {
     const [procesos, setProcesos] = useState([]);
@@ -17,19 +17,33 @@ export const useProcesos = (cuadroId) => {
                 setLoading(true);
                 setError(null);
 
-                // Obtener procesos específicos del cuadro de turno
-                const response = await axios.get(`http://localhost:8080/cuadro-turnos/${cuadroId}/procesos`);
-                setProcesos(response.data || []);
+                console.log('🔄 Cargando procesos para cuadro:', cuadroId);
+
+                // USAR TU SERVICIO API PARA OBTENER TURNOS DEL CUADRO
+                const turnosDelCuadro = await apiTurnoService.turnos.getByCuadro(cuadroId);
+                console.log('📊 Turnos del cuadro para extraer procesos:', turnosDelCuadro);
+
+                // Extraer procesos únicos de los turnos
+                const procesosUnicos = [...new Set(
+                    turnosDelCuadro
+                        .filter(turno => turno.idProceso && turno.idProceso !== null)
+                        .map(turno => ({
+                            id: turno.idProceso,
+                            nombre: turno.nombreProceso || turno.proceso || `Proceso ${turno.idProceso}`
+                        }))
+                        .map(proceso => JSON.stringify(proceso))
+                )]
+                    .map(procesoStr => JSON.parse(procesoStr))
+                    .filter(proceso => proceso.id !== undefined && proceso.id !== null)
+                    .sort((a, b) => a.nombre.localeCompare(b.nombre));
+
+                console.log('✅ Procesos únicos encontrados:', procesosUnicos);
+                setProcesos(procesosUnicos);
+
             } catch (err) {
-                console.error('Error al cargar procesos:', err);
-                // Fallback: cargar todos los procesos
-                try {
-                    const response = await axios.get('http://localhost:8080/procesos');
-                    setProcesos(response.data || []);
-                } catch (fallbackErr) {
-                    setProcesos([]);
-                    setError('Error al cargar procesos');
-                }
+                console.error('❌ Error al cargar procesos:', err);
+                setError('Error al cargar procesos');
+                setProcesos([]);
             } finally {
                 setLoading(false);
             }
