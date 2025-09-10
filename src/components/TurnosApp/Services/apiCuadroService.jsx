@@ -87,15 +87,23 @@ export const apiCuadroService = {
             return response.data;
         },
 
-        // Cerrar cuadro específico
+        // Cerrar cuadro específico con información de versión
         cerrar: async (id) => {
-            return await apiCuadroService.cuadros.cambiarEstado('abierto', 'cerrado', [id]);
+            const response = await apiCuadroService.cuadros.cambiarEstado('abierto', 'cerrado', [id]);
+            return {
+                ...response,
+                message: 'Cuadro cerrado. Versión mantenida.'
+            };
         },
 
-        // Abrir cuadro específico
+        // Abrir cuadro específico con información de nueva versión
         abrir: async (id) => {
-            return await apiCuadroService.cuadros.cambiarEstado('cerrado', 'abierto', [id]);
-        }
+            const response = await apiCuadroService.cuadros.cambiarEstado('cerrado', 'abierto', [id]);
+            return {
+                ...response,
+                message: 'Cuadro reabierto con nueva versión.'
+            };
+        },
     },
 
     // Servicios auxiliares para los formularios

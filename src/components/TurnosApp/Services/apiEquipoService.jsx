@@ -139,11 +139,17 @@ export const apiEquipoService = {
                     cuadros: []
                 };
             }
-        }
+        },
+        createWithGeneratedName: (selection) =>
+            api.post('/equipo/with-generated-name', selection),
+
+        updateWithGeneratedName: (id, selection) =>
+            api.put(`/equipo/${id}/with-generated-name`, selection),
     },
 
     //Servicios auxiliares
     auxiliares: {
+
         // Obtener opciones por categoría (para selects dinámicos)
         getByCategoria: async (categoria) => {
             const endpoints = {

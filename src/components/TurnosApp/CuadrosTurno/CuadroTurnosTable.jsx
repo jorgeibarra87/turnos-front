@@ -1,5 +1,5 @@
 import React from 'react';
-import { Eye, Edit, Trash2, CopyPlus, UsersIcon, BoxesIcon, ChevronLeft, ChevronRight, CalendarX, CalendarCog } from 'lucide-react';
+import { Eye, Edit, Trash2, CopyPlus, UsersIcon, BoxesIcon, ChevronLeft, ChevronRight, CalendarX, CalendarCog, CalendarCheck2 } from 'lucide-react';
 import { useEffect, useState, useCallback } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
@@ -38,13 +38,13 @@ export default function TurnosTable() {
         }
     }, [currentPage, itemsPerPage]);
 
-    // Función para manejar la eliminación usando apiService
+    // Función para manejar la eliminación (cerrar cuadro)
     const handleDelete = useCallback(async (id, nombre) => {
-        if (window.confirm(`¿Estás seguro de que quieres cerrar el cuadro "${nombre}"?`)) {
+        if (window.confirm(`¿Estás seguro de que quieres cerrar el cuadro "${nombre}"? La versión actual se mantendrá.`)) {
             try {
                 await apiCuadroService.cuadros.cerrar(id);
                 await loadCuadros();
-                alert('Cuadro cerrado exitosamente');
+                alert('Cuadro cerrado exitosamente. La versión se ha mantenido.');
             } catch (error) {
                 console.error('Error al cerrar el cuadro:', error);
 
@@ -59,10 +59,31 @@ export default function TurnosTable() {
         }
     }, [loadCuadros]);
 
+    // Función para re-abrir un cuadro
+    const handleUnDelete = useCallback(async (id, nombre) => {
+        if (window.confirm(`¿Estás seguro de que quieres re-abrir el cuadro "${nombre}"? Esto creará una nueva versión del cuadro.`)) {
+            try {
+                await apiCuadroService.cuadros.abrir(id);
+                await loadCuadros();
+                alert('Cuadro re-abierto exitosamente con nueva versión.');
+            } catch (error) {
+                console.error('Error al re-abrir el cuadro:', error);
+
+                if (error.response?.status === 409) {
+                    alert('No se puede re-abrir el cuadro porque tiene dependencias asociadas');
+                } else if (error.response?.status === 404) {
+                    alert('El cuadro no fue encontrado');
+                } else {
+                    alert('Error al re-abrir el cuadro');
+                }
+            }
+        }
+    }, [loadCuadros]);
+
+
     useEffect(() => {
         loadCuadros();
     }, [loadCuadros]);
-
 
     // Lógica de paginación
     const totalPages = Math.ceil(cuadros.length / itemsPerPage);
@@ -129,6 +150,24 @@ export default function TurnosTable() {
                 </h1>
             </div>
 
+            {/* Información sobre el manejo de versiones */}
+            <div className="mb-3 p-1 bg-blue-50 border-l-4 border-blue-400 rounded">
+                <div className="flex">
+                    <div className="flex-shrink-0">
+                        <svg className="w-4 h-4 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                        </svg>
+                    </div>
+                    <div className="ml-3">
+                        <p className="text-xs text-blue-700">
+                            <strong>Manejo de Versiones:</strong> Al cerrar un cuadro se mantiene su versión actual.
+                            Al reabrirlo, se genera automáticamente una nueva versión (ej: 0925_v1 → 0925_v2).
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+
             <div className="flex justify-between items-center mb-4">
                 <Link to="/crearCuadro">
                     <button className="px-4 py-2 bg-green-500 text-white rounded-2xl hover:bg-green-600 flex items-center gap-2">
@@ -160,16 +199,33 @@ export default function TurnosTable() {
             <table className="w-full text-left text-sm">
                 <thead className="bg-black text-white">
                     <tr>
+                        <th className="p-3">Id</th>
                         <th className="p-3">Cuadro</th>
                         <th className="p-3 flex items-center gap-2"><UsersIcon />Equipo</th>
+                        <th className="p-3">Versión</th>
+                        <th className="p-3">Estado</th>
                         <th className="p-3">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
                     {currentCuadros.map((cuadro) => (
                         <tr key={cuadro.idCuadroTurno} className="border-b">
+                            <td className="p-3 text-xs">{cuadro.idCuadroTurno}</td>
                             <td className="p-3 text-xs">{cuadro.nombre}</td>
                             <td className="p-3 text-xs">{cuadro?.nombreEquipo || 'Sin equipo'}</td>
+                            <td className="p-3 text-xs">
+                                <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-medium">
+                                    {cuadro.version || 'N/A'}
+                                </span>
+                            </td>
+                            <td className="p-3 text-xs">
+                                <span className={`px-2 py-1 rounded text-xs font-medium ${cuadro.estadoCuadro === 'abierto'
+                                    ? 'bg-green-100 text-green-800'
+                                    : 'bg-red-100 text-red-800'
+                                    }`}>
+                                    {cuadro.estadoCuadro}
+                                </span>
+                            </td>
                             <td className="p-3 space-x-3">
                                 <Link
                                     to={`/VerCuadro/${cuadro.idCuadroTurno}`}
@@ -182,16 +238,19 @@ export default function TurnosTable() {
                                     />
                                 </Link>
 
-                                <Link
-                                    to={`/crearCuadro/editar/${cuadro.idCuadroTurno}`}
-                                    title={`Editar cuadro: ${cuadro.nombre}`}
-                                    className="inline-block"
-                                >
-                                    <Edit
-                                        size={18}
-                                        className="text-blue-600 hover:text-blue-800 cursor-pointer transition-colors"
-                                    />
-                                </Link>
+                                {/* Botón editar cuadro */}
+                                {cuadro.estadoCuadro === 'abierto' && (
+                                    <Link
+                                        to={`/crearCuadro/editar/${cuadro.idCuadroTurno}`}
+                                        title={`Editar cuadro: ${cuadro.nombre}`}
+                                        className="inline-block"
+                                    >
+                                        <Edit
+                                            size={18}
+                                            className="text-blue-600 hover:text-blue-800 cursor-pointer transition-colors"
+                                        />
+                                    </Link>
+                                )}
 
                                 {/* Botón cerrar cuadro */}
                                 {cuadro.estadoCuadro === 'abierto' && (
@@ -203,6 +262,20 @@ export default function TurnosTable() {
                                         <CalendarX
                                             size={18}
                                             className="text-red-600 hover:text-red-800 cursor-pointer transition-colors"
+                                        />
+                                    </button>
+                                )}
+
+                                {/* Botón abrir cuadro */}
+                                {cuadro.estadoCuadro === 'cerrado' && (
+                                    <button
+                                        onClick={() => handleUnDelete(cuadro.idCuadroTurno, cuadro.nombre)}
+                                        title={`Re-Abrir cuadro: ${cuadro.nombre}`}
+                                        className="inline-block"
+                                    >
+                                        <CalendarCheck2
+                                            size={18}
+                                            className="text-yellow-600 hover:text-yellow-800 cursor-pointer transition-colors"
                                         />
                                     </button>
                                 )}

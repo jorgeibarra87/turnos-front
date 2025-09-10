@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
-import { CheckIcon, CircleXIcon, Save, User, ArrowLeft, Edit, Plus, UserPlus, X, Users } from 'lucide-react';
+import { CircleXIcon, Save, User, ArrowLeft, Edit, Plus, UserPlus, X, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { apiEquipoService } from '../Services/apiEquipoService';
-import { apiCuadroService } from '../Services/apiCuadroService';
 import SincronizarPersona from './SincronizarPersona';
 
 export default function CrearEquipo() {
@@ -14,7 +13,6 @@ export default function CrearEquipo() {
 
     // Función para manejar persona sincronizada
     const handlePersonaSincronizada = (personaSincronizada) => {
-        // Agregar la persona sincronizada al equipo
         setPersonasEquipo(prev => [...prev, personaSincronizada]);
         setShowSincronizarPersona(false);
     };
@@ -43,8 +41,6 @@ export default function CrearEquipo() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const [optionId, setOptionId] = useState("");
-    const [showEquipoForm, setShowEquipoForm] = useState(false);
-    const [equipoNombre, setEquipoNombre] = useState("");
     const [saving, setSaving] = useState(false);
     const [errorEquipo, setErrorEquipo] = useState(null);
     const [loadingEquipoData, setLoadingEquipoData] = useState(false);
@@ -68,21 +64,24 @@ export default function CrearEquipo() {
                 setLoadingEquipoData(true);
                 setError("");
 
-                // Cargar datos del equipo
                 const equipoData = await apiEquipoService.equipos.getById(equipoId);
                 setEquipoOriginal(equipoData);
-                setEquipoNombre(equipoData.nombre || "");
 
+                //Extraer categoría
                 const nombreParts = equipoData.nombre?.split('_');
-                if (nombreParts && nombreParts.length >= 3 && nombreParts[0] === 'Equipo') {
-                    setSelectedCategory(nombreParts[1]);
+                if (nombreParts && nombreParts.length >= 3 && nombreParts[0] === 'EQUIPO') {
+                    const categoriaFromName = nombreParts[1];
+
+                    const categoriaFormatted = categoriaFromName.charAt(0).toUpperCase() + categoriaFromName.slice(1).toLowerCase();
+                    console.log('Categoría extraída del nombre:', categoriaFromName, '-> Formateada:', categoriaFormatted);
+                    setSelectedCategory(categoriaFormatted);
                 }
-                // Cargar perfiles primero para tener la información disponible
+
                 await loadPerfiles();
-                // Luego cargar personas del equipo
                 await loadPersonasEquipo(equipoId);
 
             } catch (err) {
+                console.error('Error al cargar equipo:', err);
                 setError('Error al cargar los datos del equipo');
             } finally {
                 setLoadingEquipoData(false);
@@ -94,28 +93,22 @@ export default function CrearEquipo() {
     // API: Personas cargadas de equipo
     const loadPersonasEquipo = async (idEquipo) => {
         try {
-            // Usar el endpoint que ya devuelve miembros con perfil
             const personas = await apiEquipoService.equipos.getMiembrosPerfil(idEquipo);
-            //console.log('Personas cargadas con perfil:', personas);
             if (!personas || personas.length === 0) {
                 setPersonasEquipo([]);
                 return;
             }
-            // Los títulos vienen en un array, formatear correctamente
             const personasFormateadas = personas.map(persona => ({
                 ...persona,
                 perfil: persona.titulos && persona.titulos.length > 0
-                    ? persona.titulos.join(', ') // Unir múltiples títulos con coma
+                    ? persona.titulos.join(', ')
                     : 'Sin perfil asignado',
-                idTitulo: persona.titulos && persona.titulos.length > 0 ? persona.titulos[0] : null // Usar el primer título como ID
+                idTitulo: persona.titulos && persona.titulos.length > 0 ? persona.titulos[0] : null,
+                documento: persona.documento ? persona.documento : null
             }));
-            //console.log('Personas formateadas:', personasFormateadas);
             setPersonasEquipo(personasFormateadas);
-
         } catch (err) {
             console.error('Error al cargar personas del equipo:', err);
-
-            //si getMiembrosPerfil falla, usar getUsuariosEquipo
             try {
                 const personasBasicas = await apiEquipoService.equipos.getUsuariosEquipo(idEquipo);
                 const personasSinPerfil = personasBasicas.map(persona => ({
@@ -140,7 +133,7 @@ export default function CrearEquipo() {
         } catch (err) {
             console.error('Error al cargar perfiles:', err);
             setError('Error al cargar los perfiles disponibles');
-            setPerfiles([]); // Valor por defecto en caso de error
+            setPerfiles([]);
         } finally {
             setLoadingPerfiles(false);
         }
@@ -151,8 +144,6 @@ export default function CrearEquipo() {
         try {
             setLoadingUsuarios(true);
             const usuariosData = await apiEquipoService.auxiliares.getUsuariosPorPerfil(idTitulo);
-
-            // Filtrar usuarios que ya están en el equipo
             const usuariosYaEnEquipo = personasEquipo.map(p => p.idPersona);
             const usuariosFiltered = usuariosData.filter(
                 user => !usuariosYaEnEquipo.includes(user.idPersona)
@@ -165,7 +156,7 @@ export default function CrearEquipo() {
         }
     };
 
-    // Cambio categoría (cargar opciones)
+    // Cambio categoría
     const handleCategoryChange = (e) => {
         const newCategory = e.target.value;
         setSelectedCategory(newCategory);
@@ -176,17 +167,21 @@ export default function CrearEquipo() {
         }
     };
 
-    //Opciones por categoría usando apiEquipoService
+    // Opciones por categoría
     useEffect(() => {
         const fetchOptions = async () => {
-            if (!selectedCategory) {
+            // No llamar API si no hay categoría seleccionada
+            if (!selectedCategory || selectedCategory.trim() === '') {
                 setOptions([]);
+                setError(""); // Limpiar error
                 return;
             }
 
             try {
                 setLoading(true);
                 setError("");
+
+                console.log('Enviando categoría al backend:', selectedCategory);
 
                 const optionsData = await apiEquipoService.auxiliares.getByCategoria(selectedCategory);
 
@@ -201,6 +196,7 @@ export default function CrearEquipo() {
                 setOptionId(idFields[selectedCategory]);
                 setOptions(optionsData);
 
+                // Para modo edición, buscar la opción seleccionada
                 if (isEditMode && equipoOriginal && optionsData.length > 0) {
                     const nombreParts = equipoOriginal.nombre?.split('_');
                     if (nombreParts && nombreParts.length >= 3) {
@@ -212,11 +208,13 @@ export default function CrearEquipo() {
                     }
                 }
             } catch (err) {
+                console.error('Error al cargar opciones:', err);
                 setError('Error al cargar opciones: ' + err.message);
             } finally {
                 setLoading(false);
             }
         };
+
         fetchOptions();
     }, [selectedCategory, equipoOriginal]);
 
@@ -229,20 +227,9 @@ export default function CrearEquipo() {
         setSelectedOption(selectedObj || "");
     };
 
-    // Generar nombre
-    const generarNombreEquipo = () => {
-        if (!selectedCategory || !selectedOption) return '';
-        const timestamp = Date.now().toString().slice(-2);
-        return `Equipo_${selectedCategory}_${selectedOption.nombre}_${timestamp}`;
-    };
-
     // Mostrar gestor personas
     const handleMostrarGestorPersonas = () => {
         setShowPersonasManager(true);
-        if (!isEditMode) {
-            const nombreGenerado = generarNombreEquipo();
-            setEquipoNombre(nombreGenerado);
-        }
         loadPerfiles();
     };
 
@@ -292,31 +279,30 @@ export default function CrearEquipo() {
         setUsuariosDisponibles([]);
     };
 
-    // Guardar equipo usando apiEquipoService
+    // Guardar equipo
     const handleGuardarEquipo = async () => {
         setSaving(true);
         setErrorEquipo(null);
         try {
-            const equipoData = {
-                nombre: equipoNombre.trim(),
+            // Enviar datos
+            const selectionData = {
                 categoria: selectedCategory,
                 subcategoria: selectedOption?.nombre || null,
             };
 
-            if (!equipoData.nombre) {
-                throw new Error('El nombre del equipo es requerido');
-            }
+            console.log('Enviando datos al backend:', selectionData);
 
             let equipoIdFinal = equipoId;
 
             if (isEditMode) {
-                await apiEquipoService.equipos.updateNombre(equipoId, equipoData);
+                const equipoActualizado = await apiEquipoService.equipos.updateWithGeneratedName(equipoId, selectionData);
+                equipoIdFinal = equipoActualizado.idEquipo;
             } else {
-                const created = await apiEquipoService.equipos.createCompleto(equipoData);
-                equipoIdFinal = created.idEquipo;
+                const equipoCreado = await apiEquipoService.equipos.createWithGeneratedName(selectionData);
+                equipoIdFinal = equipoCreado.idEquipo;
             }
 
-            //Usar apiEquipoService para usuarios
+            // Actualizar usuarios del equipo
             if (personasEquipo.length > 0) {
                 const personasIds = personasEquipo.map(p => p.idPersona);
                 await apiEquipoService.equipos.updateUsuariosEquipo(equipoIdFinal, personasIds);
@@ -325,6 +311,7 @@ export default function CrearEquipo() {
             alert(`Equipo ${isEditMode ? 'actualizado' : 'creado'} exitosamente`);
             navigate('/equipos');
         } catch (err) {
+            console.error('Error al guardar equipo:', err);
             setErrorEquipo(
                 err.response?.data?.message ||
                 err.message ||
@@ -335,22 +322,22 @@ export default function CrearEquipo() {
         }
     };
 
-
     // Volver
     const handleVolver = () => {
-        if (showPerfilSelector) handleCerrarSelectorPerfil();
-        else if (showPersonasManager) setShowPersonasManager(false);
-        else setShowEquipoForm(false);
-        setEquipoNombre("");
+        if (showPerfilSelector) {
+            handleCerrarSelectorPerfil();
+        } else if (showPersonasManager) {
+            setShowPersonasManager(false);
+        }
         setErrorEquipo(null);
     };
 
     return (
         <div className='absolute inset-0 bg-opacity-30 backdrop-blur-sm flex justify-center items-center'>
-            {!showEquipoForm && !showPersonasManager ? (
+            {!showPersonasManager ? (
                 // Vista de selecciones inicial
                 <div className='bg-white p-4 rounded-lg flex flex-col justify-center items-center gap-4 max-w-xl w-full mx-4'>
-                    <div className="flex items-center justify-center gap-3 rounded-2xl border-b-4  border-primary-green-husj pl-4 pr-4 pb-1 pt-1 mb-1 w-fit mx-auto">
+                    <div className="flex items-center justify-center gap-3 rounded-2xl border-b-4 border-primary-green-husj pl-4 pr-4 pb-1 pt-1 mb-1 w-fit mx-auto">
                         <Users size={40} className="text-primary-green-husj" />
                         <h1 className="text-2xl font-extrabold text-gray-800">
                             {isEditMode ? 'Editar Equipo' : 'Gestión de Equipos'}
@@ -378,6 +365,7 @@ export default function CrearEquipo() {
                         </div>
                     )}
 
+                    {/* Selectores de categoría */}
                     <div className="w-full">
                         <label htmlFor="category-select" className="block text-sm font-medium text-gray-700 mb-2">
                             Selecciona una categoría para el equipo
@@ -461,7 +449,7 @@ export default function CrearEquipo() {
             ) : showPersonasManager && !showPerfilSelector ? (
                 // VISTA DEL GESTOR DE PERSONAS
                 <div className='bg-white p-6 rounded-lg flex flex-col justify-center items-center gap-6 max-w-5xl w-full mx-4 max-h-[90vh] overflow-y-auto'>
-                    <div className="flex items-center justify-center gap-3 rounded-2xl border-b-4  border-primary-green-husj pl-4 pr-4 pb-1 pt-1 mb-1 w-fit mx-auto">
+                    <div className="flex items-center justify-center gap-3 rounded-2xl border-b-4 border-primary-green-husj pl-4 pr-4 pb-1 pt-1 mb-1 w-fit mx-auto">
                         <Users size={40} className="text-primary-green-husj" />
                         <h1 className="text-2xl font-extrabold text-gray-800">
                             {isEditMode ? 'Editando Equipo' : 'Creando Nuevo Equipo'}
@@ -476,14 +464,17 @@ export default function CrearEquipo() {
                             </div>
                             <div className='text-gray-700'>
                                 <div><span className='font-medium'>ID:</span> {equipoId}</div>
+                                <div><span className='font-medium'>Nombre actual:</span> {equipoOriginal?.nombre}</div>
                             </div>
                         </div>
                     )}
 
                     <div className='text-center text-sm text-gray-600 space-y-1'>
                         <div><strong>Categoría:</strong> {selectedCategory}</div>
-                        <div><strong>{selectedCategory}:</strong> {selectedOption.nombre}</div>
-                        <div><strong>Nombre del Equipo:</strong> {equipoNombre}</div>
+                        <div><strong>{selectedCategory}:</strong> {selectedOption?.nombre}</div>
+                        {/* <div className='text-xs text-blue-600 bg-blue-50 p-2 rounded'>
+                            <em>📝 El nombre del equipo se generará automáticamente al guardar</em>
+                        </div> */}
                     </div>
 
                     {/* SECCIÓN DE PERSONAS DEL EQUIPO */}
@@ -554,8 +545,8 @@ export default function CrearEquipo() {
                     <div className='flex justify-center items-center gap-4 mt-6'>
                         <button
                             onClick={handleGuardarEquipo}
-                            disabled={saving || !equipoNombre.trim()}
-                            className={`px-6 py-2 text-white rounded-lg flex justify-center items-center gap-2 transition-colors ${saving || !equipoNombre.trim()
+                            disabled={saving}
+                            className={`px-6 py-2 text-white rounded-lg flex justify-center items-center gap-2 transition-colors ${saving
                                 ? 'bg-gray-400 cursor-not-allowed'
                                 : 'bg-blue-500 hover:bg-blue-600'
                                 }`}
@@ -581,8 +572,7 @@ export default function CrearEquipo() {
             ) : showPerfilSelector ? (
                 // VISTA DEL SELECTOR DE PERFIL Y USUARIOS
                 <div className='bg-white p-6 rounded-lg flex flex-col justify-center items-center gap-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto'>
-
-                    <div className="flex items-center justify-center gap-3 rounded-2xl border-b-4  border-primary-green-husj pl-4 pr-4 pb-1 pt-1 mb-1 w-fit mx-auto">
+                    <div className="flex items-center justify-center gap-3 rounded-2xl border-b-4 border-primary-green-husj pl-4 pr-4 pb-1 pt-1 mb-1 w-fit mx-auto">
                         <Users size={40} className="text-primary-green-husj" />
                         <h1 className="text-2xl font-extrabold text-gray-800">
                             Seleccionar Perfil y Usuario
@@ -700,73 +690,8 @@ export default function CrearEquipo() {
                         </Link>
                     </div>
                 </div>
-            ) : (
-                // Vista del formulario del equipo
-                <div className='bg-white p-8 rounded-lg flex flex-col justify-center items-center gap-6 max-w-4xl w-full mx-4'>
-                    <div className='text-3xl font-bold text-gray-800 text-center'>
-                        {isEditMode ? 'Editando Equipo' : 'Creando Nuevo Equipo'}
-                    </div>
+            ) : null}
 
-                    {isEditMode && (
-                        <div className='text-sm bg-orange-50 border border-orange-200 px-4 py-2 rounded-lg'>
-                            <div className='flex items-center justify-center gap-2 mb-1'>
-                                <Edit size={14} className="text-orange-600" />
-                                <span className='font-semibold text-orange-800'>Modificando equipo existente</span>
-                            </div>
-                            <div className='space-y-1 text-gray-700'>
-                                <div><span className='font-medium'>ID:</span> {equipoId}</div>
-                            </div>
-                        </div>
-                    )}
-
-                    <div className='text-center text-sm text-gray-600 space-y-1'>
-                        <div><strong>Categoría:</strong> {selectedCategory}</div>
-                        <div><strong>{selectedCategory}:</strong> {selectedOption.nombre}</div>
-                    </div>
-
-                    <div className='w-full max-w-2xl space-y-4'>
-                        <div>
-                            <label htmlFor="equipo-nombre" className="block text-sm font-medium text-gray-700 mb-2">
-                                Nombre Actual del Equipo
-                            </label>
-                            <div><strong>{equipoNombre}</strong></div>
-                        </div>
-                    </div>
-
-                    {errorEquipo && (
-                        <div className='w-full p-3 bg-red-100 border border-red-300 rounded-lg text-red-700 text-center'>
-                            {errorEquipo}
-                        </div>
-                    )}
-
-                    <div className='flex justify-center items-center gap-4 mt-6'>
-                        <button
-                            onClick={handleGuardarEquipo}
-                            disabled={saving || !equipoNombre.trim()}
-                            className={`px-6 py-2 text-white rounded-lg flex justify-center items-center gap-2 transition-colors ${saving || !equipoNombre.trim()
-                                ? 'bg-gray-400 cursor-not-allowed'
-                                : 'bg-blue-500 hover:bg-blue-600'
-                                }`}
-                        >
-                            <Save size={20} color="white" strokeWidth={2} />
-                            {saving ? (isEditMode ? 'Actualizando...' : 'Creando...') : (isEditMode ? 'Actualizar Equipo' : 'Crear Equipo')}
-                        </button>
-                        <button
-                            onClick={handleVolver}
-                            className="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 flex justify-center items-center gap-2 transition-colors"
-                        >
-                            <ArrowLeft size={20} color="white" strokeWidth={2} />
-                            Volver
-                        </button>
-                        <Link to="/equipos">
-                            <button className="px-6 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 flex justify-center items-center gap-2 transition-colors">
-                                <CircleXIcon size={20} color="white" strokeWidth={2} />
-                                Cancelar
-                            </button>
-                        </Link>
-                    </div>
-                </div>
-            )}
             {showSincronizarPersona && (
                 <SincronizarPersona
                     onClose={() => setShowSincronizarPersona(false)}
@@ -775,4 +700,4 @@ export default function CrearEquipo() {
             )}
         </div>
     );
-};
+}
