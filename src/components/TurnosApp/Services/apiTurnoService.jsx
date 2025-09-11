@@ -99,7 +99,7 @@ export const apiTurnoService = {
         getTurnosAbiertosByCuadro: async (cuadroId) => {
             const response = await apiClient.get(`/turnos/cuadro/${cuadroId}`);
             const turnos = response.data || [];
-            return turnos.filter(turno => turno.estadoTurno === "abierto");
+            return turnos;
         }
     },
 

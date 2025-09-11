@@ -509,11 +509,11 @@ export default function GestionCuadroHistoria() {
                                                 }`}>
                                                 {h?.turnoExcepcion ? 'Si' : 'No'}
                                             </td>
-                                            <td className={`px-2 py-2 whitespace-nowrap text-xs font-medium text-gray-900 ${h?.estado
-                                                ? 'bg-green-50 text-green-800'
-                                                : 'bg-orange-50 text-orange-800'
+                                            <td className={`px-2 py-2 whitespace-nowrap text-xs font-medium text-gray-900 ${h.estadoCuadro === 'abierto'
+                                                ? 'bg-green-100 text-green-800'
+                                                : 'bg-red-100 text-red-800'
                                                 }`}>
-                                                {h?.estado ? 'activo' : 'inactivo'}
+                                                {h.estadoCuadro}
                                             </td>
                                         </tr>
                                     ))}
@@ -622,11 +622,11 @@ export default function GestionCuadroHistoria() {
                                             <td className='px-2 py-2 whitespace-nowrap text-xs font-medium text-gray-900'>
                                                 {turno.idPersona || 'N/A'}
                                             </td>
-                                            <td className={`px-2 py-2 whitespace-nowrap text-xs font-medium text-gray-900 ${turno?.estado
-                                                ? 'bg-green-50 text-green-800'
-                                                : 'bg-orange-50 text-orange-800'
+                                            <td className={`px-2 py-2 whitespace-nowrap text-xs font-medium text-gray-900 ${turno.estadoTurno === 'abierto'
+                                                ? 'bg-green-100 text-green-800'
+                                                : 'bg-red-100 text-red-800'
                                                 }`}>
-                                                {turno?.estado ? 'activo' : 'inactivo'}
+                                                {turno.estadoTurno}
                                             </td>
                                             <td className='px-2 py-2 whitespace-nowrap text-xs text-gray-700'>
                                                 {turno.comentarios || 'N/A'}
@@ -744,11 +744,11 @@ export default function GestionCuadroHistoria() {
                                             <td className='px-2 py-2 whitespace-nowrap text-xs font-medium text-gray-900'>
                                                 {ht.idUsuario || 'N/A'}
                                             </td>
-                                            <td className={`px-2 py-2 whitespace-nowrap text-xs font-medium text-gray-900 ${ht?.estado
-                                                ? 'bg-green-50 text-green-800'
-                                                : 'bg-orange-50 text-orange-800'
+                                            <td className={`px-2 py-2 whitespace-nowrap text-xs font-medium text-gray-900 ${ht.estadoTurno === 'abierto'
+                                                ? 'bg-green-100 text-green-800'
+                                                : 'bg-red-100 text-red-800'
                                                 }`}>
-                                                {ht?.estado ? 'activo' : 'inactivo'}
+                                                {ht.estadoTurno}
                                             </td>
                                             <td className='px-2 py-2 whitespace-nowrap text-xs text-gray-700'>
                                                 {ht.comentarios || 'N/A'}
