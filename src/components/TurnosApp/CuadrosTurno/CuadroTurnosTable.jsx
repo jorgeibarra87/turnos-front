@@ -151,7 +151,7 @@ export default function TurnosTable() {
             </div>
 
             {/* Información sobre el manejo de versiones */}
-            <div className="mb-3 p-1 bg-blue-50 border-l-4 border-blue-400 rounded">
+            {/* <div className="mb-3 p-1 bg-blue-50 border-l-4 border-blue-400 rounded">
                 <div className="flex">
                     <div className="flex-shrink-0">
                         <svg className="w-4 h-4 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
@@ -165,7 +165,7 @@ export default function TurnosTable() {
                         </p>
                     </div>
                 </div>
-            </div>
+            </div> */}
 
 
             <div className="flex justify-between items-center mb-4">

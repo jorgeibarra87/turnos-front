@@ -53,9 +53,35 @@ export const apiTurnoService = {
 
         // Crear turno
         create: async (turnoData) => {
+            try {
+                const response = await apiClient.post('/turnos', turnoData);
+                return response.data;
+            } catch (error) {
+                // ✅ AGREGAR LOGGING PARA VER QUÉ CÓDIGO HTTP SE RECIBE
+                console.error('Error status:', error.response?.status);
+                console.error('Error data:', error.response?.data);
+
+                if (error.response?.status === 422) {
+                    // ✅ Validación de reglas de negocio
+                    const errorMessage = error.response.data?.mensaje ||
+                        error.response.data?.message ||
+                        'Error de validación en el turno';
+                    throw new Error(errorMessage);
+                } else if (error.response?.status === 400) {
+                    throw new Error('Datos inválidos en la solicitud');
+                } else if (error.response?.status === 409) {
+                    throw new Error('Conflicto al crear el turno');
+                } else if (error.response?.status === 500) {
+                    throw new Error('Error interno del servidor');
+                } else {
+                    throw new Error('Error desconocido: ' + (error.response?.data?.message || error.message));
+                }
+            }
+        },
+        /* create: async (turnoData) => {
             const response = await apiClient.post('/turnos', turnoData);
             return response.data;
-        },
+        }, */
 
         // Actualizar turno
         update: async (turnoId, turnoData) => {
