@@ -6,11 +6,7 @@ import { Link } from 'react-router-dom';
 import { apiTurnoService } from '../Services/apiTurnoService';
 
 export default function CrearTurnos() {
-
     const [searchParams] = useSearchParams();
-    //const procesos = searchParams.get('procesos');
-    //const seleccion = searchParams.get('seleccion');
-    //const seleccionId = searchParams.get('seleccionId');
     const [selectedCuadro, setSelectedCuadro] = useState({ id: "", nombre: "" });
     const [cuadros, setCuadros] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -38,7 +34,7 @@ export default function CrearTurnos() {
         fetchCuadros();
     }, []);
 
-    // Función para manejar el cambio en el select de cuadros;
+    // Función para manejar el cambio en el select de cuadros
     const handleCuadroChange = (e) => {
         const cuadroId = e.target.value;
         const cuadroSeleccionado = cuadros.find(cuadro =>
@@ -55,7 +51,9 @@ export default function CrearTurnos() {
             setSelectedCuadro({ id: "", nombre: "", idEquipo: null });
         }
     };
+
     console.log("selectedCuadro", selectedCuadro);
+
     const getNextStepUrl = () => {
         if (!selectedCuadro.id) return "#";
 
@@ -64,7 +62,7 @@ export default function CrearTurnos() {
             cuadroNombre: selectedCuadro.nombre,
             equipoId: selectedCuadro.idEquipo
         });
-        //console.log("seleccionId:", seleccionId);
+
         const nextRoute = '/GestionTurnos';
         return `${nextRoute}?${params.toString()}`;
     };
@@ -72,11 +70,19 @@ export default function CrearTurnos() {
     return (
         <div className='absolute inset-0 bg-opacity-30 backdrop-blur-sm flex justify-center items-center'>
             <div className='bg-white p-8 rounded-lg flex flex-col justify-center items-center gap-5 max-w-xl w-full mx-4'>
-                <div className='text-3xl text-center font-bold'>Gestion de Turnos</div>
+                <div className='text-3xl text-center font-bold'>Gestión de Turnos</div>
 
                 <div className='text-center space-y-2'>
                     <div className='text-lg font-semibold text-blue-600'>
                         Selecciona un Cuadro de turno para gestionar los turnos
+                    </div>
+                    {/* ✅ INFORMACIÓN SOBRE CÁLCULO AUTOMÁTICO */}
+                    <div className='text-sm text-gray-600 bg-blue-50 p-3 rounded-lg border border-blue-200'>
+                        <div className='font-medium text-blue-800 mb-1'>ℹ️ Cálculo Automático Habilitado</div>
+                        <div className='text-xs space-y-1'>
+                            <div><strong>Jornada:</strong> Se calcula automáticamente según la hora de inicio</div>
+                            <div><strong>Tipo:</strong> Se determina según las horas de duración del turno</div>
+                        </div>
                     </div>
                 </div>
 
@@ -110,7 +116,22 @@ export default function CrearTurnos() {
                     )}
 
                     {selectedCuadro.id && (
-                        <p className="text-xs ffont-extralight text-gray-700 p-2">Cuadro seleccionado:{selectedCuadro.nombre}</p>
+                        <div className="space-y-2 mt-3">
+                            <p className="text-xs font-extralight text-gray-700 p-2">
+                                <strong>Cuadro seleccionado:</strong> {selectedCuadro.nombre}
+                            </p>
+
+                            {/* ✅ MOSTRAR REGLAS DE JORNADAS */}
+                            <div className="text-xs bg-gray-50 p-3 rounded border">
+                                <div className="font-medium text-gray-800 mb-2">📋 Reglas de Jornadas Automáticas:</div>
+                                <div className="grid grid-cols-2 gap-2 text-xs">
+                                    <div><strong>🌅 Mañana:</strong> 06:00 - 11:59</div>
+                                    <div><strong>🌆 Tarde:</strong> 12:00 - 17:59</div>
+                                    <div><strong>🌙 Noche:</strong> 18:00 - 05:59</div>
+                                    <div><strong>⏰ 24 Horas:</strong> Turnos completos</div>
+                                </div>
+                            </div>
+                        </div>
                     )}
                 </div>
 
@@ -128,13 +149,6 @@ export default function CrearTurnos() {
                         </button>
                     </Link>
 
-                    {/* <Link to={`#`}>
-                        <button className="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 flex justify-center items-center gap-2 transition-colors">
-                            <ArrowLeft size={20} color="white" strokeWidth={2} />
-                            Volver
-                        </button>
-                    </Link> */}
-
                     <Link to="/">
                         <button className="px-6 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 flex justify-center items-center gap-2 transition-colors">
                             <CircleXIcon size={20} color="white" strokeWidth={2} />
@@ -145,4 +159,4 @@ export default function CrearTurnos() {
             </div>
         </div>
     );
-};
+}
