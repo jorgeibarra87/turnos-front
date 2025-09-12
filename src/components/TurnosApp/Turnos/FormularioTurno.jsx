@@ -12,7 +12,6 @@ export function FormularioTurno() {
     const cuadroNombre = searchParams.get('cuadroNombre');
     const equipoNombre = searchParams.get('equipoNombre');
     const equipoId = searchParams.get('equipoId');
-    console.log("equipoId", equipoId);
     const { turnoId } = useParams(); // Para modo edición desde URL /editar-turno/:id
 
     // Detectar modo edición
@@ -24,7 +23,7 @@ export function FormularioTurno() {
     const [fechaHoraInicio, setFechaHoraInicio] = useState("");
     const [fechaHoraFin, setFechaHoraFin] = useState("");
     const [selectedPersona, setSelectedPersona] = useState("");
-    const [jornada, setJornada] = useState("Mañana");
+    const [jornada, setJornada] = useState("");
     const [tipoTurno, setTipoTurno] = useState("Presencial");
     const [comentarios, setComentarios] = useState("");
     const [estadoTurno, setEstadoTurno] = useState("abierto");
@@ -100,11 +99,10 @@ export function FormularioTurno() {
                 setFechaHoraInicio(turnoData.fechaInicio || "");
                 setFechaHoraFin(turnoData.fechaFin || "");
                 setSelectedPersona(turnoData.idPersona || "");
-                setJornada(turnoData.jornada || "Mañana");
+                setJornada(turnoData.jornada || "");
                 setTipoTurno(turnoData.tipoTurno || "Presencial");
                 setComentarios(turnoData.comentarios || "");
                 setEstadoTurno(turnoData.estadoTurno || "abierto");
-
                 if (equipoId) {
                     setCuadroData(prev => ({
                         ...prev,
@@ -125,46 +123,7 @@ export function FormularioTurno() {
 
         loadTurnoForEdit();
     }, [isEditMode, turnoId]);
-    /* useEffect(() => {
-        const loadTurnoForEdit = async () => {
-            if (!isEditMode || !turnoId) return;
 
-            try {
-                setLoadingTurnoData(true);
-                const response = await axios.get(`http://localhost:8080/turnos/${turnoId}`);
-                const turnoData = response.data;
-                console.log("turnoData", turnoData);
-                setTurnoOriginal(turnoData);
-                setCuadroTurno(turnoData.cuadroTurno || "");
-                setEquipo(equipoId);
-                setFechaHoraInicio(turnoData.fechaInicio || "");
-                setFechaHoraFin(turnoData.fechaFin || "");
-                setSelectedPersona(turnoData.idPersona || "");
-                setJornada(turnoData.jornada || "Mañana");
-                setTipoTurno(turnoData.tipoTurno || "Presencial");
-                setComentarios(turnoData.comentarios || "");
-                setEstadoTurno(turnoData.estadoTurno || "abierto");
-
-                // Cargar datos relacionados
-                if (equipoId) {
-                    setCuadroData(prev => ({
-                        ...prev,
-                        equipoId: equipoId,
-                        id: turnoData.idCuadroTurno,
-                        nombre: turnoData.cuadroTurno
-                    }));
-                    loadPersonasEquipo(equipoId);
-                }
-
-            } catch (err) {
-                console.error('Error al cargar turno para editar:', err);
-                setError('Error al cargar los datos del turno');
-            } finally {
-                setLoadingTurnoData(false);
-            }
-        };
-        loadTurnoForEdit();
-    }, [isEditMode, turnoId]); */
 
     // Función para cargar personas del equipo
     const loadPersonasEquipo = async (equipoId) => {
@@ -182,19 +141,8 @@ export function FormularioTurno() {
             setLoadingPersonas(false);
         }
     };
-    /* const loadPersonasEquipo = async (equipoId) => {
-        try {
-            setLoadingPersonas(true);
-            const response = await axios.get(`http://localhost:8080/usuario/equipo/${equipoId}/usuarios`);
-            setPersonasEquipo(response.data || []);
-        } catch (err) {
-            console.error('Error al cargar personas del equipo:', err);
-            setError('Error al cargar las personas del equipo');
-        } finally {
-            setLoadingPersonas(false);
-        }
-    }; */
-    console.log("PersonasEquipo: ", personasEquipo);
+
+    //console.log("PersonasEquipo: ", personasEquipo);
     // Función para cargar info del equipo
     const loadEquipoInfo = async (equipoId) => {
         try {
@@ -206,14 +154,7 @@ export function FormularioTurno() {
             console.error('Error al cargar info del equipo:', err);
         }
     };
-    /* const loadEquipoInfo = async (equipoId) => {
-        try {
-            const response = await axios.get(`http://localhost:8080/equipo/${equipoId}`);
-            setEquipo(response.data.nombre || `Equipo_${equipoId}`);
-        } catch (err) {
-            console.error('Error al cargar info del equipo:', err);
-        }
-    }; */
+
 
     // Función para formatear fecha para input datetime-local
     const formatDateForInput = (dateTimeString) => {
@@ -240,7 +181,7 @@ export function FormularioTurno() {
             }
 
             const turnoData = {
-                //cuadroTurno: cuadroData.nombre,
+                cuadroNombre: cuadroNombre,
                 idCuadroTurno: cuadroData.id,
                 idPersona: selectedPersona,
                 fechaInicio: fechaHoraInicio,
@@ -275,7 +216,7 @@ export function FormularioTurno() {
             // Regresar a la gestión de turnos
             const params = new URLSearchParams({
                 cuadroId: cuadroData.id,
-                cuadroNombre: cuadroData.nombre,
+                cuadroNombre: cuadroNombre,
                 equipoId: cuadroData.equipoId
             });
             navigate(`/gestionar-turnos?${params.toString()}`);
@@ -298,6 +239,53 @@ export function FormularioTurno() {
             </div>
         );
     }
+
+    // Función para calcular jornada en tiempo real (preview)
+    const calcularJornadaPreview = () => {
+        if (!fechaHoraInicio || !fechaHoraFin) {
+            return "Sin definir";
+        }
+
+        const inicio = new Date(fechaHoraInicio);
+        const fin = new Date(fechaHoraFin);
+
+        // Calcular duración del turno
+        const diffMs = fin.getTime() - inicio.getTime();
+        const horasDuracion = diffMs / (1000 * 60 * 60);
+
+        // Si es turno de 24 horas
+        if (horasDuracion === 24) {
+            return "24 Horas";
+        }
+
+        // Obtener hora de inicio (0-23)
+        const horaInicio = inicio.getHours();
+
+        // Definir jornadas según hora de inicio (MISMA LÓGICA QUE BACKEND)
+        if (horaInicio >= 6 && horaInicio < 12) {
+            return "Mañana";
+        } else if (horaInicio >= 12 && horaInicio < 18) {
+            return "Tarde";
+        } else {
+            // 18:00 - 05:59 (incluye madrugada y noche)
+            return "Noche";
+        }
+    };
+
+    // Función para mostrar las reglas de jornada
+    const obtenerReglasJornada = () => {
+        return (
+            <div className="text-xs bg-blue-50 p-3 rounded border mt-2">
+                <div className="font-medium text-blue-800 mb-2">📋 Reglas de Cálculo Automático:</div>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div><strong>🌅 Mañana:</strong> 06:00 - 11:59</div>
+                    <div><strong>🌆 Tarde:</strong> 12:00 - 17:59</div>
+                    <div><strong>🌙 Noche:</strong> 18:00 - 05:59</div>
+                    <div><strong>⏰ 24 Horas:</strong> Turnos completos</div>
+                </div>
+            </div>
+        );
+    };
 
     return (
         <div className='absolute inset-0 bg-opacity-30 backdrop-blur-sm flex justify-center items-center'>
@@ -400,21 +388,19 @@ export function FormularioTurno() {
 
                     {/* Jornada y Tipo de Turno */}
                     <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                        {/* JORNADA  */}
                         <div>
-                            <label htmlFor="jornada-select" className="block text-sm font-medium text-gray-700 mb-1">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
                                 Jornada:
                             </label>
-                            <select
-                                id="jornada-select"
-                                value={jornada}
-                                onChange={(e) => setJornada(e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            >
-                                <option value="Mañana">Mañana</option>
-                                <option value="Tarde">Tarde</option>
-                                <option value="Noche">Noche</option>
-                                <option value="24 Horas">24 Horas</option>
-                            </select>
+                            <div className="px-3 py-2 bg-blue-50 border border-blue-300 rounded-md text-sm font-semibold text-blue-800 flex items-center gap-2">
+                                <span className={`inline-block w-2 h-2 rounded-full ${calcularJornadaPreview() === "Mañana" ? "bg-yellow-500" :
+                                    calcularJornadaPreview() === "Tarde" ? "bg-green-500" :
+                                        calcularJornadaPreview() === "Noche" ? "bg-blue-500" :
+                                            "bg-green-500"
+                                    }`}></span>
+                                {calcularJornadaPreview()}
+                            </div>
                         </div>
 
                         <div>
