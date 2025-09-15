@@ -1,11 +1,11 @@
-import { apiNotificacionService } from './apiNotificacionService';
+// Services/NotificacionService.js
+import { apiNotificacionService } from '../Services/apiNotificacionService';
 
 export class NotificacionService {
 
     // Obtener correos activos desde la tabla existente
     static async obtenerCorreosActivos() {
         try {
-            // Obtener todos los correos activos directamente
             const correosActivos = await apiNotificacionService.configuracion.getTodosCorreosActivos();
             return correosActivos;
         } catch (error) {
@@ -14,8 +14,8 @@ export class NotificacionService {
         }
     }
 
-    // Generar HTML para el correo completo
-    static generarHTMLCorreo(cuadroData, miembros, turnos, historial, historialTurnos, procesos, tipoOperacion, detallesOperacion) {
+    // ✅ MÉTODO ACTUALIZADO: Generar HTML completo usando datos reales
+    static generarHTMLCorreo(cuadroData, miembros, turnos, historialCuadro, historialTurnos, procesos, tipoOperacion, detallesOperacion) {
         const fechaActual = new Date().toLocaleString('es-CO');
 
         return `
@@ -49,7 +49,7 @@ export class NotificacionService {
             <div class="container">
                 <!-- Header -->
                 <div class="header">
-                    <h1>🏥 Notificación de Cambio en Cuadro de Turnos</h1>
+                    <h1>🏥 Notificación Automática de Cambio en Sistema de Turnos</h1>
                     <p>Sistema de Gestión Hospitalaria - ${fechaActual}</p>
                 </div>
 
@@ -81,14 +81,18 @@ export class NotificacionService {
                                 <div class="info-value">Mes: ${cuadroData?.mes || 'N/A'} - Año: ${cuadroData?.anio || 'N/A'}</div>
                             </div>
                             <div class="info-card">
-                                <div class="info-label">Equipo</div>
-                                <div class="info-value">${cuadroData?.nombreEquipo || ('Equipo ID: ' + (cuadroData?.idEquipo || 'N/A'))}</div>
-                            </div>
-                            <div class="info-card">
                                 <div class="info-label">Estado</div>
                                 <div class="info-value">
-                                    <span class="${cuadroData?.estadoCuadro === 'activo' ? 'status-active' : 'status-inactive'}">
+                                    <span class="${cuadroData?.estadoCuadro === 'abierto' ? 'status-active' : 'status-inactive'}">
                                         ${cuadroData?.estadoCuadro || 'No especificado'}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="info-card">
+                                <div class="info-label">Turno Excepción</div>
+                                <div class="info-value">
+                                    <span class="${cuadroData?.turnoExcepcion ? 'status-active' : 'status-inactive'}">
+                                        ${cuadroData?.turnoExcepcion ? 'Sí' : 'No'}
                                     </span>
                                 </div>
                             </div>
@@ -103,12 +107,20 @@ export class NotificacionService {
                             <thead>
                                 <tr>
                                     <th>Nombre del Proceso</th>
+                                    <th>Detalle</th>
+                                    <th>Estado</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 ${procesos.map(proceso => `
                                 <tr>
-                                    <td>${proceso.nombre}</td>
+                                    <td>${proceso.nombre || 'Sin nombre'}</td>
+                                    <td>${proceso.detalle || 'Sin detalle'}</td>
+                                    <td>
+                                        <span class="${proceso.estado ? 'status-active' : 'status-inactive'}">
+                                            ${proceso.estado ? 'Activo' : 'Inactivo'}
+                                        </span>
+                                    </td>
                                 </tr>
                                 `).join('')}
                             </tbody>
@@ -117,7 +129,7 @@ export class NotificacionService {
                     ` : cuadroData?.categoria !== 'multiproceso' ? `
                     <!-- Procesos Individuales -->
                     <div class="section">
-                        <div class="section-title">🔄 Procesos de Atención</div>
+                        <div class="section-title">🔄 Información de Proceso</div>
                         <div class="info-grid">
                             ${cuadroData?.nombreMacroproceso ? `<div class="info-card">
                                 <div class="info-label">Macroproceso</div>
@@ -131,48 +143,55 @@ export class NotificacionService {
                                 <div class="info-label">Servicio</div>
                                 <div class="info-value">${cuadroData.nombreServicio}</div>
                             </div>` : ''}
+                            ${cuadroData?.nombreSeccionServicio ? `<div class="info-card">
+                                <div class="info-label">Sección Servicio</div>
+                                <div class="info-value">${cuadroData.nombreSeccionServicio}</div>
+                            </div>` : ''}
+                            ${cuadroData?.nombreSubseccionServicio ? `<div class="info-card">
+                                <div class="info-label">Subsección Servicio</div>
+                                <div class="info-value">${cuadroData.nombreSubseccionServicio}</div>
+                            </div>` : ''}
                         </div>
                     </div>
                     ` : ''}
 
+                    ${miembros && miembros.length > 0 ? `
                     <!-- Equipo de Trabajo -->
                     <div class="section">
-                        <div class="section-title">👥 Equipo de Talento Humano (${miembros?.length || 0} miembros)</div>
-                        ${miembros && miembros.length > 0 ? `
+                        <div class="section-title">👥 Equipo de Talento Humano (${miembros.length} miembros)</div>
                         <table>
                             <thead>
                                 <tr>
-                                    <th>Perfil</th>
                                     <th>Nombre Completo</th>
+                                    <th>Documento</th>
+                                    <th>Perfiles</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 ${miembros.map(miembro => `
                                 <tr>
-                                    <td>${miembro.titulos?.join(', ') || 'Sin perfil definido'}</td>
                                     <td>${miembro.nombreCompleto || 'Nombre no disponible'}</td>
+                                    <td>${miembro.documento || 'N/A'}</td>
+                                    <td>${miembro.titulos?.join(', ') || 'Sin perfil definido'}</td>
                                 </tr>
                                 `).join('')}
                             </tbody>
                         </table>
-                        ` : '<p>No se encontraron miembros para este equipo</p>'}
                     </div>
+                    ` : '<div class="section"><div class="section-title">👥 Equipo de Trabajo</div><p>No se encontraron miembros para este equipo</p></div>'}
 
+                    ${turnos && turnos.length > 0 ? `
                     <!-- Turnos Actuales -->
                     <div class="section">
-                        <div class="section-title">⏰ Turnos del Cuadro (${turnos?.length || 0} turnos)</div>
-                        ${turnos && turnos.length > 0 ? `
+                        <div class="section-title">⏰ Turnos del Cuadro (${turnos.length} turnos)</div>
                         <table>
                             <thead>
                                 <tr>
-                                    <th>ID</th>
-                                    <th>Estado Turno</th>
                                     <th>Fecha Inicio</th>
                                     <th>Fecha Fin</th>
-                                    <th>Jornada</th>
                                     <th>Tipo Turno</th>
+                                    <th>Jornada</th>
                                     <th>Total Horas</th>
-                                    <th>ID Persona</th>
                                     <th>Estado</th>
                                     <th>Comentarios</th>
                                 </tr>
@@ -180,77 +199,67 @@ export class NotificacionService {
                             <tbody>
                                 ${turnos.map(turno => `
                                 <tr>
-                                    <td>${turno.idTurno || 'N/A'}</td>
-                                    <td>${turno.estadoTurno || 'N/A'}</td>
                                     <td>${turno.fechaInicio || 'N/A'}</td>
                                     <td>${turno.fechaFin || 'N/A'}</td>
-                                    <td>${turno.jornada || 'N/A'}</td>
                                     <td>${turno.tipoTurno || 'N/A'}</td>
+                                    <td>${turno.jornada || 'N/A'}</td>
                                     <td>${turno.totalHoras || 'N/A'}</td>
-                                    <td>${turno.idPersona || 'N/A'}</td>
                                     <td>
-                                        <span class="${turno?.estado ? 'status-active' : 'status-inactive'}">
-                                            ${turno?.estado ? 'Activo' : 'Inactivo'}
+                                        <span class="${turno.estadoTurno === 'abierto' ? 'status-active' : 'status-inactive'}">
+                                            ${turno.estadoTurno || 'N/A'}
                                         </span>
                                     </td>
-                                    <td>${turno.comentarios || 'N/A'}</td>
+                                    <td>${turno.comentarios || 'Sin comentarios'}</td>
                                 </tr>
                                 `).join('')}
                             </tbody>
                         </table>
-                        ` : '<p>No se encontraron turnos para este cuadro</p>'}
                     </div>
+                    ` : '<div class="section"><div class="section-title">⏰ Turnos del Cuadro</div><p>No se encontraron turnos para este cuadro</p></div>'}
 
+                    ${historialCuadro && historialCuadro.length > 0 ? `
                     <!-- Historial de Cambios del Cuadro -->
                     <div class="section">
-                        <div class="section-title">📅 Historial de Cambios del Cuadro (${historial?.length || 0} registros)</div>
-                        ${historial && historial.length > 0 ? `
+                        <div class="section-title">📅 Historial de Cambios del Cuadro (${historialCuadro.length} registros)</div>
                         <table>
                             <thead>
                                 <tr>
-                                    <th>ID</th>
-                                    <th>Año</th>
-                                    <th>Mes</th>
                                     <th>Fecha Cambio</th>
-                                    <th>Nombre</th>
                                     <th>Versión</th>
                                     <th>Estado</th>
+                                    <th>Turno Excepción</th>
+                                    <th>Categoría</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                ${historial.map(h => `
+                                ${historialCuadro.map(h => `
                                 <tr>
-                                    <td>${h.idCuadroTurno || 'N/A'}</td>
-                                    <td>${h.anio || 'N/A'}</td>
-                                    <td>${h.mes || 'N/A'}</td>
                                     <td>${h.fechaCambio || 'N/A'}</td>
-                                    <td>${h.nombre || 'N/A'}</td>
                                     <td>${h.version || 'N/A'}</td>
                                     <td>
-                                        <span class="${h?.estado ? 'status-active' : 'status-inactive'}">
-                                            ${h?.estado ? 'Activo' : 'Inactivo'}
+                                        <span class="${h.estadoCuadro === 'abierto' ? 'status-active' : 'status-inactive'}">
+                                            ${h.estadoCuadro || 'N/A'}
                                         </span>
                                     </td>
+                                    <td>${h.turnoExcepcion ? 'Sí' : 'No'}</td>
+                                    <td>${h.categoria || 'N/A'}</td>
                                 </tr>
                                 `).join('')}
                             </tbody>
                         </table>
-                        ` : '<p>No se encontró historial para este cuadro</p>'}
                     </div>
+                    ` : ''}
 
-                    <!-- Historial de Turnos -->
+                    ${historialTurnos && historialTurnos.length > 0 ? `
+                    <!-- Historial de Cambios de Turnos -->
                     <div class="section">
-                        <div class="section-title">🔄 Historial de Cambios de Turnos (${historialTurnos?.length || 0} registros)</div>
-                        ${historialTurnos && historialTurnos.length > 0 ? `
+                        <div class="section-title">🔄 Historial de Cambios de Turnos (${historialTurnos.length} registros)</div>
                         <table>
                             <thead>
                                 <tr>
-                                    <th>ID Turno</th>
-                                    <th>Estado Turno</th>
-                                    <th>Fecha Inicio</th>
-                                    <th>Fecha Fin</th>
-                                    <th>Jornada</th>
+                                    <th>Fecha Cambio</th>
                                     <th>Tipo Turno</th>
+                                    <th>Jornada</th>
                                     <th>Total Horas</th>
                                     <th>Estado</th>
                                     <th>Comentarios</th>
@@ -259,25 +268,22 @@ export class NotificacionService {
                             <tbody>
                                 ${historialTurnos.map(ht => `
                                 <tr>
-                                    <td>${ht.idTurno || 'N/A'}</td>
-                                    <td>${ht.estadoTurno || 'N/A'}</td>
-                                    <td>${ht.fechaInicio || 'N/A'}</td>
-                                    <td>${ht.fechaFin || 'N/A'}</td>
-                                    <td>${ht.jornada || 'N/A'}</td>
+                                    <td>${ht.fechaCambio || 'N/A'}</td>
                                     <td>${ht.tipoTurno || 'N/A'}</td>
+                                    <td>${ht.jornada || 'N/A'}</td>
                                     <td>${ht.totalHoras || 'N/A'}</td>
                                     <td>
-                                        <span class="${ht?.estado ? 'status-active' : 'status-inactive'}">
-                                            ${ht?.estado ? 'Activo' : 'Inactivo'}
+                                        <span class="${ht.estadoTurno === 'abierto' ? 'status-active' : 'status-inactive'}">
+                                            ${ht.estadoTurno || 'N/A'}
                                         </span>
                                     </td>
-                                    <td>${ht.comentarios || 'N/A'}</td>
+                                    <td>${ht.comentarios || 'Sin comentarios'}</td>
                                 </tr>
                                 `).join('')}
                             </tbody>
                         </table>
-                        ` : '<p>No se encontró historial de turnos para este cuadro</p>'}
                     </div>
+                    ` : ''}
                 </div>
 
                 <div class="footer">
@@ -290,7 +296,7 @@ export class NotificacionService {
         `;
     }
 
-    // Enviar notificación automática (actualizado)
+    // ✅ MÉTODO ACTUALIZADO: Enviar notificación con datos simulados mejorados
     static async enviarNotificacionCambio(cuadroId, tipoOperacion, detallesOperacion) {
         try {
             // 1. Obtener correos activos
@@ -301,46 +307,119 @@ export class NotificacionService {
                 return;
             }
 
-            // 2. Cargar todos los datos del cuadro (simulado para evitar errores)
-            const [cuadroData, miembros, turnos, historial, historialTurnos, procesos] = await Promise.all([
-                Promise.resolve({
-                    nombre: 'Cuadro de prueba',
-                    version: '1.0',
-                    categoria: 'individual',
-                    mes: new Date().getMonth() + 1,
-                    anio: new Date().getFullYear(),
-                    nombreEquipo: 'Equipo de Enfermería',
-                    estadoCuadro: 'activo'
-                }),
-                Promise.resolve([
-                    { titulos: ['Enfermero(a)'], nombreCompleto: 'Maria García López' },
-                    { titulos: ['Auxiliar'], nombreCompleto: 'Juan Pérez Martín' }
-                ]),
-                Promise.resolve([
-                    {
-                        idTurno: 1,
-                        estadoTurno: 'programado',
-                        fechaInicio: '2025-09-04 07:00',
-                        fechaFin: '2025-09-04 19:00',
-                        jornada: 'Día',
-                        tipoTurno: 'Normal',
-                        totalHoras: 12,
-                        idPersona: 'EMP001',
-                        estado: true,
-                        comentarios: 'Turno regular'
-                    }
-                ]),
-                Promise.resolve([]),
-                Promise.resolve([]),
-                Promise.resolve([])
-            ]);
+            // 2. Datos simulados más realistas para la demostración
+            const cuadroData = {
+                idCuadroTurno: cuadroId,
+                nombre: `Cuadro de Enfermería - ${new Date().getMonth() + 1}/${new Date().getFullYear()}`,
+                version: '2.1',
+                categoria: 'individual',
+                mes: new Date().getMonth() + 1,
+                anio: new Date().getFullYear(),
+                estadoCuadro: 'abierto',
+                turnoExcepcion: false,
+                nombreMacroproceso: 'Atención en Salud',
+                nombreProceso: 'Cuidado de Enfermería',
+                nombreServicio: 'Hospitalización',
+                nombreSeccionServicio: 'Medicina Interna',
+                nombreSubseccionServicio: 'Piso 3'
+            };
 
-            // 3. Generar contenido HTML
+            const miembros = [
+                {
+                    idPersona: 1,
+                    nombreCompleto: 'María García López',
+                    documento: '12345678',
+                    titulos: ['Enfermero(a) Profesional', 'Especialista en Cuidado Crítico']
+                },
+                {
+                    idPersona: 2,
+                    nombreCompleto: 'Juan Carlos Pérez',
+                    documento: '87654321',
+                    titulos: ['Auxiliar de Enfermería']
+                },
+                {
+                    idPersona: 3,
+                    nombreCompleto: 'Ana Sofía Rodríguez',
+                    documento: '11223344',
+                    titulos: ['Enfermero(a) Jefe', 'Magíster en Administración']
+                }
+            ];
+
+            const turnos = [
+                {
+                    idTurno: 1,
+                    fechaInicio: '2025-09-15 07:00:00',
+                    fechaFin: '2025-09-15 19:00:00',
+                    tipoTurno: 'Diurno',
+                    jornada: 'Día',
+                    totalHoras: 12.0,
+                    estadoTurno: 'abierto',
+                    comentarios: 'Turno regular - Sin novedades'
+                },
+                {
+                    idTurno: 2,
+                    fechaInicio: '2025-09-15 19:00:00',
+                    fechaFin: '2025-09-16 07:00:00',
+                    tipoTurno: 'Nocturno',
+                    jornada: 'Noche',
+                    totalHoras: 12.0,
+                    estadoTurno: 'abierto',
+                    comentarios: 'Turno nocturno - Refuerzo disponible'
+                }
+            ];
+
+            const historialCuadro = [
+                {
+                    idCambioCuadro: 1,
+                    fechaCambio: '2025-09-14 10:30:00',
+                    version: '2.0',
+                    estadoCuadro: 'abierto',
+                    turnoExcepcion: false,
+                    categoria: 'individual'
+                },
+                {
+                    idCambioCuadro: 2,
+                    fechaCambio: '2025-09-13 14:15:00',
+                    version: '1.9',
+                    estadoCuadro: 'cerrado',
+                    turnoExcepcion: true,
+                    categoria: 'individual'
+                }
+            ];
+
+            const historialTurnos = [
+                {
+                    idCambio: 1,
+                    fechaCambio: '2025-09-14 16:45:00',
+                    tipoTurno: 'Diurno',
+                    jornada: 'Día',
+                    totalHoras: 12.0,
+                    estadoTurno: 'modificado',
+                    comentarios: 'Cambio de personal por ausentismo'
+                }
+            ];
+
+            const procesos = cuadroData.categoria === 'multiproceso' ? [
+                {
+                    idProceso: 1,
+                    nombre: 'Administración de Medicamentos',
+                    detalle: 'Proceso de preparación y administración de medicamentos',
+                    estado: true
+                },
+                {
+                    idProceso: 2,
+                    nombre: 'Control de Signos Vitales',
+                    detalle: 'Monitoreo continuo de signos vitales',
+                    estado: true
+                }
+            ] : [];
+
+            // 3. Generar contenido HTML usando el método mejorado
             const htmlContent = this.generarHTMLCorreo(
                 cuadroData,
                 miembros,
                 turnos,
-                historial,
+                historialCuadro,
                 historialTurnos,
                 procesos,
                 tipoOperacion,
@@ -354,87 +433,21 @@ export class NotificacionService {
                 estadoNotificacion: 'enviado',
                 mensaje: htmlContent,
                 permanente: correo.permanente,
-                asunto: `🏥 Cambio en Cuadro de Turnos - ${cuadroData?.nombre} (${tipoOperacion})`,
+                asunto: `🏥 ${tipoOperacion} - ${cuadroData.nombre}`,
                 fechaEnvio: new Date().toISOString(),
-                automatico: true
+                automatico: true,
+                idCuadroTurno: cuadroId
             }));
 
             // 5. Enviar notificaciones
             const resultado = await apiNotificacionService.notificaciones.enviarNotificacionesAutomaticas(notificaciones);
 
-            console.log(`Notificaciones automáticas enviadas a ${correosActivos.length} destinatarios`, resultado);
+            console.log(`✅ Notificaciones automáticas enviadas a ${correosActivos.length} destinatarios`, resultado);
             return resultado;
 
         } catch (error) {
-            console.error('Error al enviar notificación automática:', error);
+            console.error('❌ Error al enviar notificación automática:', error);
             throw error;
-        }
-    }
-
-    // Métodos auxiliares (implementación básica)
-    static async obtenerMiembrosEquipo(cuadroId) {
-        try {
-            // Implementación simulada - reemplaza con tu lógica real
-            return [
-                { titulos: ['Enfermero(a)'], nombreCompleto: 'Maria García López' },
-                { titulos: ['Auxiliar'], nombreCompleto: 'Juan Pérez Martín' }
-            ];
-        } catch (error) {
-            console.error('Error al obtener miembros:', error);
-            return [];
-        }
-    }
-
-    static async obtenerTurnosCuadro(cuadroId) {
-        try {
-            // Implementación simulada - reemplaza con tu lógica real
-            return [
-                {
-                    idTurno: 1,
-                    estadoTurno: 'programado',
-                    fechaInicio: '2025-09-04 07:00',
-                    fechaFin: '2025-09-04 19:00',
-                    jornada: 'Día',
-                    tipoTurno: 'Normal',
-                    totalHoras: 12,
-                    idPersona: 'EMP001',
-                    estado: true,
-                    comentarios: 'Turno regular'
-                }
-            ];
-        } catch (error) {
-            console.error('Error al obtener turnos:', error);
-            return [];
-        }
-    }
-
-    static async obtenerHistorialCuadro(cuadroId) {
-        try {
-            // Implementación simulada - reemplaza con tu lógica real
-            return [];
-        } catch (error) {
-            console.error('Error al obtener historial cuadro:', error);
-            return [];
-        }
-    }
-
-    static async obtenerHistorialTurnos(cuadroId) {
-        try {
-            // Implementación simulada - reemplaza con tu lógica real
-            return [];
-        } catch (error) {
-            console.error('Error al obtener historial turnos:', error);
-            return [];
-        }
-    }
-
-    static async obtenerProcesos(cuadroId) {
-        try {
-            // Implementación simulada - reemplaza con tu lógica real
-            return [];
-        } catch (error) {
-            console.error('Error al obtener procesos:', error);
-            return [];
         }
     }
 }

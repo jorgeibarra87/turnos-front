@@ -554,7 +554,7 @@ export default function GestionCuadroHistoria() {
                                             Id
                                         </th>
                                         <th className='px-2 py-2 text-left text-xs font-medium text-white uppercase tracking-wider'>
-                                            estado Turno
+                                            estado
                                         </th>
                                         <th className='px-2 py-2 text-left text-xs font-medium text-white uppercase tracking-wider'>
                                             Fecha Inicio
@@ -581,7 +581,7 @@ export default function GestionCuadroHistoria() {
                                             Id Persona
                                         </th>
                                         <th className='px-2 py-2 text-left text-xs font-medium text-white uppercase tracking-wider'>
-                                            Estado
+                                            Estado Turno
                                         </th>
                                         <th className='px-2 py-2 text-left text-xs font-medium text-white uppercase tracking-wider'>
                                             comentarios
@@ -595,8 +595,7 @@ export default function GestionCuadroHistoria() {
                                             <td className='px-2 py-2 whitespace-nowrap text-center'>
                                                 {turno.idTurno || 'N/A'}
                                             </td>
-                                            <td className='px-2 py-2 whitespace-nowrap text-xs font-medium text-gray-900'>
-                                                {turno.estadoTurno || 'N/A'}
+                                            <td className={`px-2 py-2 whitespace-nowrap text-xs font-medium text-gray-900 ${turno.estado ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}> {turno.estado ? 'activo' : 'inactivo'}
                                             </td>
                                             <td className='px-2 py-2 whitespace-nowrap text-xs font-medium text-gray-900'>
                                                 {turno.fechaInicio || 'N/A'}
@@ -670,7 +669,7 @@ export default function GestionCuadroHistoria() {
                                             Id
                                         </th>
                                         <th className='px-2 py-2 text-left text-xs font-medium text-white uppercase tracking-wider'>
-                                            estado Turno
+                                            estado
                                         </th>
                                         <th className='px-2 py-2 text-left text-xs font-medium text-white uppercase tracking-wider'>
                                             Fecha Inicio
@@ -700,7 +699,7 @@ export default function GestionCuadroHistoria() {
                                             Id Persona
                                         </th>
                                         <th className='px-2 py-2 text-left text-xs font-medium text-white uppercase tracking-wider'>
-                                            Estado
+                                            Estado Turno
                                         </th>
                                         <th className='px-2 py-2 text-left text-xs font-medium text-white uppercase tracking-wider'>
                                             comentarios
@@ -714,8 +713,7 @@ export default function GestionCuadroHistoria() {
                                             <td className='px-2 py-2 whitespace-nowrap text-center'>
                                                 {ht.idTurno || 'N/A'}
                                             </td>
-                                            <td className='px-2 py-2 whitespace-nowrap text-xs font-medium text-gray-900'>
-                                                {ht.estadoTurno || 'N/A'}
+                                            <td className={`px-2 py-2 whitespace-nowrap text-xs font-medium text-gray-900 ${ht.estado ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}> {ht.estado ? 'activo' : 'inactivo'}
                                             </td>
                                             <td className='px-2 py-2 whitespace-nowrap text-xs font-medium text-gray-900'>
                                                 {ht.fechaInicio || 'N/A'}
