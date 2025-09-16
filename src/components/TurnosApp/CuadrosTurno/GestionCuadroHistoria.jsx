@@ -5,6 +5,7 @@ import { User, ArrowLeft, Eye, Calendar, Users, Tag, CalendarClock } from 'lucid
 import { Link } from 'react-router-dom';
 import { apiCuadroService } from '../Services/apiCuadroService';
 import { apiTurnoService } from '../Services/apiTurnoService';
+import { apiEquipoService } from '../Services/apiEquipoService';
 
 export default function GestionCuadroHistoria() {
     const { id } = useParams(); // Obtener ID desde la URL
@@ -31,6 +32,13 @@ export default function GestionCuadroHistoria() {
     const [procesos, setProcesos] = useState([]);
     const [loadingProcesos, setLoadingProcesos] = useState(false);
     const [errorProcesos, setErrorProcesos] = useState(null);
+
+    const [historialEquipos, setHistorialEquipos] = useState([]);
+    const [historialPersonasEquipo, setHistorialPersonasEquipo] = useState([]);
+    const [loadingEquipos, setLoadingEquipos] = useState(false);
+    const [loadingPersonasEquipo, setLoadingPersonasEquipo] = useState(false);
+    const [errorEquipos, setErrorEquipos] = useState(null);
+    const [errorPersonasEquipo, setErrorPersonasEquipo] = useState(null);
 
     // Cargar datos del cuadro
     useEffect(() => {
@@ -59,6 +67,9 @@ export default function GestionCuadroHistoria() {
                 if (cuadro.idEquipo) {
                     await loadMiembrosEquipo(cuadro.idEquipo);
                 }
+
+                // Cargar historial de equipos y personas
+                await loadHistorialEquiposYPersonas(id);
 
             } catch (err) {
                 console.error('Error al cargar cuadro:', err);
@@ -168,6 +179,31 @@ export default function GestionCuadroHistoria() {
             setHistorialTurno([]);
         } finally {
             setLoadingHistorialTurno(false);
+        }
+    };
+
+    // cargar historial de equipos y personas
+    const loadHistorialEquiposYPersonas = async (cuadroId) => {
+        try {
+            setLoadingEquipos(true);
+            setLoadingPersonasEquipo(true);
+            setErrorEquipos(null);
+            setErrorPersonasEquipo(null);
+
+            const historialCompleto = await apiEquipoService.equipos.getHistorialCompleto(cuadroId);
+
+            setHistorialEquipos(historialCompleto.historialEquipos || []);
+            setHistorialPersonasEquipo(historialCompleto.historialPersonas || []);
+
+        } catch (error) {
+            console.error("Error al obtener historial de equipos y personas:", error);
+            setErrorEquipos("Error al cargar historial de equipos");
+            setErrorPersonasEquipo("Error al cargar historial de personas");
+            setHistorialEquipos([]);
+            setHistorialPersonasEquipo([]);
+        } finally {
+            setLoadingEquipos(false);
+            setLoadingPersonasEquipo(false);
         }
     };
 
@@ -750,6 +786,175 @@ export default function GestionCuadroHistoria() {
                                             </td>
                                             <td className='px-2 py-2 whitespace-nowrap text-xs text-gray-700'>
                                                 {ht.comentarios || 'N/A'}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </div>
+
+                {/* Historial de Cambios de Equipos */}
+                <div className='bg-white rounded-lg border'>
+                    <div className='bg-blue-50 px-6 py-2 border-b'>
+                        <h2 className='text-sm font-semibold flex items-center gap-1'>
+                            <CalendarClock size={20} className="text-blue-600" />
+                            Historial Cambios Equipos
+                        </h2>
+                    </div>
+
+                    {loadingEquipos ? (
+                        <div className="p-8 text-center">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
+                            <p className="text-gray-500">Cargando historial de equipos...</p>
+                        </div>
+                    ) : errorEquipos ? (
+                        <div className="p-6 text-center text-red-600 bg-red-50 m-4 rounded-lg">
+                            {errorEquipos}
+                        </div>
+                    ) : historialEquipos.length === 0 ? (
+                        <div className="p-6 text-center text-gray-500">
+                            No se encontró historial de equipos
+                        </div>
+                    ) : (
+                        <div className='overflow-x-auto'>
+                            <table className='w-full'>
+                                <thead className='bg-black'>
+                                    <tr>
+                                        <th className='px-2 py-2 text-left text-xs font-medium text-white uppercase tracking-wider'>
+                                            Fecha
+                                        </th>
+                                        <th className='px-2 py-2 text-left text-xs font-medium text-white uppercase tracking-wider'>
+                                            Equipo
+                                        </th>
+                                        <th className='px-2 py-2 text-left text-xs font-medium text-white uppercase tracking-wider'>
+                                            Tipo Cambio
+                                        </th>
+                                        <th className='px-2 py-2 text-left text-xs font-medium text-white uppercase tracking-wider'>
+                                            Detalles
+                                        </th>
+                                        <th className='px-2 py-2 text-left text-xs font-medium text-white uppercase tracking-wider'>
+                                            Usuario
+                                        </th>
+                                        <th className='px-2 py-2 text-left text-xs font-medium text-white uppercase tracking-wider'>
+                                            Observaciones
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody className='divide-y divide-gray-200'>
+                                    {historialEquipos.map((cambio, index) => (
+                                        <tr key={index} className='hover:bg-gray-50 transition-colors'>
+                                            <td className='px-2 py-2 whitespace-nowrap text-xs font-medium text-gray-900'>
+                                                {cambio.fechaCambio ? new Date(cambio.fechaCambio).toLocaleString('es-CO') : 'N/A'}
+                                            </td>
+                                            <td className='px-2 py-2 whitespace-nowrap text-xs font-medium text-gray-900'>
+                                                {cambio.nombreEquipo || `Equipo ID: ${cambio.idEquipo}`}
+                                            </td>
+                                            <td className='px-2 py-2 whitespace-nowrap text-xs font-medium'>
+                                                <span className={`px-2 py-1 rounded-full text-xs ${cambio.tipoCambio === 'CREACION' ? 'bg-green-100 text-green-800' :
+                                                    cambio.tipoCambio === 'MODIFICACION' ? 'bg-yellow-100 text-yellow-800' :
+                                                        cambio.tipoCambio === 'ELIMINACION' ? 'bg-red-100 text-red-800' :
+                                                            'bg-gray-100 text-gray-800'
+                                                    }`}>
+                                                    {cambio.tipoCambio}
+                                                </span>
+                                            </td>
+                                            <td className='px-2 py-2 text-xs text-gray-700'>
+                                                {cambio.resumenCambio || 'Sin detalles'}
+                                            </td>
+                                            <td className='px-2 py-2 whitespace-nowrap text-xs text-gray-700'>
+                                                {cambio.usuarioCambio || 'Sistema'}
+                                            </td>
+                                            <td className='px-2 py-2 text-xs text-gray-700'>
+                                                {cambio.observaciones || 'Sin observaciones'}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </div>
+
+                {/* Historial de Cambios Persona-Equipo */}
+                <div className='bg-white rounded-lg border'>
+                    <div className='bg-blue-50 px-6 py-2 border-b'>
+                        <h2 className='text-sm font-semibold flex items-center gap-1'>
+                            <Users size={20} className="text-blue-600" />
+                            Historial Cambios Persona-Equipo
+                        </h2>
+                    </div>
+
+                    {loadingPersonasEquipo ? (
+                        <div className="p-8 text-center">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
+                            <p className="text-gray-500">Cargando historial de personas...</p>
+                        </div>
+                    ) : errorPersonasEquipo ? (
+                        <div className="p-6 text-center text-red-600 bg-red-50 m-4 rounded-lg">
+                            {errorPersonasEquipo}
+                        </div>
+                    ) : historialPersonasEquipo.length === 0 ? (
+                        <div className="p-6 text-center text-gray-500">
+                            No se encontró historial de personas-equipo
+                        </div>
+                    ) : (
+                        <div className='overflow-x-auto'>
+                            <table className='w-full'>
+                                <thead className='bg-black'>
+                                    <tr>
+                                        <th className='px-2 py-2 text-left text-xs font-medium text-white uppercase tracking-wider'>
+                                            Fecha
+                                        </th>
+                                        <th className='px-2 py-2 text-left text-xs font-medium text-white uppercase tracking-wider'>
+                                            Persona
+                                        </th>
+                                        <th className='px-2 py-2 text-left text-xs font-medium text-white uppercase tracking-wider'>
+                                            Tipo Cambio
+                                        </th>
+                                        <th className='px-2 py-2 text-left text-xs font-medium text-white uppercase tracking-wider'>
+                                            Detalles
+                                        </th>
+                                        <th className='px-2 py-2 text-left text-xs font-medium text-white uppercase tracking-wider'>
+                                            Usuario
+                                        </th>
+                                        <th className='px-2 py-2 text-left text-xs font-medium text-white uppercase tracking-wider'>
+                                            Observaciones
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody className='divide-y divide-gray-200'>
+                                    {historialPersonasEquipo.map((cambio, index) => (
+                                        <tr key={index} className='hover:bg-gray-50 transition-colors'>
+                                            <td className='px-2 py-2 whitespace-nowrap text-xs font-medium text-gray-900'>
+                                                {cambio.fechaCambio ? new Date(cambio.fechaCambio).toLocaleString('es-CO') : 'N/A'}
+                                            </td>
+                                            <td className='px-2 py-2 whitespace-nowrap text-xs font-medium text-gray-900'>
+                                                {cambio.nombrePersona || `Persona ID: ${cambio.idPersona}`}
+                                                {cambio.documentoPersona && (
+                                                    <div className="text-xs text-gray-500">
+                                                        Doc: {cambio.documentoPersona}
+                                                    </div>
+                                                )}
+                                            </td>
+                                            <td className='px-2 py-2 whitespace-nowrap text-xs font-medium'>
+                                                <span className={`px-2 py-1 rounded-full text-xs ${cambio.tipoCambio === 'ASIGNACION' ? 'bg-green-100 text-green-800' :
+                                                    cambio.tipoCambio === 'REASIGNACION' ? 'bg-yellow-100 text-yellow-800' :
+                                                        cambio.tipoCambio === 'DESVINCULACION' ? 'bg-red-100 text-red-800' :
+                                                            'bg-gray-100 text-gray-800'
+                                                    }`}>
+                                                    {cambio.tipoCambio}
+                                                </span>
+                                            </td>
+                                            <td className='px-2 py-2 text-xs text-gray-700'>
+                                                {cambio.resumenCambio || 'Sin detalles'}
+                                            </td>
+                                            <td className='px-2 py-2 whitespace-nowrap text-xs text-gray-700'>
+                                                {cambio.usuarioCambio || 'Sistema'}
+                                            </td>
+                                            <td className='px-2 py-2 text-xs text-gray-700'>
+                                                {cambio.observaciones || 'Sin observaciones'}
                                             </td>
                                         </tr>
                                     ))}

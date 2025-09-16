@@ -297,6 +297,7 @@ export default function CrearEquipo() {
             if (isEditMode) {
                 const equipoActualizado = await apiEquipoService.equipos.updateWithGeneratedName(equipoId, selectionData);
                 equipoIdFinal = equipoActualizado.idEquipo;
+                console.log('Equipo actualizado:', equipoActualizado.idEquipo);
             } else {
                 const equipoCreado = await apiEquipoService.equipos.createWithGeneratedName(selectionData);
                 equipoIdFinal = equipoCreado.idEquipo;

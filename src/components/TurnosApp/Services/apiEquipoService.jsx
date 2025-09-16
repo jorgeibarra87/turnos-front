@@ -140,11 +140,46 @@ export const apiEquipoService = {
                 };
             }
         },
-        createWithGeneratedName: (selection) =>
-            api.post('/equipo/with-generated-name', selection),
 
-        updateWithGeneratedName: (id, selection) =>
-            api.put(`/equipo/${id}/with-generated-name`, selection),
+        createWithGeneratedName: async (selection) => {
+            const response = await apiClient.post('/equipo/with-generated-name', selection);
+            return response.data;  // Solo devolver los datos
+        },
+
+        updateWithGeneratedName: async (id, selection) => {
+            const response = await apiClient.put(`/equipo/${id}/with-generated-name`, selection);
+            return response.data;  // Solo devolver los datos
+        },
+
+        // Obtener historial de un equipo específico
+        getHistorialEquipo: async (equipoId) => {
+            try {
+                const response = await apiClient.get(`/cambios-equipo/historial/${equipoId}`);
+                return response.data;
+            } catch (error) {
+                throw new Error(`Error al obtener historial del equipo: ${error.response?.data?.message || error.message}`);
+            }
+        },
+
+        // Obtener historial de una persona específica
+        getHistorialPersona: async (personaId) => {
+            try {
+                const response = await apiClient.get(`/cambios-equipo/historial-persona/${personaId}`);
+                return response.data;
+            } catch (error) {
+                throw new Error(`Error al obtener historial de la persona: ${error.response?.data?.message || error.message}`);
+            }
+        },
+
+        // Obtener historial completo relacionado a un cuadro
+        getHistorialCompleto: async (cuadroId) => {
+            try {
+                const response = await apiClient.get(`/cambios-equipo/historial-cuadro/${cuadroId}`);
+                return response.data;
+            } catch (error) {
+                throw new Error(`Error al obtener historial completo: ${error.response?.data?.message || error.message}`);
+            }
+        }
     },
 
     //Servicios auxiliares
