@@ -1,14 +1,16 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { Eye, Edit, Trash2, CopyPlus, Users, Settings, FileText } from 'lucide-react';
+import { Eye, Edit, Trash2, CopyPlus, Users, Settings, FileText, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { apiService } from '../Services/apiContratoService';
 
 export default function ContratosTable() {
     const [contratos, setContratos] = useState([]);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage, setItemsPerPage] = useState(10);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
-    // Cargar contratos
+    // Cargar contratos usando apiService
     const loadContratos = useCallback(async () => {
         try {
             setLoading(true);
@@ -42,6 +44,12 @@ export default function ContratosTable() {
             );
 
             setContratos(contratosConDetalles);
+
+            // Resetear página si es necesario
+            const totalPages = Math.ceil(contratosConDetalles.length / itemsPerPage);
+            if (currentPage > totalPages && totalPages > 0) {
+                setCurrentPage(totalPages);
+            }
         } catch (err) {
             console.error('Error al cargar contratos:', err);
             setError('Error al cargar los contratos. Intenta nuevamente.');
@@ -49,14 +57,14 @@ export default function ContratosTable() {
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [currentPage, itemsPerPage]);
 
-    // Eliminar contrato
+    // Función para manejar la eliminación
     const handleDelete = useCallback(async (id, numeroContrato) => {
         if (window.confirm(`¿Estás seguro de que quieres eliminar el contrato "${numeroContrato}"?`)) {
             try {
                 await apiService.contratos.delete(id);
-                await loadContratos(); // Recargar lista
+                await loadContratos();
                 alert('Contrato eliminado exitosamente');
             } catch (error) {
                 console.error('Error al eliminar contrato:', error);
@@ -92,16 +100,76 @@ export default function ContratosTable() {
         return 'Sin procesos';
     };
 
-    // Cargar contratos al montar el componente
     useEffect(() => {
         loadContratos();
     }, [loadContratos]);
+
+    // Lógica de paginación
+    const totalPages = Math.ceil(contratos.length / itemsPerPage);
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const currentContratos = contratos.slice(startIndex, endIndex);
+
+    // Funciones para cambiar página
+    const goToPage = (page) => {
+        setCurrentPage(page);
+    };
+
+    const goToPrevious = () => {
+        if (currentPage > 1) {
+            setCurrentPage(currentPage - 1);
+        }
+    };
+
+    const goToNext = () => {
+        if (currentPage < totalPages) {
+            setCurrentPage(currentPage + 1);
+        }
+    };
+
+    // Función para generar números de página visibles
+    const getVisiblePageNumbers = () => {
+        const delta = 2; // Número de páginas a mostrar a cada lado de la página actual
+        const range = [];
+        const rangeWithDots = [];
+
+        // Calcular el rango de páginas a mostrar
+        for (let i = Math.max(2, currentPage - delta);
+            i <= Math.min(totalPages - 1, currentPage + delta);
+            i++) {
+            range.push(i);
+        }
+
+        // Agregar primera página
+        if (currentPage - delta > 2) {
+            rangeWithDots.push(1, '...');
+        } else {
+            rangeWithDots.push(1);
+        }
+
+        // Agregar páginas del rango
+        rangeWithDots.push(...range);
+
+        // Agregar última página
+        if (currentPage + delta < totalPages - 1) {
+            rangeWithDots.push('...', totalPages);
+        } else if (totalPages > 1) {
+            rangeWithDots.push(totalPages);
+        }
+
+        return rangeWithDots;
+    };
 
     // Loading spinner
     if (loading) {
         return (
             <div className="m-8 p-6 bg-white shadow rounded">
-                <div className='m-10 text-5xl text-center font-bold'>Ver Todos los Contratos:</div>
+                <div className="flex items-center justify-center gap-3 rounded-2xl border-b-4 border-primary-green-husj pl-4 pr-4 pb-1 pt-1 mb-6 w-fit mx-auto">
+                    <FileText size={40} className="text-primary-green-husj" />
+                    <h1 className="text-4xl font-extrabold text-gray-800">
+                        Ver Todos los Contratos
+                    </h1>
+                </div>
                 <div className="text-center py-8">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
                     <p className="text-lg text-gray-500">Cargando contratos...</p>
@@ -112,15 +180,14 @@ export default function ContratosTable() {
 
     return (
         <div className="m-8 p-6 bg-white shadow rounded">
-            <div className="flex items-center justify-center gap-3 rounded-2xl border-b-4  border-primary-green-husj pl-4 pr-4 pb-1 pt-1 mb-6 w-fit mx-auto">
+            <div className="flex items-center justify-center gap-3 rounded-2xl border-b-4 border-primary-green-husj pl-4 pr-4 pb-1 pt-1 mb-6 w-fit mx-auto">
                 <FileText size={40} className="text-primary-green-husj" />
                 <h1 className="text-4xl font-extrabold text-gray-800">
                     Ver Todos los Contratos
                 </h1>
             </div>
 
-            {/* Header con botón crear y contador */}
-            <div className="mb-6 flex justify-between items-center">
+            <div className="flex justify-between items-center mb-4">
                 <Link to="/crearContrato">
                     <button className="px-4 py-2 bg-primary-green-husj text-white rounded-2xl hover:bg-green-600 flex items-center gap-2 transition-colors">
                         <CopyPlus size={22} />
@@ -128,8 +195,23 @@ export default function ContratosTable() {
                     </button>
                 </Link>
 
-                <div className="text-sm text-gray-500">
-                    {contratos.length} contrato{contratos.length !== 1 ? 's' : ''} encontrado{contratos.length !== 1 ? 's' : ''}
+                {/* Selector de elementos por página */}
+                <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-600">Mostrar:</span>
+                    <select
+                        value={itemsPerPage}
+                        onChange={(e) => {
+                            setItemsPerPage(Number(e.target.value));
+                            setCurrentPage(1); // Resetear a primera página
+                        }}
+                        className="border border-gray-300 rounded px-2 py-1 text-sm"
+                    >
+                        <option value={5}>5</option>
+                        <option value={10}>10</option>
+                        <option value={25}>25</option>
+                        <option value={50}>50</option>
+                    </select>
+                    <span className="text-sm text-gray-600">por página</span>
                 </div>
             </div>
 
@@ -148,70 +230,136 @@ export default function ContratosTable() {
             )}
 
             {/* Tabla de contratos */}
-            {contratos.length > 0 ? (
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left text-sm border-collapse">
-                        <thead className="bg-black text-white">
-                            <tr>
-                                <th className="p-3">Número Contrato</th>
-                                <th className="p-3">Especialidades</th>
-                                <th className="p-3">Procesos</th>
-                                <th className="p-3">
-                                    <div className="flex items-center gap-2">
-                                        <Settings size={16} />
-                                        Acciones
-                                    </div>
-                                </th>
+            <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm">
+                    <thead className="bg-black text-white">
+                        <tr>
+                            <th className="p-3">ID</th>
+                            <th className="p-3">Número Contrato</th>
+                            <th className="p-3">Especialidades</th>
+                            <th className="p-3">Procesos</th>
+                            <th className="p-3">
+                                <div className="flex items-center gap-2">
+                                    <Settings size={16} />
+                                    Acciones
+                                </div>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {currentContratos.map((contrato) => (
+                            <tr key={contrato.idContrato} className="border-b hover:bg-gray-50 transition-colors">
+                                <td className="p-3 text-xs">{contrato.idContrato}</td>
+                                <td className="p-3 text-xs font-medium">
+                                    {contrato.numContrato || 'Sin número'}
+                                </td>
+                                <td className="p-3 text-xs">
+                                    {getEspecialidadesDisplay(contrato)}
+                                </td>
+                                <td className="p-3 text-xs">
+                                    {getProcesosDisplay(contrato)}
+                                </td>
+                                <td className="p-3 space-x-3">
+                                    {/* Ver */}
+                                    <Link
+                                        to={`/verContrato/${contrato.idContrato}`}
+                                        title={`Ver contrato: ${contrato.numContrato}`}
+                                        className="inline-block"
+                                    >
+                                        <Eye
+                                            size={18}
+                                            className="text-primary-green-husj hover:text-green-600 cursor-pointer transition-colors"
+                                        />
+                                    </Link>
+
+                                    {/* Editar */}
+                                    <Link
+                                        to={`/crearContrato/editar/${contrato.idContrato}`}
+                                        title={`Editar contrato: ${contrato.numContrato}`}
+                                        className="inline-block"
+                                    >
+                                        <Edit
+                                            size={18}
+                                            className="text-primary-blue1-husj hover:text-primary-blue2-husj cursor-pointer transition-colors"
+                                        />
+                                    </Link>
+
+                                    {/* Eliminar - descomentado si necesitas la función */}
+                                    {/* <button
+                                        onClick={() => handleDelete(contrato.idContrato, contrato.numContrato)}
+                                        title={`Eliminar contrato: ${contrato.numContrato}`}
+                                        className="inline-block"
+                                    >
+                                        <Trash2
+                                            size={18}
+                                            className="text-red-500 hover:text-red-700 cursor-pointer transition-colors"
+                                        />
+                                    </button> */}
+                                </td>
                             </tr>
-                        </thead>
-                        <tbody>
-                            {contratos.map((contrato) => (
-                                <tr key={contrato.idContrato} className="border-b hover:bg-gray-50 transition-colors">
-                                    <td className="p-3 border border-gray-200 font-medium">
-                                        {contrato.numContrato || 'Sin número'}
-                                    </td>
-                                    <td className="p-3 border border-gray-200 text-sm">
-                                        {getEspecialidadesDisplay(contrato)}
-                                    </td>
-                                    <td className="p-3 border border-gray-200 text-sm">
-                                        {getProcesosDisplay(contrato)}
-                                    </td>
-                                    <td className="p-3 border border-gray-200">
-                                        <div className="flex items-center gap-3">
-                                            {/* Ver */}
-                                            <Link
-                                                to={`/verContrato/${contrato.idContrato}`}
-                                                title={`Ver contrato: ${contrato.numContrato}`}
-                                                className="text-primary-green-husj hover:text-green-600 transition-colors"
-                                            >
-                                                <Eye size={18} />
-                                            </Link>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
 
-                                            {/* Editar */}
-                                            <Link
-                                                to={`/crearContrato/editar/${contrato.idContrato}`}
-                                                title={`Editar contrato: ${contrato.numContrato}`}
-                                                className="text-primary-blue1-husj hover:text-primary-blue2-husj transition-colors"
-                                            >
-                                                <Edit size={18} />
-                                            </Link>
+            {/* Información de paginación y controles */}
+            {contratos.length > 0 && (
+                <div className="mt-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+                    {/* Información de registros */}
+                    <div className="text-sm text-gray-600">
+                        Mostrando {startIndex + 1} a {Math.min(endIndex, contratos.length)} de {contratos.length} registros
+                    </div>
 
-                                            {/* Eliminar */}
-                                            {/* <button
-                                                onClick={() => handleDelete(contrato.idContrato, contrato.numContrato)}
-                                                title={`Eliminar contrato: ${contrato.numContrato}`}
-                                                className="text-red-500 hover:text-red-700 transition-colors"
-                                            >
-                                                <Trash2 size={18} />
-                                            </button> */}
-                                        </div>
-                                    </td>
-                                </tr>
+                    {/* Controles de paginación */}
+                    {totalPages > 1 && (
+                        <div className="flex items-center gap-2">
+                            {/* Botón anterior */}
+                            <button
+                                onClick={goToPrevious}
+                                disabled={currentPage === 1}
+                                className={`p-2 rounded ${currentPage === 1
+                                    ? 'text-gray-400 cursor-not-allowed'
+                                    : 'text-gray-600 hover:bg-gray-100'
+                                    }`}
+                            >
+                                <ChevronLeft size={20} />
+                            </button>
+
+                            {/* Números de página */}
+                            {getVisiblePageNumbers().map((pageNumber, index) => (
+                                <button
+                                    key={index}
+                                    onClick={() => pageNumber !== '...' && goToPage(pageNumber)}
+                                    disabled={pageNumber === '...'}
+                                    className={`px-3 py-1 rounded text-sm ${pageNumber === currentPage
+                                        ? 'bg-blue-500 text-white'
+                                        : pageNumber === '...'
+                                            ? 'text-gray-400 cursor-default'
+                                            : 'text-gray-600 hover:bg-gray-100'
+                                        }`}
+                                >
+                                    {pageNumber}
+                                </button>
                             ))}
-                        </tbody>
-                    </table>
+
+                            {/* Botón siguiente */}
+                            <button
+                                onClick={goToNext}
+                                disabled={currentPage === totalPages}
+                                className={`p-2 rounded ${currentPage === totalPages
+                                    ? 'text-gray-400 cursor-not-allowed'
+                                    : 'text-gray-600 hover:bg-gray-100'
+                                    }`}
+                            >
+                                <ChevronRight size={20} />
+                            </button>
+                        </div>
+                    )}
                 </div>
-            ) : !loading && (
+            )}
+
+            {/* Mensaje cuando no hay contratos */}
+            {contratos.length === 0 && !loading && (
                 <div className="text-center py-12 text-gray-500">
                     <Users size={48} className="mx-auto mb-4 text-gray-300" />
                     <p className="text-lg font-medium">No hay contratos disponibles</p>

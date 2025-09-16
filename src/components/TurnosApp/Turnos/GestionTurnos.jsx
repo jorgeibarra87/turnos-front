@@ -3,15 +3,21 @@ import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom'
 import axios from 'axios';
 import { User, ArrowLeft, Eye, Users, CalendarPlus, Calendar, Edit, CalendarSearch, CalendarSync, ChevronLeft, ChevronRight, CalendarClock } from 'lucide-react';
 import { apiTurnoService } from '../Services/apiTurnoService';
-//import { turnosData } from '../../data/turnosData';
 
 export default function GestionTurnos() {
     const [searchParams] = useSearchParams();
     const equipoId = searchParams.get('equipoId');
     const cuadroId = searchParams.get('cuadroId');
     const cuadroNombre = searchParams.get('cuadroNombre');
+
+    // Estados para paginación de personas
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(10);
+
+    // Estados para paginación de turnos por persona (objeto que guarda la página actual y items por página de cada persona)
+    const [turnosPagination, setTurnosPagination] = useState({});
+    const [turnosItemsPerPage, setTurnosItemsPerPage] = useState({}); // Nuevo estado para items por página de cada persona
+
     const navigate = useNavigate();
 
     const [turnos, setTurnos] = useState([]);
@@ -51,6 +57,97 @@ export default function GestionTurnos() {
         });
     };
 
+    // Funciones para paginación de turnos por persona
+    const getTurnosCurrentPage = (persona) => {
+        return turnosPagination[persona] || 1;
+    };
+
+    const setTurnosCurrentPage = (persona, page) => {
+        setTurnosPagination(prev => ({
+            ...prev,
+            [persona]: page
+        }));
+    };
+
+    // Función para obtener items por página de una persona específica
+    const getTurnosItemsPerPage = (persona) => {
+        return turnosItemsPerPage[persona] || 5; // Valor por defecto: 5
+    };
+
+    // Función para establecer items por página para una persona específica
+    const setTurnosItemsPerPersona = (persona, items) => {
+        setTurnosItemsPerPage(prev => ({
+            ...prev,
+            [persona]: items
+        }));
+        // Resetear a la primera página cuando se cambia el número de items
+        setTurnosCurrentPage(persona, 1);
+    };
+
+    const getTurnosPaginatedData = (turnosPersona, persona) => {
+        const currentPage = getTurnosCurrentPage(persona);
+        const itemsPerPage = getTurnosItemsPerPage(persona);
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        const endIndex = startIndex + itemsPerPage;
+        return turnosPersona.slice(startIndex, endIndex);
+    };
+
+    const getTurnosTotalPages = (turnosPersona, persona) => {
+        const itemsPerPage = getTurnosItemsPerPage(persona);
+        return Math.ceil(turnosPersona.length / itemsPerPage);
+    };
+
+    // Funciones de navegación para turnos
+    const goToTurnosPage = (persona, page) => {
+        setTurnosCurrentPage(persona, page);
+    };
+
+    const goToTurnosPrevious = (persona, turnosPersona) => {
+        const currentPage = getTurnosCurrentPage(persona);
+        if (currentPage > 1) {
+            setTurnosCurrentPage(persona, currentPage - 1);
+        }
+    };
+
+    const goToTurnosNext = (persona, turnosPersona) => {
+        const currentPage = getTurnosCurrentPage(persona);
+        const totalPages = getTurnosTotalPages(turnosPersona, persona);
+        if (currentPage < totalPages) {
+            setTurnosCurrentPage(persona, currentPage + 1);
+        }
+    };
+
+    // Función para generar números de página visibles para turnos
+    const getTurnosVisiblePageNumbers = (persona, turnosPersona) => {
+        const currentPage = getTurnosCurrentPage(persona);
+        const totalPages = getTurnosTotalPages(turnosPersona, persona);
+        const delta = 1;
+        const range = [];
+        const rangeWithDots = [];
+
+        for (let i = Math.max(2, currentPage - delta);
+            i <= Math.min(totalPages - 1, currentPage + delta);
+            i++) {
+            range.push(i);
+        }
+
+        if (currentPage - delta > 2) {
+            rangeWithDots.push(1, '...');
+        } else {
+            rangeWithDots.push(1);
+        }
+
+        rangeWithDots.push(...range);
+
+        if (currentPage + delta < totalPages - 1) {
+            rangeWithDots.push('...', totalPages);
+        } else if (totalPages > 1) {
+            rangeWithDots.push(totalPages);
+        }
+
+        return rangeWithDots;
+    };
+
     // Obtener datos del equipo
     useEffect(() => {
         const fetchEquipo = async () => {
@@ -60,7 +157,6 @@ export default function GestionTurnos() {
                 setLoading(true);
                 setError(null);
 
-                // CAMBIO: Usar servicio
                 const equipoData = await apiTurnoService.auxiliares.getEquipoInfo(equipoId);
                 setEquipo(equipoData);
 
@@ -76,7 +172,6 @@ export default function GestionTurnos() {
         fetchEquipo();
     }, [equipoId]);
 
-
     // Obtener miembros del equipo
     useEffect(() => {
         const loadMiembrosEquipo = async () => {
@@ -86,7 +181,6 @@ export default function GestionTurnos() {
                 setLoadingMiembros(true);
                 setErrorMiembros(null);
 
-                // CAMBIO: Usar servicio
                 const miembrosData = await apiTurnoService.auxiliares.getMiembrosPerfilEquipo(equipoId);
                 setMiembros(miembrosData);
 
@@ -111,7 +205,6 @@ export default function GestionTurnos() {
                 setLoading(true);
                 setError(null);
 
-                // usar servicio
                 const turnosData = await apiTurnoService.turnos.getTurnosAbiertosByCuadro(cuadroId);
                 setTurnos(turnosData);
 
@@ -144,7 +237,7 @@ export default function GestionTurnos() {
     const endIndex = startIndex + itemsPerPage;
     const currentPersonas = personas.slice(startIndex, endIndex);
 
-    // Funciones para cambiar página
+    // Funciones para cambiar página de personas
     const goToPage = (page) => {
         setCurrentPage(page);
     };
@@ -161,7 +254,7 @@ export default function GestionTurnos() {
         }
     };
 
-    // Función para generar números de página visibles
+    // Función para generar números de página visibles para personas
     const getVisiblePageNumbers = () => {
         const delta = 2;
         const range = [];
@@ -279,7 +372,7 @@ export default function GestionTurnos() {
                     />
                 </div>
 
-                {/* Selector de elementos por página */}
+                {/* Selector de elementos por página para personas */}
                 <div className="flex items-center justify-end gap-2">
                     <span className="text-sm text-gray-600">Mostrar:</span>
                     <select
@@ -318,20 +411,45 @@ export default function GestionTurnos() {
                     ) : (
                         <div className="space-y-6 p-4">
                             {currentPersonas.map((persona) => {
-                                const turnosPersona = turnosPorPersona[persona];
+                                const turnosPersona = turnosPorPersona[persona].sort((a, b) => new Date(a.fechaInicio) - new Date(b.fechaInicio));
                                 const totalHoras = turnosPersona.reduce((sum, turno) => sum + (turno.totalHoras || 0), 0);
+
+                                // Paginación para los turnos de esta persona
+                                const currentTurnosPage = getTurnosCurrentPage(persona);
+                                const turnosPaginados = getTurnosPaginatedData(turnosPersona, persona);
+                                const turnosTotalPages = getTurnosTotalPages(turnosPersona, persona);
+                                const currentItemsPerPage = getTurnosItemsPerPage(persona);
 
                                 return (
                                     <div key={persona} className="border rounded-lg overflow-hidden">
-                                        {/* Encabezado de la persona */}
-                                        <div className="bg-gray-800 text-white px-4 py-3 flex justify-between items-center">
-                                            <h3 className="text-lg font-semibold flex items-center gap-2">
-                                                <User size={20} />
-                                                {persona}
-                                            </h3>
-                                            <div className="flex gap-4 text-sm">
-                                                <span>Turnos: {turnosPersona.length}</span>
-                                                <span>Total Horas: {totalHoras}</span>
+                                        {/* Encabezado de la persona con selector de items por página */}
+                                        <div className="bg-gray-800 text-white px-4 py-3">
+                                            <div className="flex justify-between items-center mb-2">
+                                                <h3 className="text-lg font-semibold flex items-center gap-2">
+                                                    <User size={20} />
+                                                    {persona}
+                                                </h3>
+                                                <div className="flex gap-4 text-sm">
+                                                    <span>Turnos: {turnosPersona.length}</span>
+                                                    <span>Total Horas: {totalHoras}</span>
+                                                </div>
+                                            </div>
+
+                                            {/* Selector de turnos por página para esta persona específica */}
+                                            <div className="flex items-center justify-end gap-2 text-sm">
+                                                <span className="text-gray-300">Mostrar:</span>
+                                                <select
+                                                    value={currentItemsPerPage}
+                                                    onChange={(e) => setTurnosItemsPerPersona(persona, Number(e.target.value))}
+                                                    className="bg-gray-700 text-white border border-gray-600 rounded px-2 py-1 text-sm focus:outline-none focus:border-gray-500"
+                                                >
+                                                    <option value={3}>3</option>
+                                                    <option value={5}>5</option>
+                                                    <option value={10}>10</option>
+                                                    <option value={15}>15</option>
+                                                    <option value={25}>25</option>
+                                                </select>
+                                                <span className="text-gray-300">turnos por página</span>
                                             </div>
                                         </div>
 
@@ -367,67 +485,117 @@ export default function GestionTurnos() {
                                                     </tr>
                                                 </thead>
                                                 <tbody className='divide-y divide-gray-200'>
-                                                    {turnosPersona
-                                                        .sort((a, b) => new Date(a.fechaInicio) - new Date(b.fechaInicio))
-                                                        .map((turno, index) => (
-                                                            <tr key={turno.idTurno} className={`hover:bg-gray-50 transition-colors ${index % 2 === 0 ? "bg-white" : "bg-gray-50"}`}>
-                                                                <td className='px-3 py-2 text-sm text-gray-700'>
-                                                                    {turno.idTurno}
-                                                                </td>
-                                                                <td className='px-3 py-2 text-sm text-gray-900'>
-                                                                    {formatearFecha(turno.fechaInicio)}
-                                                                </td>
-                                                                <td className='px-3 py-2 text-sm text-gray-900'>
-                                                                    {formatearHora(turno.fechaInicio)}
-                                                                </td>
-                                                                <td className='px-3 py-2 text-sm text-gray-900'>
-                                                                    {formatearFecha(turno.fechaFin)}
-                                                                </td>
-                                                                <td className='px-3 py-2 text-sm text-gray-900'>
-                                                                    {formatearHora(turno.fechaFin)}
-                                                                </td>
-                                                                <td className='px-3 py-2 text-sm text-gray-900 font-medium'>
-                                                                    {turno.totalHoras || 0}
-                                                                </td>
-                                                                <td className='px-3 py-2 text-sm text-gray-900'>
-                                                                    <span className={`px-2 py-1 rounded text-xs font-medium ${turno.jornada === "Mañana" ? "bg-yellow-100 text-yellow-800" :
-                                                                        turno.jornada === "Tarde" ? "bg-green-100 text-green-800" :
-                                                                            turno.jornada === "Noche" ? "bg-blue-100 text-blue-800" :
-                                                                                "bg-gray-100 text-gray-800"
-                                                                        }`}>
-                                                                        {turno.jornada || "N/A"}
-                                                                    </span>
-                                                                </td>
-                                                                <td className='px-3 py-2 text-sm font-medium'>
-                                                                    <div className="flex gap-2">
-                                                                        <Link
-                                                                            to={`/ver-turno/${turno.idTurno}?cuadroNombre=${cuadroNombre}&equipoNombre=${equipo.nombre}`}
-                                                                            title={`Ver turno: ${persona}`}
-                                                                            className="inline-block"
-                                                                        >
-                                                                            <CalendarSearch
-                                                                                size={18}
-                                                                                className="text-green-600 hover:text-green-800 cursor-pointer transition-colors"
-                                                                            />
-                                                                        </Link>
+                                                    {turnosPaginados.map((turno, index) => (
+                                                        <tr key={turno.idTurno} className={`hover:bg-gray-50 transition-colors ${index % 2 === 0 ? "bg-white" : "bg-gray-50"}`}>
+                                                            <td className='px-3 py-2 text-sm text-gray-700'>
+                                                                {turno.idTurno}
+                                                            </td>
+                                                            <td className='px-3 py-2 text-sm text-gray-900'>
+                                                                {formatearFecha(turno.fechaInicio)}
+                                                            </td>
+                                                            <td className='px-3 py-2 text-sm text-gray-900'>
+                                                                {formatearHora(turno.fechaInicio)}
+                                                            </td>
+                                                            <td className='px-3 py-2 text-sm text-gray-900'>
+                                                                {formatearFecha(turno.fechaFin)}
+                                                            </td>
+                                                            <td className='px-3 py-2 text-sm text-gray-900'>
+                                                                {formatearHora(turno.fechaFin)}
+                                                            </td>
+                                                            <td className='px-3 py-2 text-sm text-gray-900 font-medium'>
+                                                                {turno.totalHoras || 0}
+                                                            </td>
+                                                            <td className='px-3 py-2 text-sm text-gray-900'>
+                                                                <span className={`px-2 py-1 rounded text-xs font-medium ${turno.jornada === "Mañana" ? "bg-yellow-100 text-yellow-800" :
+                                                                    turno.jornada === "Tarde" ? "bg-green-100 text-green-800" :
+                                                                        turno.jornada === "Noche" ? "bg-blue-100 text-blue-800" :
+                                                                            "bg-gray-100 text-gray-800"
+                                                                    }`}>
+                                                                    {turno.jornada || "N/A"}
+                                                                </span>
+                                                            </td>
+                                                            <td className='px-3 py-2 text-sm font-medium'>
+                                                                <div className="flex gap-2">
+                                                                    <Link
+                                                                        to={`/ver-turno/${turno.idTurno}?cuadroNombre=${cuadroNombre}&equipoNombre=${equipo.nombre}`}
+                                                                        title={`Ver turno: ${persona}`}
+                                                                        className="inline-block"
+                                                                    >
+                                                                        <CalendarSearch
+                                                                            size={18}
+                                                                            className="text-green-600 hover:text-green-800 cursor-pointer transition-colors"
+                                                                        />
+                                                                    </Link>
 
-                                                                        <Link
-                                                                            to={`/editar-turno/${turno.idTurno}?cuadroNombre=${cuadroNombre}&equipoNombre=${equipo.nombre}&equipoId=${equipoId}`}
-                                                                            title={`Editar turno: ${persona}`}
-                                                                            className="inline-block"
-                                                                        >
-                                                                            <CalendarSync
-                                                                                size={18}
-                                                                                className="text-blue-600 hover:text-blue-800 cursor-pointer transition-colors"
-                                                                            />
-                                                                        </Link>
-                                                                    </div>
-                                                                </td>
-                                                            </tr>
-                                                        ))}
+                                                                    <Link
+                                                                        to={`/editar-turno/${turno.idTurno}?cuadroNombre=${cuadroNombre}&equipoNombre=${equipo.nombre}&equipoId=${equipoId}`}
+                                                                        title={`Editar turno: ${persona}`}
+                                                                        className="inline-block"
+                                                                    >
+                                                                        <CalendarSync
+                                                                            size={18}
+                                                                            className="text-blue-600 hover:text-blue-800 cursor-pointer transition-colors"
+                                                                        />
+                                                                    </Link>
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    ))}
                                                 </tbody>
                                             </table>
                                         </div>
+
+                                        {/* Paginación para turnos de cada persona */}
+                                        {turnosTotalPages > 1 && (
+                                            <div className="bg-gray-50 px-4 py-3 flex justify-between items-center text-sm">
+                                                <div className="text-gray-600">
+                                                    Mostrando {((currentTurnosPage - 1) * currentItemsPerPage) + 1} a {Math.min(currentTurnosPage * currentItemsPerPage, turnosPersona.length)} de {turnosPersona.length} turnos
+                                                </div>
+
+                                                <div className="flex items-center gap-1">
+                                                    {/* Botón anterior */}
+                                                    <button
+                                                        onClick={() => goToTurnosPrevious(persona, turnosPersona)}
+                                                        disabled={currentTurnosPage === 1}
+                                                        className={`p-1 rounded ${currentTurnosPage === 1
+                                                            ? 'text-gray-400 cursor-not-allowed'
+                                                            : 'text-gray-600 hover:bg-gray-200'
+                                                            }`}
+                                                    >
+                                                        <ChevronLeft size={16} />
+                                                    </button>
+
+                                                    {/* Números de página */}
+                                                    {getTurnosVisiblePageNumbers(persona, turnosPersona).map((pageNumber, index) => (
+                                                        <button
+                                                            key={index}
+                                                            onClick={() => pageNumber !== '...' && goToTurnosPage(persona, pageNumber)}
+                                                            disabled={pageNumber === '...'}
+                                                            className={`px-2 py-1 rounded text-xs ${pageNumber === currentTurnosPage
+                                                                ? 'bg-blue-500 text-white'
+                                                                : pageNumber === '...'
+                                                                    ? 'text-gray-400 cursor-default'
+                                                                    : 'text-gray-600 hover:bg-gray-200'
+                                                                }`}
+                                                        >
+                                                            {pageNumber}
+                                                        </button>
+                                                    ))}
+
+                                                    {/* Botón siguiente */}
+                                                    <button
+                                                        onClick={() => goToTurnosNext(persona, turnosPersona)}
+                                                        disabled={currentTurnosPage === turnosTotalPages}
+                                                        className={`p-1 rounded ${currentTurnosPage === turnosTotalPages
+                                                            ? 'text-gray-400 cursor-not-allowed'
+                                                            : 'text-gray-600 hover:bg-gray-200'
+                                                            }`}
+                                                    >
+                                                        <ChevronRight size={16} />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 );
                             })}
@@ -435,7 +603,7 @@ export default function GestionTurnos() {
                     )}
                 </div>
 
-                {/* Información de paginación y controles */}
+                {/* Información de paginación y controles para personas */}
                 {personas.length > 0 && (
                     <div className="mt-4 flex flex-col sm:flex-row justify-between items-center gap-4">
                         {/* Información de registros */}
