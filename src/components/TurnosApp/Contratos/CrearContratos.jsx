@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
-import axios from 'axios';
 import { CheckIcon, CircleXIcon, Save, ArrowLeft, Edit, Plus, Trash2, X, Calendar, FileText, User, Clock, Briefcase, Target } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { apiService } from '../Services/apiContratoService';
@@ -236,13 +235,15 @@ export default function CrearContrato() {
                 procesosIds: procesosIds
             };
 
-            console.log('Datos a enviar:', contratoCompleto); // Para debug
+            //console.log('Datos a enviar:', contratoCompleto); // Para debug
 
             if (isEditMode) {
-                await axios.put(`http://localhost:8080/contrato/actualizar/${contratoId}`, contratoCompleto);
+                // Usar apiService
+                await apiService.contratos.updateCompleto(contratoId, contratoCompleto);
                 alert('Contrato actualizado exitosamente');
             } else {
-                await axios.post('http://localhost:8080/contrato/guardar', contratoCompleto);
+                // Usar apiService
+                await apiService.contratos.createCompleto(contratoCompleto);
                 alert('Contrato creado exitosamente');
             }
 
@@ -297,7 +298,7 @@ export default function CrearContrato() {
                 return {
                     title: 'Especialidades',
                     data: especialidades.filter(e => {
-                        // Solo excluir los que ya están en la lista de especialidadesSeleccionadas del contrato actual
+                        // excluir los que ya están en la lista de especialidades Seleccionadas del contrato actual
                         return !especialidadesSeleccionadas.find(sel =>
                             sel.idTitulo === e.idTitulo ||
                             sel.id === e.idTitulo ||
@@ -311,9 +312,9 @@ export default function CrearContrato() {
             case 'proceso':
                 return {
                     title: 'Procesos',
-                    // Solo filtrar los que ya están seleccionados en este contrato específico
+                    // filtrar los que ya están seleccionados en este contrato específico
                     data: procesos.filter(p => {
-                        // Solo excluir los que ya están en la lista de procesosSeleccionados del contrato actual
+                        // excluir los que ya están en la lista de procesosSeleccionados del contrato actual
                         return !procesosSeleccionados.find(sel =>
                             sel.idProceso === p.idProceso ||
                             sel.id === p.idProceso ||
@@ -599,7 +600,7 @@ export default function CrearContrato() {
                         </div>
                     </div>
 
-                    {/* Tabla de resumen similar a VerContrato */}
+                    {/* Tabla de resumen */}
                     <div className='w-full'>
                         <h3 className='text-xl font-semibold text-gray-800 mb-4'>Resumen de Elementos Relacionados</h3>
                         <div className='bg-white rounded-lg border'>

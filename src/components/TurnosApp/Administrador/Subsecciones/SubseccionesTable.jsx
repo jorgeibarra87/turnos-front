@@ -401,7 +401,7 @@ function CrearEditarSubseccion({ subseccion, secciones, modoEdicion, onVolver, o
             setSaving(true);
             setError('');
 
-            // Limpiar y validar datos usando el servicio
+            // Limpiar y validar datos
             const cleanedData = subseccionesValidation.cleanSubseccionData(formData);
             const validation = subseccionesValidation.validateSubseccionData(cleanedData);
 
@@ -537,7 +537,7 @@ function CrearEditarSubseccion({ subseccion, secciones, modoEdicion, onVolver, o
 
 // Componente para Ver Subsección
 function VerSubseccion({ subseccion, onVolver }) {
-    // Usar utilidades para obtener información de la sección
+    //obtener información de la sección
     const seccionInfo = subseccionesUtils.getSeccionInfo(subseccion);
 
     const getEstadoTexto = (estado) => {

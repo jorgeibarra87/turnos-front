@@ -93,7 +93,7 @@ export default function ProcesosTable() {
         setModoEdicion(false);
     };
 
-    // Función para obtener el nombre del macroproceso usando utilidad
+    // Función para obtener el nombre del macroproceso
     const getMacroprocesoNombre = (proceso) => {
         return procesoUtils.getMacroprocesoNombre(proceso, macroprocesos);
     };
@@ -188,17 +188,14 @@ export default function ProcesosTable() {
         } else {
             rangeWithDots.push(1);
         }
-
         // Agregar páginas del rango
         rangeWithDots.push(...range);
-
         // Agregar última página
         if (currentPage + delta < totalPages - 1) {
             rangeWithDots.push('...', totalPages);
         } else if (totalPages > 1) {
             rangeWithDots.push(totalPages);
         }
-
         return rangeWithDots;
     };
 
@@ -552,7 +549,7 @@ function VerProceso({ proceso, macroprocesos, onVolver }) {
             : 'text-red-600 bg-red-50 px-3 py-1 rounded-full text-sm font-medium';
     };
 
-    // Usar utilidad para obtener información del macroproceso
+    //obtener información del macroproceso
     const macroprocesoInfo = procesoUtils.getMacroprocesoInfo(proceso, macroprocesos);
 
     return (

@@ -88,7 +88,7 @@ export default function CrearCuadro() {
                 // Usar apiService
                 const cuadroData = await apiCuadroService.cuadros.getById(cuadroIdToEdit);
 
-                console.log('Datos del cuadro cargados:', cuadroData);
+                //console.log('Datos del cuadro cargados:', cuadroData);
                 setCuadroOriginal(cuadroData);
 
                 // Si es un cuadro multiproceso, redirigir al flujo correcto
@@ -101,7 +101,7 @@ export default function CrearCuadro() {
                             const procesosData = await apiCuadroService.cuadros.getProcesos(cuadroIdToEdit);
                             const procesosIds = procesosData.map(p => p.idProceso || p.id);
 
-                            console.log('Procesos encontrados:', procesosIds);
+                            //console.log('Procesos encontrados:', procesosIds);
                             navigate(`/crearCuadroMulti?edit=true&id=${cuadroIdToEdit}&procesos=${encodeURIComponent(JSON.stringify(procesosIds))}`);
 
                         } catch (procesosError) {
@@ -358,7 +358,7 @@ export default function CrearCuadro() {
                 cuadroData.idSubseccionServicio = selectedOption[optionId];
             }
 
-            // Usar apiService en lugar de axios directo
+            // Usar apiService
             if (isEditMode) {
                 await apiCuadroService.cuadros.updateCompleto(cuadroIdToEdit, cuadroData);
                 alert('Cuadro de turno actualizado exitosamente');
@@ -393,7 +393,7 @@ export default function CrearCuadro() {
         setErrorCuadro(null);
     };
 
-    // Mostrar loading si estamos cargando datos para editar
+    // Mostrar loading si esta cargando datos para editar
     if (isEditMode && loadingCuadroData) {
         return (
             <div className='absolute inset-0 bg-opacity-30 backdrop-blur-sm flex justify-center items-center'>

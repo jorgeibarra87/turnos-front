@@ -284,7 +284,7 @@ export default function ContratosTable() {
                                         />
                                     </Link>
 
-                                    {/* Eliminar - descomentado si necesitas la función */}
+                                    {/* Eliminar */}
                                     {/* <button
                                         onClick={() => handleDelete(contrato.idContrato, contrato.numContrato)}
                                         title={`Eliminar contrato: ${contrato.numContrato}`}

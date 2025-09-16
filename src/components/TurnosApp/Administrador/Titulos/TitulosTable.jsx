@@ -95,7 +95,7 @@ export default function TitulosTable() {
         setModoEdicion(false);
     };
 
-    // Función para obtener el nombre del tipo de formación usando las utilidades
+    // Función para obtener el nombre del tipo de formación
     const getTipoFormacionNombre = (titulo) => {
         return titulosUtils.getTipoFormacionNombre(titulo, tiposformacionacademica);
     };
@@ -379,7 +379,7 @@ export default function TitulosTable() {
     );
 }
 
-// Componente para Crear/Editar Título (REFACTORIZADO)
+// Componente para Crear/Editar Título
 function CrearEditarTitulo({ titulo, tiposformacionacademica, modoEdicion, onVolver, onActualizar }) {
     const [formData, setFormData] = useState({
         nombre: titulo?.titulo || '',
@@ -401,7 +401,7 @@ function CrearEditarTitulo({ titulo, tiposformacionacademica, modoEdicion, onVol
             setSaving(true);
             setError('');
 
-            // Limpiar y validar datos usando el servicio
+            // Limpiar y validar datos
             const cleanedData = titulosValidation.cleanTituloData(formData);
             const validation = titulosValidation.validateTituloData(cleanedData);
 
@@ -535,9 +535,9 @@ function CrearEditarTitulo({ titulo, tiposformacionacademica, modoEdicion, onVol
     );
 }
 
-// Componente para Ver Título (MEJORADO CON UTILS)
+// Componente para Ver Título
 function VerTitulo({ titulo, onVolver }) {
-    // Usar utilidades para obtener información del tipo de formación
+    //obtener información del tipo de formación
     const tipoFormacionInfo = titulosUtils.getTipoFormacionInfo(titulo);
 
     const getEstadoTexto = (estado) => {

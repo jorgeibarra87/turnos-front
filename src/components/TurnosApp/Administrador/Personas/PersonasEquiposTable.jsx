@@ -287,7 +287,7 @@ export default function PersonasEquiposTable() {
     );
 }
 
-// FORMULARIO actualizado
+// FORMULARIO
 function FormularioUsuarioEquipo({ personas, equipos, editando, onClose, onSaved }) {
     const [personaId, setPersonaId] = useState(editando?.idPersona || "");
     const [equipoId, setEquipoId] = useState("");

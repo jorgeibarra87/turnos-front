@@ -112,12 +112,12 @@ export default function ServiciosTable() {
         setModoEdicion(false);
     };
 
-    // Función para obtener el nombre del bloque usando utilidades
+    // Función para obtener el nombre del bloque
     const getBloqueNombre = (servicio) => {
         return serviciosUtils.getBloqueNombre(servicio, bloques);
     };
 
-    // Función para obtener el nombre del proceso usando utilidades
+    // Función para obtener el nombre del proceso
     const getProcesoNombre = (servicio) => {
         return serviciosUtils.getProcesoNombre(servicio, procesos);
     };
@@ -611,7 +611,7 @@ function VerServicio({ servicio, bloques, procesos, onVolver }) {
             : 'text-red-600 bg-red-50 px-3 py-1 rounded-full text-sm font-medium';
     };
 
-    // Usar utilidades para obtener información de dependencias
+    // utilidades para obtener información de dependencias
     const bloqueInfo = serviciosUtils.getBloqueInfo(servicio, bloques);
     const procesoInfo = serviciosUtils.getProcesoInfo(servicio, procesos);
 

@@ -17,7 +17,6 @@ export default function NotificacionesTable() {
 
     useEffect(() => {
         loadNotificaciones();
-        //loadMacroprocesos();
     }, []);
 
     const loadNotificaciones = async () => {
