@@ -16,7 +16,7 @@ export default function GestionTurnos() {
 
     // Estados para paginación de turnos por persona (objeto que guarda la página actual y items por página de cada persona)
     const [turnosPagination, setTurnosPagination] = useState({});
-    const [turnosItemsPerPage, setTurnosItemsPerPage] = useState({}); // Nuevo estado para items por página de cada persona
+    const [turnosItemsPerPage, setTurnosItemsPerPage] = useState({}); // estado para items por página de cada persona
 
     const navigate = useNavigate();
 
@@ -230,7 +230,7 @@ export default function GestionTurnos() {
         return acc;
     }, {});
 
-    // Lógica de paginación ajustada para personas
+    // Lógica de paginación para personas
     const personas = Object.keys(turnosPorPersona);
     const totalPages = Math.ceil(personas.length / itemsPerPage);
     const startIndex = (currentPage - 1) * itemsPerPage;

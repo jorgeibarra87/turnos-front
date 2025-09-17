@@ -25,8 +25,6 @@ export function VerTurno() {
             }
 
             try {
-                /* const response = await axios.get(`http://localhost:8080/turnos/${turnoId}`);
-                setTurno(response.data); */
                 const turnoData = await apiTurnoService.turnos.getById(turnoId);
                 setTurno(turnoData);
             } catch (err) {

@@ -182,7 +182,7 @@ export default function CalendarioTurnos() {
         console.log('Filtros aplicados:', filtros);
         // Forzar recarga si es necesario
         if (filtros.cuadroTurno) {
-            setFiltros({ ...filtros }); // Trigger useEffect
+            setFiltros({ ...filtros }); //useEffect
         }
     };
 

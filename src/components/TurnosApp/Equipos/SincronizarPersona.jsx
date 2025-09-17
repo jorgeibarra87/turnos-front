@@ -168,7 +168,7 @@ export default function SincronizarPersona({ onClose, onPersonaSincronizada }) {
                 sincronizado: true
             };
 
-            // Llamar callback del componente padre
+            // Llamar componente padre
             if (onPersonaSincronizada) {
                 onPersonaSincronizada(personaSincronizada);
             }

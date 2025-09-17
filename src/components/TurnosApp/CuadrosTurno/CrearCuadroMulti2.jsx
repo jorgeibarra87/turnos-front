@@ -29,8 +29,7 @@ export default function SiguientePaso() {
             try {
                 setLoadingCuadro(true);
                 setError(null);
-
-                // Usar apiCuadroService
+                // apiCuadroService
                 const cuadroData = await apiCuadroService.cuadros.getById(cuadroId);
                 setCuadroOriginal(cuadroData);
 
@@ -51,14 +50,14 @@ export default function SiguientePaso() {
         loadCuadroData();
     }, [isEditMode, cuadroId]);
 
-    // Cargar equipos usando apiService
+    // Cargar equipos
     useEffect(() => {
         const fetchEquipos = async () => {
             try {
                 setLoading(true);
                 setError(null);
 
-                // Usar apiCuadroService
+                //apiCuadroService
                 const equiposData = await apiCuadroService.auxiliares.getEquipos();
                 setEquipos(equiposData);
 
@@ -74,7 +73,7 @@ export default function SiguientePaso() {
         fetchEquipos();
     }, []);
 
-    // Cargar nombres de procesos usando apiService
+    // Cargar nombres de procesos
     useEffect(() => {
         const fetchNombresProcesos = async () => {
             if (!procesos) {
@@ -86,7 +85,7 @@ export default function SiguientePaso() {
                 setLoadingProcesos(true);
                 const procesosIds = JSON.parse(procesos);
 
-                //Usar apiCuadroService para obtener detalles de procesos
+                //obtener detalles de procesos
                 const procesosData = await Promise.all(
                     procesosIds.map(async (id) => {
                         try {

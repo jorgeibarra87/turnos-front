@@ -16,14 +16,14 @@ export default function VerEquipo() {
     const [error, setError] = useState(null);
 
 
-    //Obtener datos del equipo usando apiService;
+    //Obtener datos del equipo
     useEffect(() => {
         const fetchEquipo = async () => {
             try {
                 setLoading(true);
                 setError(null);
 
-                // Usar apiEquipoService
+                // apiEquipoService
                 const equipoData = await apiEquipoService.equipos.getById(id);
                 setEquipo(equipoData);
 
@@ -47,7 +47,7 @@ export default function VerEquipo() {
         }
     }, [id]);
 
-    //Cargar miembros usando apiService;
+    //Cargar miembros;
     useEffect(() => {
         const loadMiembrosEquipo = async () => {
             if (!id) return;
@@ -56,7 +56,7 @@ export default function VerEquipo() {
                 setLoadingMiembros(true);
                 setErrorMiembros(null);
 
-                // Usar apiEquipoService
+                // apiEquipoService
                 const miembrosData = await apiEquipoService.equipos.getMiembrosPerfil(id);
                 setMiembros(miembrosData);
 

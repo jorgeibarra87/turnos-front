@@ -90,7 +90,7 @@ export function FormularioTurno() {
             try {
                 setLoadingTurnoData(true);
 
-                // CAMBIO: Usar servicio
+                //Usar servicio
                 const turnoData = await apiTurnoService.turnos.getById(turnoId);
 
                 setTurnoOriginal(turnoData);
@@ -124,13 +124,12 @@ export function FormularioTurno() {
         loadTurnoForEdit();
     }, [isEditMode, turnoId]);
 
-
     // Función para cargar personas del equipo
     const loadPersonasEquipo = async (equipoId) => {
         try {
             setLoadingPersonas(true);
 
-            // CAMBIO: Usar servicio
+            //Usar servicio
             const personasData = await apiTurnoService.auxiliares.getUsuariosEquipo(equipoId);
             setPersonasEquipo(personasData);
 
@@ -146,7 +145,7 @@ export function FormularioTurno() {
     // Función para cargar info del equipo
     const loadEquipoInfo = async (equipoId) => {
         try {
-            // CAMBIO: Usar servicio
+            //Usar servicio
             const equipoInfo = await apiTurnoService.auxiliares.getEquipoInfo(equipoId);
             setEquipo(equipoInfo.nombre);
 
@@ -154,7 +153,6 @@ export function FormularioTurno() {
             console.error('Error al cargar info del equipo:', err);
         }
     };
-
 
     // Función para formatear fecha para input datetime-local
     const formatDateForInput = (dateTimeString) => {
@@ -204,10 +202,8 @@ export function FormularioTurno() {
             let response;
 
             if (isEditMode) {
-                /* response = await axios.put(`http://localhost:8080/turnos/${turnoId}`, turnoData); */
                 await apiTurnoService.turnos.update(turnoId, turnoData);
             } else {
-                /* response = await axios.post('http://localhost:8080/turnos', turnoData); */
                 await apiTurnoService.turnos.create(turnoData);
             }
 
@@ -240,7 +236,7 @@ export function FormularioTurno() {
         );
     }
 
-    // Función para calcular jornada en tiempo real (preview)
+    // Función para calcular jornada
     const calcularJornadaPreview = () => {
         if (!fechaHoraInicio || !fechaHoraFin) {
             return "Sin definir";
@@ -261,7 +257,7 @@ export function FormularioTurno() {
         // Obtener hora de inicio (0-23)
         const horaInicio = inicio.getHours();
 
-        // Definir jornadas según hora de inicio (MISMA LÓGICA QUE BACKEND)
+        // Definir jornadas según hora de inicio
         if (horaInicio >= 6 && horaInicio < 12) {
             return "Mañana";
         } else if (horaInicio >= 12 && horaInicio < 18) {

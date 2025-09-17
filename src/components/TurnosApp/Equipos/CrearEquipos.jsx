@@ -90,7 +90,7 @@ export default function CrearEquipo() {
         loadEquipoForEdit();
     }, [isEditMode, equipoId]);
 
-    // API: Personas cargadas de equipo
+    // Personas cargadas de equipo
     const loadPersonasEquipo = async (idEquipo) => {
         try {
             const personas = await apiEquipoService.equipos.getMiembrosPerfil(idEquipo);

@@ -109,7 +109,7 @@ export default function GestionCuadroHistoria() {
                     setLoadingProcesos(false);
                 }
             } else if (cuadroData && cuadroData.categoria !== 'multiproceso') {
-                // Si no es multiproceso, aseguramos que los procesos estén vacíos
+                // Si no es multiproceso, validamos que los procesos estén vacíos
                 setProcesos([]);
                 setLoadingProcesos(false);
             }
@@ -325,7 +325,7 @@ export default function GestionCuadroHistoria() {
                     </div>
                 </div>
 
-                {/* Sección de Procesos de Atención (solo si es 'multiproceso') */}
+                {/* Sección de Procesos de Atención (si es 'multiproceso') */}
                 {cuadroData.categoria === 'multiproceso' && (
                     <div className='bg-white rounded-lg border'>
                         <div className='bg-blue-50 px-2 py-2 border-b'>
@@ -368,7 +368,7 @@ export default function GestionCuadroHistoria() {
                     </div>
                 )}
 
-                {/* Sección de Procesos individuales (solo no es 'multiproceso') */}
+                {/* Sección de Procesos individuales (si no es 'multiproceso') */}
                 {cuadroData.categoria !== 'multiproceso' && (
                     <div className='bg-white rounded-lg border'>
                         <div className='bg-blue-50 px-2 py-2 border-b'>
@@ -518,7 +518,7 @@ export default function GestionCuadroHistoria() {
                                     </tr>
                                 </thead>
                                 <tbody className='divide-y divide-gray-200'>
-                                    {/* {console.log('Historial del cuadro:', historial)} */}
+
                                     {historial.map((h, index) => (
                                         <tr key={index} className='hover:bg-gray-50 transition-colors'>
                                             <td className='px-2 py-2 whitespace-nowrap text-center'>
@@ -625,7 +625,7 @@ export default function GestionCuadroHistoria() {
                                     </tr>
                                 </thead>
                                 <tbody className='divide-y divide-gray-200'>
-                                    {console.log('Turnos:', turnos)}
+
                                     {turnos.map((turno, index) => (
                                         <tr key={index} className='hover:bg-gray-50 transition-colors'>
                                             <td className='px-2 py-2 whitespace-nowrap text-center'>
@@ -743,7 +743,7 @@ export default function GestionCuadroHistoria() {
                                     </tr>
                                 </thead>
                                 <tbody className='divide-y divide-gray-200'>
-                                    {/* {console.log('historia Turnos:', historialturno)} */}
+
                                     {historialturno.map((ht, index) => (
                                         <tr key={index} className='hover:bg-gray-50 transition-colors'>
                                             <td className='px-2 py-2 whitespace-nowrap text-center'>

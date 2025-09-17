@@ -13,13 +13,12 @@ export default function EquiposTable() {
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(10);
 
-    // Cargar equipos usando apiService
+    // Cargar equipos
     const loadEquipos = useCallback(async () => {
         try {
             setLoading(true);
             setError(null);
 
-            // Usar apiEquipoService
             const equiposData = await apiEquipoService.equipos.getEquiposActivos();
             setEquipos(equiposData);
 
@@ -37,11 +36,11 @@ export default function EquiposTable() {
         }
     }, [currentPage, itemsPerPage]);
 
-    //eliminación usando apiService
+    //eliminación
     const handleDelete = useCallback(async (id, nombre) => {
         if (window.confirm(`¿Estás seguro de que quieres eliminar el equipo "${nombre}"?`)) {
             try {
-                // Usar apiEquipoService para verificar dependencias
+                // verificar dependencias
                 const deleteCheck = await apiEquipoService.equipos.canDelete(id);
 
                 if (!deleteCheck.canDelete) {
@@ -238,7 +237,6 @@ export default function EquiposTable() {
                     <tr>
                         <th className="p-3">ID</th>
                         <th className="p-3">Nombre del Equipo</th>
-                        {/* <th className="p-3">Área/Proceso</th> */}
                         <th className="p-3 flex items-center gap-2">
                             <Settings size={16} />
                             Acciones
@@ -278,7 +276,7 @@ export default function EquiposTable() {
                                         className="text-blue-600 hover:text-blue-800 cursor-pointer transition-colors"
                                     />
                                 </Link>
-                                {/* Botón Eliminar - Mantiene la funcionalidad de botón */}
+                                {/* Botón Eliminar */}
                                 {/* <button
                                     onClick={() => handleDelete(equipo.idEquipo || equipo.id, equipo.nombre)}
                                     title={`Eliminar equipo: ${equipo.nombre}`}

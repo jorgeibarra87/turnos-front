@@ -52,7 +52,7 @@ export default function CrearTurnos() {
         }
     };
 
-    console.log("selectedCuadro", selectedCuadro);
+    //console.log("selectedCuadro", selectedCuadro);
 
     const getNextStepUrl = () => {
         if (!selectedCuadro.id) return "#";
@@ -76,7 +76,7 @@ export default function CrearTurnos() {
                     <div className='text-lg font-semibold text-blue-600'>
                         Selecciona un Cuadro de turno para gestionar los turnos
                     </div>
-                    {/* ✅ INFORMACIÓN SOBRE CÁLCULO AUTOMÁTICO */}
+                    {/* INFORMACIÓN SOBRE CÁLCULO AUTOMÁTICO */}
                     <div className='text-sm text-gray-600 bg-blue-50 p-3 rounded-lg border border-blue-200'>
                         <div className='font-medium text-blue-800 mb-1'>ℹ️ Cálculo Automático Habilitado</div>
                         <div className='text-xs space-y-1'>
@@ -121,7 +121,7 @@ export default function CrearTurnos() {
                                 <strong>Cuadro seleccionado:</strong> {selectedCuadro.nombre}
                             </p>
 
-                            {/* ✅ MOSTRAR REGLAS DE JORNADAS */}
+                            {/* MOSTRAR REGLAS DE JORNADAS */}
                             <div className="text-xs bg-gray-50 p-3 rounded border">
                                 <div className="font-medium text-gray-800 mb-2">📋 Reglas de Jornadas Automáticas:</div>
                                 <div className="grid grid-cols-2 gap-2 text-xs">

@@ -443,7 +443,7 @@ export default function ReportesFiltro() {
                     yPosition = 40;
                 }
 
-                doc.setFontSize(13); //Texto más grande
+                doc.setFontSize(13);
                 doc.setFont('helvetica', 'bold');
 
                 //nombre de usuario**

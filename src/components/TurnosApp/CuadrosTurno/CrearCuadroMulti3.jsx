@@ -22,13 +22,13 @@ export default function CrearCuadroMulti3() {
     const [error, setError] = useState(null);
     const [cuadroOriginal, setCuadroOriginal] = useState(null);
 
-    // CAMBIO: Cargar datos del cuadro original para edición usando apiService
+    // Cargar datos del cuadro original para edición
     useEffect(() => {
         const loadCuadroData = async () => {
             if (!isEditMode || !cuadroId) return;
 
             try {
-                // CAMBIO: Usar apiCuadroService en lugar de axios directo
+                // Usar apiCuadroService
                 const cuadroData = await apiCuadroService.cuadros.getById(cuadroId);
                 setCuadroOriginal(cuadroData);
             } catch (err) {
@@ -40,7 +40,7 @@ export default function CrearCuadroMulti3() {
         loadCuadroData();
     }, [isEditMode, cuadroId]);
 
-    // CAMBIO: Cargar miembros del equipo usando apiService
+    // Cargar miembros del equipo usando apiService
     useEffect(() => {
         const fetchMiembros = async () => {
             if (!equipoId) return;
@@ -49,7 +49,7 @@ export default function CrearCuadroMulti3() {
                 setLoadingMiembros(true);
                 setError(null);
 
-                // CAMBIO: Usar apiCuadroService
+                // Usar apiCuadroService
                 const miembrosData = await apiCuadroService.auxiliares.getMiembrosEquipo(equipoId);
                 setMiembros(miembrosData);
 
@@ -65,7 +65,7 @@ export default function CrearCuadroMulti3() {
         fetchMiembros();
     }, [equipoId]);
 
-    // CAMBIO: Cargar datos de los procesos usando apiService
+    // Cargar datos de los procesos usando apiService
     useEffect(() => {
         const fetchProcesosData = async () => {
             if (!procesos) return;
@@ -76,7 +76,7 @@ export default function CrearCuadroMulti3() {
 
                 const procesosIds = JSON.parse(procesos);
 
-                // CAMBIO: Usar apiCuadroService para obtener detalles de procesos
+                // obtener detalles de procesos
                 const procesosDataPromises = procesosIds.map(async (id) => {
                     try {
                         // Intentar obtener el proceso específico por ID
@@ -106,7 +106,7 @@ export default function CrearCuadroMulti3() {
         fetchProcesosData();
     }, [procesos]);
 
-    // CAMBIO: Manejar guardar cuadro multiproceso usando apiService
+    // Manejar guardar cuadro multiproceso
     const handleGuardarCuadro = async () => {
         setSaving(true);
         setError(null);
@@ -124,7 +124,6 @@ export default function CrearCuadroMulti3() {
                 idsProcesosAtencion: procesosIds.map(id => parseInt(id))
             };
 
-            // CAMBIO: Usar apiCuadroService en lugar de axios directo
             if (isEditMode) {
                 await apiCuadroService.cuadros.updateCompleto(cuadroId, cuadroData);
                 alert('Cuadro multiproceso actualizado exitosamente');
@@ -139,7 +138,7 @@ export default function CrearCuadroMulti3() {
         } catch (err) {
             console.error('Error al guardar/actualizar cuadro:', err);
 
-            // Manejo mejorado de errores
+            // Manejo de errores
             if (err.response?.status === 409) {
                 setError('Ya existe un cuadro multiproceso con esta configuración');
             } else if (err.response?.status === 400) {

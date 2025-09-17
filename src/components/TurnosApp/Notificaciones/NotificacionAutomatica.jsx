@@ -36,13 +36,13 @@ export default function NotificacionAutomatica() {
         }
     };
 
-    // ✅ FUNCIÓN ACTUALIZADA: Probar notificación automática básica
+    //FUNCIÓN Probar notificación automática básica
     const probarNotificacionBasica = async () => {
         setLoading(true);
         setMensaje('');
 
         try {
-            console.log('🔧 Correos activos encontrados:', correosActivos);
+            /* console.log('🔧 Correos activos encontrados:', correosActivos); */
 
             // Datos de prueba para la notificación básica
             const notificacionesPrueba = correosActivos.map(correo => ({
@@ -106,7 +106,7 @@ export default function NotificacionAutomatica() {
         }
     };
 
-    // ✅ NUEVAS FUNCIONES: Simular operaciones reales
+    // Simular operaciones reales
     const simularCreacionCuadro = async () => {
         setSimulandoCreacion(true);
         setMensaje('');
@@ -275,7 +275,7 @@ export default function NotificacionAutomatica() {
                     )}
                 </div>
 
-                {/* ✅ NUEVA SECCIÓN: Simulaciones de Operaciones */}
+                {/* Simulaciones de Operaciones */}
                 <div className='bg-yellow-50 rounded-lg p-5 border border-yellow-200'>
                     <h2 className='text-lg font-semibold mb-4 text-yellow-800 flex items-center gap-2'>
                         <Play size={24} />

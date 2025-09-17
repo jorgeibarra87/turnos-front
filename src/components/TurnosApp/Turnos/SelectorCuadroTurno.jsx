@@ -20,13 +20,12 @@ export function SelectorCuadroTurno() {
     // Referencia al contenedor principal
     const containerRef = useRef(null);
 
-    //Usar apiTurnoService
+    //apiTurnoService
     useEffect(() => {
         const fetchCuadros = async () => {
             try {
                 setLoading(true);
                 setError(null);
-                //Usar servicio en lugar de axios directo
                 const cuadrosFormateados = await apiTurnoService.auxiliares.getCuadrosFormateados();
                 setCuadros(cuadrosFormateados);
                 setFiltroCuadros(cuadrosFormateados); // Inicializar filtrados
@@ -106,7 +105,7 @@ export function SelectorCuadroTurno() {
 
     return (
         <div className='absolute inset-0 bg-opacity-30 backdrop-blur-sm flex justify-center items-center'>
-            {/* Agregar la referencia aquí */}
+            {/* referencia aquí */}
             <div ref={containerRef} className='bg-white p-8 rounded-lg flex flex-col justify-center items-center gap-5 max-w-2xl w-full mx-4'>
                 <div className="flex items-center justify-center gap-3 rounded-2xl border-b-4  border-primary-green-husj pl-4 pr-4 pb-1 pt-1 mb-6 w-fit mx-auto">
                     <CalendarClock size={40} className="text-primary-green-husj" />
