@@ -14,6 +14,7 @@ export default function VerEquipo() {
     const [errorMiembros, setErrorMiembros] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [verMasObservaciones, setVerMasObservaciones] = useState(false);
 
 
     //Obtener datos del equipo
@@ -153,6 +154,23 @@ export default function VerEquipo() {
                             </table>
                         </div>
                     )}
+                </div>
+
+                <div className="flex items-start gap-3 border border-gray-300 rounded-xl p-2 text-sm">
+                    <div className="w-32 font-semibold text-gray-700">Observaciones:</div>
+                    <div className="text-gray-900 text-sm leading-relaxed">
+                        <div className={`${verMasObservaciones ? '' : 'line-clamp-1'} whitespace-pre-line`}>
+                            {equipo?.observaciones || 'Sin observaciones'}
+                        </div>
+                        {equipo?.observaciones && equipo?.observaciones.length > 20 && ( // solo mostrar botón si el texto es largo
+                            <button
+                                onClick={() => setVerMasObservaciones(!verMasObservaciones)}
+                                className="text-blue-600 hover:underline text-xs mt-1"
+                            >
+                                {verMasObservaciones ? 'Ver menos' : 'Ver más'}
+                            </button>
+                        )}
+                    </div>
                 </div>
 
                 {/* Botón de volver */}

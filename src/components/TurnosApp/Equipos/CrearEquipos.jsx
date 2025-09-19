@@ -45,6 +45,8 @@ export default function CrearEquipo() {
     const [errorEquipo, setErrorEquipo] = useState(null);
     const [loadingEquipoData, setLoadingEquipoData] = useState(false);
     const [equipoOriginal, setEquipoOriginal] = useState(null);
+    const [observaciones, setObservaciones] = useState("");
+
 
     // Gestión de personas
     const [showPersonasManager, setShowPersonasManager] = useState(false);
@@ -64,8 +66,11 @@ export default function CrearEquipo() {
                 setLoadingEquipoData(true);
                 setError("");
 
+
                 const equipoData = await apiEquipoService.equipos.getById(equipoId);
                 setEquipoOriginal(equipoData);
+                setObservaciones(equipoData.observaciones || "");
+                //console.log("equipo data:", equipoData);
 
                 //Extraer categoría
                 const nombreParts = equipoData.nombre?.split('_');
@@ -288,6 +293,7 @@ export default function CrearEquipo() {
             const selectionData = {
                 categoria: selectedCategory,
                 subcategoria: selectedOption?.nombre || null,
+                observaciones: observaciones || "",
             };
 
             console.log('Enviando datos al backend:', selectionData);
@@ -426,6 +432,21 @@ export default function CrearEquipo() {
                             )}
                         </div>
                     )}
+
+                    <div className="w-full">
+                        <label htmlFor="observaciones" className="block text-sm font-medium text-gray-700 mb-2">
+                            Observaciones
+                        </label>
+                        <textarea
+                            id="observaciones"
+                            value={observaciones}
+                            onChange={(e) => setObservaciones(e.target.value)}
+                            placeholder="Escribe aquí observaciones del equipo..."
+                            rows={3}
+                            className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm 
+               focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        />
+                    </div>
 
                     <div className='flex justify-center items-center gap-4 mt-4'>
                         <button

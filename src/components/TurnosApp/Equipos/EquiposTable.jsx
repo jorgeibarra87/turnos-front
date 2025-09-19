@@ -237,6 +237,7 @@ export default function EquiposTable() {
                     <tr>
                         <th className="p-3">ID</th>
                         <th className="p-3">Nombre del Equipo</th>
+                        <th className="p-3">Observaciones</th>
                         <th className="p-3 flex items-center gap-2">
                             <Settings size={16} />
                             Acciones
@@ -251,6 +252,16 @@ export default function EquiposTable() {
                             </td>
                             <td className="p-3 text-xs font-medium">
                                 {equipo.nombre || 'Sin nombre'}
+                            </td>
+                            <td
+                                className="p-3 text-xs font-medium"
+                                title={equipo.observaciones || "Sin observación"}
+                            >
+                                {equipo.observaciones
+                                    ? equipo.observaciones.length > 40
+                                        ? equipo.observaciones.substring(0, 40) + "..."
+                                        : equipo.observaciones
+                                    : "Sin observación"}
                             </td>
                             <td className="p-3 space-x-3">
                                 {/* Botón Ver - Link a vista detallada de equipo */}
