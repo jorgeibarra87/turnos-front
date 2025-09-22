@@ -116,7 +116,7 @@ export const personasTitulosService = {
     // Eliminar relación persona-título
     removeTituloFromPersona: async (personaId, tituloId) => {
         try {
-            const response = await api.delete(`/usuarios/${personaId}/titulos/${tituloId}`);
+            const response = await api.delete(`/usuario/${personaId}/titulo/${tituloId}`);
             return response.data;
         } catch (error) {
             throw new Error(`Error al eliminar relación persona-título: ${error.response?.data?.message || error.message}`);
