@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { UserPlus, Search, Save, X, User, ArrowLeft, CheckCircle, AlertCircle } from 'lucide-react';
 import axios from 'axios';
+import { personasService, personasTitulosService } from '../Services/apiPersonasService';
+import { titulosService, tiposFormacionService } from '../Services/apiTitulosService';
+
 
 export default function SincronizarPersona({ onClose, onPersonaSincronizada }) {
     const [documento, setDocumento] = useState('');
@@ -83,6 +86,66 @@ export default function SincronizarPersona({ onClose, onPersonaSincronizada }) {
                 "estado": true,
                 "nombreTipo": "ESPECIALISTA"
             }
+        }
+    };
+
+    // Función para verificar si la persona existe por documento
+    const verificarPersonaExistente = async (documento) => {
+        try {
+            const todasPersonas = await personasService.getAll();
+            return todasPersonas.find(persona => persona.documento === documento);
+        } catch (error) {
+            console.error('Error al verificar persona existente:', error);
+            return null;
+        }
+    };
+
+    // Función para buscar o crear título
+    const buscarOCrearTitulo = async (nombreTitulo, tipoFormacionId) => {
+        try {
+            // Buscar título existente
+            const todosLosTitulos = await titulosService.getAll();
+            const tituloExistente = todosLosTitulos.find(
+                titulo => titulo.titulo.toLowerCase() === nombreTitulo.toLowerCase()
+            );
+
+            if (tituloExistente) {
+                return tituloExistente;
+            }
+
+            // Si no existe, crear nuevo título
+            const nuevoTitulo = {
+                titulo: nombreTitulo,
+                idTipoFormacionAcademica: parseInt(tipoFormacionId),
+                estado: true
+            };
+
+            return await titulosService.create(nuevoTitulo);
+        } catch (error) {
+            console.error('Error al buscar o crear título:', error);
+            throw new Error('Error al procesar el título');
+        }
+    };
+
+    // Función auxiliar para manejar la relación persona-título
+    const manejarRelacionPersonaTitulo = async (personaId, tituloId) => {
+        try {
+            // Obtener títulos actuales de la persona
+            const usuariosTitulos = await personasTitulosService.getUsuariosTitulos();
+            const relacionExistente = usuariosTitulos.find(
+                rel => rel.idPersona === personaId && rel.idTitulo === tituloId
+            );
+
+            if (!relacionExistente) {
+                // Solo agregar si no existe la relación
+                await personasTitulosService.addTituloToPersona(personaId, tituloId);
+                console.log('Relación persona-título creada exitosamente');
+            } else {
+                console.log('La relación persona-título ya existe');
+            }
+        } catch (error) {
+            // Log del error pero no fallar el proceso completo
+            console.error('Error al manejar relación persona-título:', error);
         }
     };
 
@@ -192,36 +255,80 @@ export default function SincronizarPersona({ onClose, onPersonaSincronizada }) {
                 throw new Error('La fecha de nacimiento es requerida');
             }
 
-            // Validación opcional de email (si se proporciona, debe ser válido)
+            // Validación de email (si se proporciona, debe ser válido)
             if (formData.email && !isValidEmail(formData.email)) {
                 throw new Error('El email proporcionado no es válido');
             }
 
-            // Simular guardado
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            // Verificar si la persona ya existe
+            const personaExistente = await verificarPersonaExistente(documento);
 
-            // Preparar datos para enviar a componente padre
-            const personaSincronizada = {
-                //idPersona: `temp_${Date.now()}`,
-                nombreCompleto: formData.nombreCompleto,
+            // Buscar o crear el título
+            const titulo = await buscarOCrearTitulo(formData.titulo, formData.tipoFormacion);
+
+            // Preparar datos de la persona
+            const datosPersona = {
                 documento: documento,
-                email: formData.email,
-                telefono: formData.telefono,
-                titulo: formData.titulo,
-                tipoFormacion: tiposFormacion.find(t => t.id.toString() === formData.tipoFormacion)?.tipo,
-                fechaNacimiento: formData.fechaNacimiento,
-                apellidos: formData.apellidos,
-                nombres: formData.nombres,
-                sincronizado: true
+                nombreCompleto: formData.nombreCompleto,
+                nombres: formData.nombres || null,
+                apellidos: formData.apellidos || null,
+                email: formData.email || null,
+                telefono: formData.telefono || null,
+                fechaNacimiento: formData.fechaNacimiento || null
             };
 
+            let personaGuardada;
+
+            if (personaExistente) {
+                // Actualizar persona existente
+                console.log('Actualizando persona existente:', personaExistente.idPersona);
+                personaGuardada = await personasService.update(personaExistente.idPersona, datosPersona);
+            } else {
+                // Crear nueva persona
+                console.log('Creando nueva persona');
+                personaGuardada = await personasService.create(datosPersona);
+            }
+
+            // Asociar título a la persona (si no está ya asociado)
+            try {
+                await personasTitulosService.addTituloToPersona(personaGuardada.idPersona, titulo.idTitulo);
+            } catch (error) {
+                // Si ya existe la relación, no es un error grave
+                console.log('La relación persona-título ya existe o hubo un error menor:', error.message);
+            }
+
+            // Preparar datos para el componente padre
+            const personaSincronizada = {
+                idPersona: personaGuardada.idPersona,
+                nombreCompleto: personaGuardada.nombreCompleto,
+                documento: personaGuardada.documento,
+                email: personaGuardada.email,
+                telefono: personaGuardada.telefono,
+                titulo: titulo.titulo,
+                tipoFormacion: tiposFormacion.find(t => t.id.toString() === formData.tipoFormacion)?.tipo,
+                fechaNacimiento: personaGuardada.fechaNacimiento,
+                apellidos: personaGuardada.apellidos,
+                nombres: personaGuardada.nombres,
+                sincronizado: true,
+                esActualizacion: !!personaExistente
+            };
+
+            // Notificar al componente padre
             if (onPersonaSincronizada) {
                 onPersonaSincronizada(personaSincronizada);
             }
 
+            // Mostrar mensaje de éxito
+            setError(''); // Limpiar errores
+
+            // Opcional: mostrar mensaje de éxito
+            console.log(personaExistente ? 'Persona actualizada exitosamente' : 'Persona creada exitosamente');
+
+            // Cerrar modal
             onClose();
 
         } catch (err) {
+            console.error('Error al guardar persona:', err);
             setError(err.message || 'Error al guardar la persona');
         } finally {
             setSaving(false);
