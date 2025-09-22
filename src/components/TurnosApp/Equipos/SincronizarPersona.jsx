@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { UserPlus, Search, Save, X, User, ArrowLeft, CheckCircle, AlertCircle } from 'lucide-react';
+import axios from 'axios';
 
 export default function SincronizarPersona({ onClose, onPersonaSincronizada }) {
     const [documento, setDocumento] = useState('');
@@ -85,7 +86,7 @@ export default function SincronizarPersona({ onClose, onPersonaSincronizada }) {
         }
     };
 
-    // Simular consulta GET
+    // consulta GET
     const handleSincronizar = async () => {
         if (!documento.trim()) {
             setError('Por favor ingresa un número de documento');
@@ -98,29 +99,59 @@ export default function SincronizarPersona({ onClose, onPersonaSincronizada }) {
 
         try {
             // Simular delay de API
-            await new Promise(resolve => setTimeout(resolve, 1500));
-
+            //await new Promise(resolve => setTimeout(resolve, 1500));
             // Buscar datos simulados
-            const datos = datosSimulados[documento.trim()];
+            //const datos = datosSimulados[documento.trim()];
+            const response = await fetch(`/api/genusuario/informacionCompleta/${documento.trim()}`);
 
-            if (!datos) {
-                throw new Error('No se encontraron datos para este documento');
+            // Verificar si la respuesta es exitosa
+            if (!response.ok) {
+                if (response.status === 404) {
+                    throw new Error('No se encontraron datos para este documento');
+                } else if (response.status >= 500) {
+                    throw new Error('Error del servidor. Inténtalo más tarde');
+                } else {
+                    throw new Error(`Error en la consulta: ${response.status}`);
+                }
             }
 
-            setDatosPersona(datos);
+            // Convertir respuesta a JSON
+            const data = await response.json();
 
-            // Prellenar formulario con datos obtenidos
+            // Adaptar los datos
+            const datosAdaptados = {
+                persona: {
+                    fechaNacimiento: data.fechaNacimiento,
+                    apellidos: data.apellidos || null,
+                    documento: data.documento,
+                    email: data.email,
+                    nombreCompleto: data.nombreCompleto,
+                    nombres: data.nombres || null,
+                    telefono: data.telefono
+                },
+                titulo: {
+                    idTitulo: null,
+                    titulo: data.titulo || '',
+                    idTipoFormacionAcademica: null,
+                    estado: true,
+                    nombreTipo: ''
+                }
+            };
+
+            setDatosPersona(datosAdaptados);
+
+            // Prellenar formulario con datos obtenidos - manejar valores null
             setFormData({
-                nombreCompleto: datos.persona.nombreCompleto || '',
-                email: datos.persona.email || '',
-                telefono: datos.persona.telefono || '',
-                titulo: datos.titulo.titulo || '',
-                tipoFormacion: datos.titulo.idTipoFormacionAcademica.toString(),
-                fechaNacimiento: datos.persona.fechaNacimiento || '',
-                apellidos: datos.persona.apellidos || '',
-                nombres: datos.persona.nombres || ''
+                nombreCompleto: datosAdaptados.persona.nombreCompleto || '',
+                email: datosAdaptados.persona.email || '',
+                telefono: datosAdaptados.persona.telefono || '',
+                titulo: datosAdaptados.titulo.titulo || '',
+                tipoFormacion: datosAdaptados.titulo.idTipoFormacionAcademica ?
+                    datosAdaptados.titulo.idTipoFormacionAcademica.toString() : '',
+                fechaNacimiento: datosAdaptados.persona.fechaNacimiento || '',
+                apellidos: datosAdaptados.persona.apellidos || '',
+                nombres: datosAdaptados.persona.nombres || ''
             });
-
         } catch (err) {
             setError(err.message || 'Error al consultar los datos');
             setDatosPersona(null);
@@ -141,13 +172,29 @@ export default function SincronizarPersona({ onClose, onPersonaSincronizada }) {
     // Guardar persona sincronizada
     const handleGuardar = async () => {
         setSaving(true);
+        setError(''); // Limpiar errores previos
+
         try {
             // Validaciones básicas
             if (!formData.nombreCompleto.trim()) {
                 throw new Error('El nombre completo es requerido');
             }
+
             if (!formData.tipoFormacion) {
                 throw new Error('El tipo de formación es requerido');
+            }
+
+            if (!formData.titulo.trim()) {
+                throw new Error('El título/especialidad es requerido');
+            }
+
+            if (!formData.fechaNacimiento) {
+                throw new Error('La fecha de nacimiento es requerida');
+            }
+
+            // Validación opcional de email (si se proporciona, debe ser válido)
+            if (formData.email && !isValidEmail(formData.email)) {
+                throw new Error('El email proporcionado no es válido');
             }
 
             // Simular guardado
@@ -155,7 +202,7 @@ export default function SincronizarPersona({ onClose, onPersonaSincronizada }) {
 
             // Preparar datos para enviar a componente padre
             const personaSincronizada = {
-                idPersona: `temp_${Date.now()}`, // ID temporal
+                //idPersona: `temp_${Date.now()}`,
                 nombreCompleto: formData.nombreCompleto,
                 documento: documento,
                 email: formData.email,
@@ -168,12 +215,10 @@ export default function SincronizarPersona({ onClose, onPersonaSincronizada }) {
                 sincronizado: true
             };
 
-            // Llamar componente padre
             if (onPersonaSincronizada) {
                 onPersonaSincronizada(personaSincronizada);
             }
 
-            // Cerrar modal
             onClose();
 
         } catch (err) {
@@ -181,6 +226,12 @@ export default function SincronizarPersona({ onClose, onPersonaSincronizada }) {
         } finally {
             setSaving(false);
         }
+    };
+
+    // Función auxiliar para validar email
+    const isValidEmail = (email) => {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email);
     };
 
     return (
@@ -231,7 +282,7 @@ export default function SincronizarPersona({ onClose, onPersonaSincronizada }) {
                     </div>
 
                     {/* Documentos de ejemplo */}
-                    <div className='mt-4 text-sm text-gray-600'>
+                    {/* <div className='mt-4 text-sm text-gray-600'>
                         <p className='font-medium mb-1'>Documentos de prueba disponibles:</p>
                         <div className='flex gap-4 flex-wrap'>
                             {Object.keys(datosSimulados).map(doc => (
@@ -244,7 +295,7 @@ export default function SincronizarPersona({ onClose, onPersonaSincronizada }) {
                                 </button>
                             ))}
                         </div>
-                    </div>
+                    </div> */}
                 </div>
 
                 {/* Mostrar error */}
@@ -305,49 +356,53 @@ export default function SincronizarPersona({ onClose, onPersonaSincronizada }) {
                             {/* Email */}
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Email {!datosPersona.persona.email && '*'}
+                                    Email {!datosPersona?.persona?.email && '*'}
                                 </label>
                                 <input
                                     type="email"
                                     name="email"
                                     value={formData.email}
                                     onChange={handleInputChange}
-                                    placeholder={!datosPersona.persona.email ? "Ingresa el email manualmente" : ""}
-                                    className={`w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 ${datosPersona.persona.email ? 'bg-green-100' : 'bg-yellow-50 border-yellow-300'
+                                    placeholder={!datosPersona?.persona?.email ? "Ingresa el email" : ""}
+                                    className={`w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 ${datosPersona?.persona?.email ? 'bg-green-100' : 'bg-yellow-50 border-yellow-300'
                                         }`}
-                                    readOnly={!!datosPersona.persona.email}
+                                    readOnly={!!datosPersona?.persona?.email}
+                                    required={!datosPersona?.persona?.email}
                                 />
                             </div>
 
                             {/* Teléfono */}
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Teléfono {!datosPersona.persona.telefono && '*'}
+                                    Teléfono (opcional)
                                 </label>
                                 <input
                                     type="tel"
                                     name="telefono"
                                     value={formData.telefono}
                                     onChange={handleInputChange}
-                                    placeholder={!datosPersona.persona.telefono ? "Ingresa el teléfono manualmente" : ""}
-                                    className={`w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 ${datosPersona.persona.telefono ? 'bg-green-100' : 'bg-yellow-50 border-yellow-300'
+                                    placeholder={!datosPersona?.persona?.telefono ? "Ingresa el teléfono (opcional)" : ""}
+                                    className={`w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 ${datosPersona?.persona?.telefono ? 'bg-green-100' : 'bg-white'
                                         }`}
-                                    readOnly={!!datosPersona.persona.telefono}
                                 />
                             </div>
 
                             {/* Título */}
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Título/Especialidad
+                                    Título/Especialidad *
                                 </label>
                                 <input
                                     type="text"
                                     name="titulo"
                                     value={formData.titulo}
                                     onChange={handleInputChange}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-green-100"
-                                    readOnly
+                                    placeholder="Ingresa el título/especialidad"
+                                    className={`w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 ${datosPersona && datosPersona.titulo && datosPersona.titulo.titulo
+                                        ? 'bg-green-100'
+                                        : 'bg-yellow-50 border-yellow-300'
+                                        }`}
+                                    required
                                 />
                             </div>
 
@@ -404,7 +459,7 @@ export default function SincronizarPersona({ onClose, onPersonaSincronizada }) {
                             {/* Fecha de Nacimiento */}
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Fecha de Nacimiento
+                                    Fecha de Nacimiento *
                                 </label>
                                 <input
                                     type="date"
@@ -412,6 +467,7 @@ export default function SincronizarPersona({ onClose, onPersonaSincronizada }) {
                                     value={formData.fechaNacimiento}
                                     onChange={handleInputChange}
                                     className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                    required
                                 />
                             </div>
                         </div>

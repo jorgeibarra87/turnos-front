@@ -9,6 +9,7 @@ export default function CrearCuadro() {
     const location = useLocation();
     const [searchParams] = useSearchParams();
 
+
     // Función para detectar modo edición y extraer ID
     const detectEditMode = () => {
         const pathname = location.pathname;
@@ -67,6 +68,7 @@ export default function CrearCuadro() {
     const [loadingMiembros, setLoadingMiembros] = useState(false);
     const [saving, setSaving] = useState(false);
     const [errorCuadro, setErrorCuadro] = useState(null);
+    const [observaciones, setObservaciones] = useState("");
 
     // Estados específicos para edición
     const [loadingCuadroData, setLoadingCuadroData] = useState(false);
@@ -117,7 +119,8 @@ export default function CrearCuadro() {
                 setSelectedCategory(cuadroData.categoria.charAt(0).toUpperCase() + cuadroData.categoria.slice(1));
                 setSelectedEquipo({
                     id: cuadroData.idEquipo.toString(),
-                    nombre: cuadroData.equipoNombre || ""
+                    nombre: cuadroData.equipoNombre || "",
+                    observaciones: cuadroData.observaciones || ""
                 });
 
                 const categoryMapping = {
@@ -343,6 +346,7 @@ export default function CrearCuadro() {
                 mes: isEditMode ? cuadroOriginal.mes : fechaActual.getMonth() + 1,
                 turnoExcepcion: isEditMode ? cuadroOriginal.turnoExcepcion : false,
                 idEquipo: parseInt(selectedEquipo.id),
+                observaciones: observaciones.trim(),
             };
 
             // Establecer el ID correcto según la categoría
@@ -554,6 +558,21 @@ export default function CrearCuadro() {
                         </div>
                     )}
 
+                    <div className="w-full">
+                        <label htmlFor="observaciones" className="block text-sm font-medium text-gray-700 mb-2">
+                            Observaciones
+                        </label>
+                        <textarea
+                            id="observaciones"
+                            value={observaciones}
+                            onChange={(e) => setObservaciones(e.target.value)}
+                            placeholder="Escribe aquí observaciones del cuadro..."
+                            rows={3}
+                            className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm 
+               focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        />
+                    </div>
+
                     {/* Botones de acción */}
                     {selectedCategory !== 'Multiproceso' && (
                         <div className='flex justify-center items-center gap-4 mt-4'>
@@ -617,6 +636,7 @@ export default function CrearCuadro() {
                         <div><strong>Categoría:</strong> {selectedCategory}</div>
                         <div><strong>{selectedCategory}:</strong> {selectedOption.nombre}</div>
                         <div><strong>Equipo:</strong> {selectedEquipo.nombre}</div>
+                        <div><strong>Observaciones:</strong> {selectedEquipo.observaciones}</div>
                     </div>
 
                     {/* Tabla */}
