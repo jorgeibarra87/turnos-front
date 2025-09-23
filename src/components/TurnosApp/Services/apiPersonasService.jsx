@@ -83,7 +83,7 @@ export const personasService = {
 
 // Servicios para RELACIONES PERSONAS-TÍTULOS
 export const personasTitulosService = {
-    // Obtener todas las relaciones personas-títulos (usando mapper)
+    // Obtener todas las relaciones personas-títulos
     getUsuariosTitulos: async () => {
         try {
             const response = await api.get("/usuario/titulos");
@@ -126,7 +126,7 @@ export const personasTitulosService = {
 
 // Servicios para RELACIONES PERSONAS-ROLES
 export const personasRolesService = {
-    // Obtener todas las relaciones personas-roles (usando mapper)
+    // Obtener todas las relaciones personas-roles
     getUsuariosRoles: async () => {
         try {
             const response = await api.get("/usuario/roles");
@@ -169,7 +169,7 @@ export const personasRolesService = {
 
 // Servicios para RELACIONES PERSONAS-EQUIPOS
 export const personasEquiposService = {
-    // Obtener todas las relaciones personas-equipos (usando mapper)
+    // Obtener todas las relaciones personas-equipos
     getUsuariosEquipos: async () => {
         try {
             const response = await api.get("/usuario/equipos");

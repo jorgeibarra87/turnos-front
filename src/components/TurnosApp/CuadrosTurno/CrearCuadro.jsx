@@ -92,6 +92,7 @@ export default function CrearCuadro() {
 
                 //console.log('Datos del cuadro cargados:', cuadroData);
                 setCuadroOriginal(cuadroData);
+                setObservaciones(cuadroData.observaciones || "");
 
                 // Si es un cuadro multiproceso, redirigir al flujo correcto
                 if (cuadroData.categoria?.toLowerCase() === 'multiproceso') {
@@ -120,7 +121,6 @@ export default function CrearCuadro() {
                 setSelectedEquipo({
                     id: cuadroData.idEquipo.toString(),
                     nombre: cuadroData.equipoNombre || "",
-                    observaciones: cuadroData.observaciones || ""
                 });
 
                 const categoryMapping = {
@@ -340,13 +340,18 @@ export default function CrearCuadro() {
         const fechaActual = new Date();
 
         try {
+            if (observaciones && observaciones.length > 1000) {
+                setErrorCuadro('Las observaciones no pueden exceder 1000 caracteres');
+                setSaving(false);
+                return;
+            }
             const cuadroData = {
                 categoria: selectedCategory.toLowerCase(),
                 anio: isEditMode ? cuadroOriginal.anio : fechaActual.getFullYear(),
                 mes: isEditMode ? cuadroOriginal.mes : fechaActual.getMonth() + 1,
                 turnoExcepcion: isEditMode ? cuadroOriginal.turnoExcepcion : false,
                 idEquipo: parseInt(selectedEquipo.id),
-                observaciones: observaciones.trim(),
+                observaciones: observaciones.trim() || null,
             };
 
             // Establecer el ID correcto según la categoría
@@ -378,7 +383,9 @@ export default function CrearCuadro() {
             console.error('Error al guardar/actualizar cuadro:', err);
 
             // Manejo de errores
-            if (err.response?.status === 409) {
+            if (err.code === 'ECONNABORTED') {
+                setErrorCuadro('La operación está tardando más de lo esperado. Por favor, verifica si el cuadro se guardó correctamente.');
+            } else if (err.response?.status === 409) {
                 setErrorCuadro('Ya existe un cuadro con esta configuración');
             } else if (err.response?.status === 400) {
                 setErrorCuadro(err.response?.data?.message || 'Datos inválidos');
@@ -636,7 +643,7 @@ export default function CrearCuadro() {
                         <div><strong>Categoría:</strong> {selectedCategory}</div>
                         <div><strong>{selectedCategory}:</strong> {selectedOption.nombre}</div>
                         <div><strong>Equipo:</strong> {selectedEquipo.nombre}</div>
-                        <div><strong>Observaciones:</strong> {selectedEquipo.observaciones}</div>
+                        <div><strong>Observaciones:</strong> {observaciones}</div>
                     </div>
 
                     {/* Tabla */}
