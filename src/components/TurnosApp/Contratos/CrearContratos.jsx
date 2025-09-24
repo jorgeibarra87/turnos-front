@@ -346,12 +346,6 @@ export default function CrearContrato() {
 
                     {isEditMode && (
                         <div className='p-4 text-2xl text-center font-bold'>
-                            <div className="flex items-center justify-center gap-2 rounded-2xl border-b-4  border-primary-green-husj pl-4 pr-4 pb-1 pt-1 mb-6 w-fit mx-auto">
-                                <FileText size={30} className="text-primary-green-husj" />
-                                <h1 className="text-2xl font-extrabold text-gray-800">
-                                    Editar Contrato:
-                                </h1>
-                            </div>
                             <div className='text-sm bg-orange-50 border border-orange-200 px-4 py-2 rounded-lg'>
 
                                 <div className='flex items-center justify-center gap-2 mb-1'>
