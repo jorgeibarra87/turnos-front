@@ -4,6 +4,7 @@ import axios from 'axios';
 import { CalendarClock, CheckIcon, CircleXIcon, Search, ChevronDown } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { apiTurnoService } from '../Services/apiTurnoService';
+import SearchableDropdown from '../Turnos/SearchableDropdown';
 
 export function SelectorCuadroHistorial() {
     const navigate = useNavigate();
@@ -137,41 +138,18 @@ export function SelectorCuadroHistorial() {
                     ) : (
                         <div className="relative">
                             {/* Input con búsqueda */}
-                            <div className="relative">
-                                <input
-                                    type="text"
-                                    value={searchTerm}
-                                    onChange={(e) => {
-                                        setSearchTerm(e.target.value);
-                                        setIsOpen(true);
-                                        // Si se borra el input, limpiar selección
-                                        if (e.target.value === '') {
-                                            setSelectedCuadro({ id: "", nombre: "", idEquipo: null });
-                                        }
-                                    }}
-                                    onClick={() => setIsOpen(true)}
-                                    placeholder="Buscar cuadro..."
-                                    className=" text-xs w-full px-4 py-2 pr-10 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                />
-
-                                {/* Iconos del input */}
-                                <div className="absolute inset-y-0 right-0 flex items-center pr-3 gap-1">
-                                    {searchTerm && (
-                                        <button
-                                            onClick={handleClear}
-                                            className="text-gray-400 hover:text-gray-600"
-                                            type="button"
-                                        >
-                                            <CircleXIcon size={16} />
-                                        </button>
-                                    )}
-                                    <Search size={16} className="text-gray-400" />
-                                    <ChevronDown
-                                        size={16}
-                                        className={`text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`}
-                                    />
-                                </div>
-                            </div>
+                            <SearchableDropdown
+                                options={cuadros}
+                                placeholder="Buscar cuadro..."
+                                onSelect={handleCuadroSelect}
+                                onClear={handleClear}
+                                value={selectedCuadro?.nombre || ""}
+                                displayProperty="nombre"
+                                idProperty="idCuadroTurno"
+                                secondaryProperty="nombreEquipo"
+                                loading={loading}
+                                error={error}
+                            />
 
                             {/* Dropdown de opciones */}
                             {isOpen && (

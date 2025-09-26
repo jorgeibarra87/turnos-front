@@ -4,6 +4,7 @@ import axios from 'axios';
 import { CalendarClock, CheckIcon, CircleXIcon, Search, ChevronDown } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { apiTurnoService } from '../Services/apiTurnoService';
+import SearchableDropdown from '../Turnos/SearchableDropdown';
 
 export function SelectorCuadroTurno() {
     const navigate = useNavigate();
@@ -29,7 +30,6 @@ export function SelectorCuadroTurno() {
                 const cuadrosFormateados = await apiTurnoService.auxiliares.getCuadrosFormateados();
                 setCuadros(cuadrosFormateados);
                 setFiltroCuadros(cuadrosFormateados); // Inicializar filtrados
-
             } catch (err) {
                 setError('Error al cargar los cuadros');
                 console.error('Error al cargar cuadros:', err);
@@ -107,7 +107,7 @@ export function SelectorCuadroTurno() {
         <div className='absolute inset-0 bg-opacity-30 backdrop-blur-sm flex justify-center items-center'>
             {/* referencia aquí */}
             <div ref={containerRef} className='bg-white p-8 rounded-lg flex flex-col justify-center items-center gap-5 max-w-2xl w-full mx-4'>
-                <div className="flex items-center justify-center gap-3 rounded-2xl border-b-4  border-primary-green-husj pl-4 pr-4 pb-1 pt-1 mb-6 w-fit mx-auto">
+                <div className="flex items-center justify-center gap-3 rounded-2xl border-b-4 border-primary-green-husj pl-4 pr-4 pb-1 pt-1 mb-6 w-fit mx-auto">
                     <CalendarClock size={40} className="text-primary-green-husj" />
                     <h1 className="text-4xl font-extrabold text-gray-800">
                         Gestión de Turnos
@@ -136,45 +136,22 @@ export function SelectorCuadroTurno() {
                     ) : (
                         <div className="relative">
                             {/* Input con búsqueda */}
-                            <div className="relative">
-                                <input
-                                    type="text"
-                                    value={searchTerm}
-                                    onChange={(e) => {
-                                        setSearchTerm(e.target.value);
-                                        setIsOpen(true);
-                                        // Si se borra el input, limpiar selección
-                                        if (e.target.value === '') {
-                                            setSelectedCuadro({ id: "", nombre: "", idEquipo: null });
-                                        }
-                                    }}
-                                    onClick={() => setIsOpen(true)}
-                                    placeholder="Buscar cuadro..."
-                                    className=" text-xs w-full px-4 py-2 pr-10 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                />
-
-                                {/* Iconos del input */}
-                                <div className="absolute inset-y-0 right-0 flex items-center pr-3 gap-1">
-                                    {searchTerm && (
-                                        <button
-                                            onClick={handleClear}
-                                            className="text-gray-400 hover:text-gray-600"
-                                            type="button"
-                                        >
-                                            <CircleXIcon size={16} />
-                                        </button>
-                                    )}
-                                    <Search size={16} className="text-gray-400" />
-                                    <ChevronDown
-                                        size={16}
-                                        className={`text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`}
-                                    />
-                                </div>
-                            </div>
+                            <SearchableDropdown
+                                options={cuadros}
+                                placeholder="Buscar cuadro..."
+                                onSelect={handleCuadroSelect}
+                                onClear={handleClear}
+                                value={selectedCuadro?.nombre || ""}
+                                displayProperty="nombre"
+                                idProperty="idCuadroTurno"
+                                secondaryProperty="nombreEquipo"
+                                loading={loading}
+                                error={error}
+                            />
 
                             {/* Dropdown de opciones */}
                             {isOpen && (
-                                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+                                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto min-w-0">
                                     {filtroCuadros.length === 0 ? (
                                         <div className="px-4 py-2 text-gray-500 text-center">
                                             {searchTerm ? 'No se encontraron cuadros' : 'No hay cuadros disponibles'}
@@ -184,12 +161,15 @@ export function SelectorCuadroTurno() {
                                             <button
                                                 key={cuadro.idCuadroTurno || index}
                                                 onClick={() => handleCuadroSelect(cuadro)}
-                                                className={`w-full px-4 py-2 text-left hover:bg-blue-50 focus:bg-blue-50 focus:outline-none ${selectedCuadro.id === cuadro.idCuadroTurno ? 'bg-blue-100' : ''
+                                                className={`w-full px-4 py-2 text-left hover:bg-blue-50 focus:bg-blue-50 focus:outline-none min-w-0 ${selectedCuadro.id === cuadro.idCuadroTurno ? 'bg-blue-100' : ''
                                                     }`}
+                                                title={`${cuadro.nombre}${cuadro.nombreEquipo ? ` - Equipo: ${cuadro.nombreEquipo}` : ''}`}
                                             >
-                                                <div className="text-xs">{cuadro.nombre}</div>
+                                                <div className="text-xs truncate w-full min-w-0">
+                                                    {cuadro.nombre}
+                                                </div>
                                                 {cuadro.nombreEquipo && (
-                                                    <div className="text-xs text-gray-500">
+                                                    <div className="text-xs text-gray-500 truncate w-full min-w-0">
                                                         Equipo: {cuadro.nombreEquipo}
                                                     </div>
                                                 )}
@@ -202,9 +182,17 @@ export function SelectorCuadroTurno() {
                     )}
 
                     {selectedCuadro.id && (
-                        <p className="text-xs font-extralight text-gray-700 p-2">
-                            Cuadro seleccionado: {selectedCuadro.nombre}
-                        </p>
+                        <div className="text-xs font-extralight text-gray-700 p-2 border-t border-gray-100 mt-2">
+                            <div className="flex items-start gap-2">
+                                <span className="text-gray-600 font-medium min-w-fit">Cuadro seleccionado:</span>
+                                <span
+                                    className="truncate flex-1 min-w-0"
+                                    title={selectedCuadro.nombre}
+                                >
+                                    {selectedCuadro.nombre}
+                                </span>
+                            </div>
+                        </div>
                     )}
                 </div>
 
