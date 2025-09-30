@@ -467,10 +467,10 @@ const Sidebar = () => (
 ```json
 {
   "scripts": {
-    "dev": "vite", // Servidor de desarrollo
-    "build": "vite build", // Build de producción
-    "lint": "eslint .", // Análisis de código
-    "preview": "vite preview" // Preview del build
+    "dev": "vite",
+    "build": "vite build",
+    "lint": "eslint .",
+    "preview": "vite preview"
   }
 }
 ```
