@@ -11,6 +11,12 @@ import { FilePlus2 } from "lucide-react";
 import SearchableDropdown from '../Turnos/SearchableDropdown';
 
 export default function ReportesFiltro() {
+    // Array de meses
+    const meses = [
+        'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+        'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+    ];
+
     const [anio, setAnio] = useState(new Date().getFullYear());
     const [mes, setMes] = useState(new Date().getMonth() + 1);
     const [cuadroId, setCuadroId] = useState(1);
@@ -23,11 +29,6 @@ export default function ReportesFiltro() {
     const [error, setError] = useState(null);
     const [selectedCuadro, setSelectedCuadro] = useState(null);
     const [selectedPersona, setSelectedPersona] = useState(null);
-
-    const meses = [
-        'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-        'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
-    ];
 
     // Función para manejar selección de cuadro
     const handleCuadroSelect = (cuadro) => {
@@ -115,14 +116,12 @@ export default function ReportesFiltro() {
 
     // Función para obtener el nombre del mes en español
     const obtenerNombreMes = (mes) => {
-        const meses = [
-            'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-            'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
-        ];
-        return meses[mes - 1] || '';
+        const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+            'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+        return meses[mes - 1];
     };
 
-    // Exportación a Excel con ExcelJS
+    // Exportación a Excel con ExcelJS (CÓDIGO COMPLETO)
     const exportToExcel = async () => {
         if (!reporte || !reporte.detalleTurnos.length) {
             alert('No hay datos para exportar');
@@ -136,13 +135,13 @@ export default function ReportesFiltro() {
             // Obtener nombre del cuadro
             const cuadroSeleccionado = cuadros.find(c => c.idCuadroTurno == cuadroId);
             const nombreMes = obtenerNombreMes(mes);
-            const nombreCuadro = cuadroSeleccionado ? cuadroSeleccionado.nombre : "CUADRO DE TURNOS";
+            const nombreCuadro = cuadroSeleccionado ? cuadroSeleccionado.nombre : 'CUADRO DE TURNOS';
 
             // Encabezado completo
             // Título de la organización
             worksheet.mergeCells('A1:I1');
             const orgCell = worksheet.getCell('A1');
-            orgCell.value = 'Hospital Universitario San José de Popayán NIT 891580002-5';
+            orgCell.value = 'Hospital Universitario San José de Popayán - NIT 891580002-5';
             orgCell.font = { bold: true, size: 12, color: { argb: 'FF000000' } };
             orgCell.alignment = { horizontal: 'center', vertical: 'middle' };
             orgCell.border = {
@@ -155,14 +154,10 @@ export default function ReportesFiltro() {
             // Título del reporte
             worksheet.mergeCells('A2:I2');
             const titleCell = worksheet.getCell('A2');
-            titleCell.value = `Reporte: ${nombreMes} ${anio} - Cuadro: ${nombreCuadro.toUpperCase()}`;
+            titleCell.value = `Reporte ${nombreMes} ${anio} - Cuadro ${nombreCuadro.toUpperCase()}`;
             titleCell.font = { bold: true, size: 14, color: { argb: 'FF2F5496' } };
             titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
-            titleCell.fill = {
-                type: 'pattern',
-                pattern: 'solid',
-                fgColor: { argb: 'FFF2F2F2' }
-            };
+            titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF2F2F2' } };
             titleCell.border = {
                 top: { style: 'thin', color: { argb: 'FF000000' } },
                 left: { style: 'thin', color: { argb: 'FF000000' } },
@@ -170,7 +165,7 @@ export default function ReportesFiltro() {
                 right: { style: 'thin', color: { argb: 'FF000000' } }
             };
 
-            //Agregar fila vacía con bordes
+            // Agregar fila vacía con bordes
             worksheet.mergeCells('A3:I3');
             const emptyCell = worksheet.getCell('A3');
             emptyCell.value = '';
@@ -181,18 +176,14 @@ export default function ReportesFiltro() {
                 right: { style: 'thin', color: { argb: 'FF000000' } }
             };
 
-            //Encabezados de columna
+            // Encabezados de columna
             const headers = ['Usuario', 'Total Turnos', 'Total Horas', 'Jornada', 'Fecha Inicio', 'Hora Inicio', 'Fecha Fin', 'Hora Fin', 'Horas'];
             const headerRow = worksheet.addRow(headers);
 
             // Estilo de encabezados
             headerRow.eachCell((cell, colNumber) => {
                 cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
-                cell.fill = {
-                    type: 'pattern',
-                    pattern: 'solid',
-                    fgColor: { argb: 'FF4472C4' }
-                };
+                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF4472C4' } };
                 cell.border = {
                     top: { style: 'thin', color: { argb: 'FF000000' } },
                     left: { style: 'thin', color: { argb: 'FF000000' } },
@@ -211,9 +202,9 @@ export default function ReportesFiltro() {
             }, {});
 
             // Aplicar filtro de persona si está seleccionada
-            const usuariosParaExportar = personaSeleccionada
-                ? { [personaSeleccionada]: turnosPorUsuario[personaSeleccionada] || [] }
-                : turnosPorUsuario;
+            const usuariosParaExportar = personaSeleccionada ?
+                { [personaSeleccionada]: turnosPorUsuario[personaSeleccionada] } :
+                turnosPorUsuario;
 
             // Agregar datos por usuario
             Object.entries(usuariosParaExportar).forEach(([usuario, turnos]) => {
@@ -221,23 +212,19 @@ export default function ReportesFiltro() {
 
                 const totalHoras = turnos.reduce((sum, t) => sum + (t.horas || 0), 0);
 
-                //Fila de encabezado del usuario
+                // Fila de encabezado del usuario
                 const userHeaderRow = worksheet.addRow([
-                    usuario,
+                    `Usuario: ${usuario}`,
                     `${turnos.length} turnos`,
                     `${totalHoras} horas`,
                     '', '', '', '', '', ''
                 ]);
 
-                //Estilo del encabezado del usuario con bordes
+                // Estilo del encabezado del usuario con bordes
                 userHeaderRow.eachCell((cell, colNumber) => {
                     if (colNumber <= 3) {
                         cell.font = { bold: true, color: { argb: 'FF2F5496' } };
-                        cell.fill = {
-                            type: 'pattern',
-                            pattern: 'solid',
-                            fgColor: { argb: 'FFE7E6E6' }
-                        };
+                        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE7E6E6' } };
                     }
                     cell.border = {
                         top: { style: 'thin', color: { argb: 'FF000000' } },
@@ -252,7 +239,7 @@ export default function ReportesFiltro() {
                     .sort((a, b) => new Date(a.fechaInicio) - new Date(b.fechaInicio))
                     .forEach((turno, index) => {
                         const row = worksheet.addRow([
-                            '', //Celda vacía para usuario
+                            '', // Celda vacía para usuario
                             '',
                             '',
                             turno.jornada || 'N/A',
@@ -263,8 +250,8 @@ export default function ReportesFiltro() {
                             turno.horas || 0
                         ]);
 
-                        //Aplicar bordes a todas las celdas de datos
-                        row.eachCell((cell) => {
+                        // Aplicar bordes a todas las celdas de datos
+                        row.eachCell(cell => {
                             cell.border = {
                                 top: { style: 'thin', color: { argb: 'FF000000' } },
                                 left: { style: 'thin', color: { argb: 'FF000000' } },
@@ -273,11 +260,7 @@ export default function ReportesFiltro() {
                             };
                             // Fondo alternado
                             if (index % 2 === 0) {
-                                cell.fill = {
-                                    type: 'pattern',
-                                    pattern: 'solid',
-                                    fgColor: { argb: 'FFF8F9FA' }
-                                };
+                                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8F9FA' } };
                             }
                         });
 
@@ -292,7 +275,7 @@ export default function ReportesFiltro() {
 
                 // Fila vacía para separación con bordes
                 const separatorRow = worksheet.addRow(['', '', '', '', '', '', '', '', '']);
-                separatorRow.eachCell((cell) => {
+                separatorRow.eachCell(cell => {
                     cell.border = {
                         top: { style: 'thin', color: { argb: 'FF000000' } },
                         left: { style: 'thin', color: { argb: 'FF000000' } },
@@ -302,7 +285,7 @@ export default function ReportesFiltro() {
                 });
             });
 
-            //Ajustar ancho de columnas para nombres largos**
+            // Ajustar ancho de columnas para nombres largos
             worksheet.columns = [
                 { width: 35 }, // Usuario
                 { width: 15 }, // Total Turnos
@@ -315,25 +298,23 @@ export default function ReportesFiltro() {
                 { width: 9 }   // Horas
             ];
 
-            //Ajustar altura de las filas
+            // Ajustar altura de las filas
             worksheet.eachRow((row, rowNumber) => {
                 row.height = rowNumber <= 3 ? 20 : 16; // Más alto para encabezados
             });
 
-            //Pie de página con información adicional
+            // Pie de página con información adicional
             const footerRowNum = worksheet.rowCount + 2;
             worksheet.mergeCells(`A${footerRowNum}:I${footerRowNum}`);
             const footerCell = worksheet.getCell(`A${footerRowNum}`);
-            footerCell.value = `Generado el: ${new Date().toLocaleDateString('es-ES')} - Para uso exclusivo de trámites y servicios prestados por Hospital Universitario San José de Popayán`;
+            footerCell.value = `Generado el ${new Date().toLocaleDateString('es-ES')} - Para uso exclusivo de trámites y servicios prestados por Hospital Universitario San José de Popayán`;
             footerCell.font = { size: 10, italic: true };
             footerCell.alignment = { horizontal: 'center' };
 
             // Generar archivo
             const buffer = await workbook.xlsx.writeBuffer();
-            const blob = new Blob([buffer], {
-                type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            });
-            saveAs(blob, `Reporte_Turnos_${reporte.anio}_${String(reporte.mes).padStart(2, '0')}.xlsx`);
+            const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            saveAs(blob, `ReporteTurnos${reporte.anio}${String(reporte.mes).padStart(2, '0')}.xlsx`);
 
         } catch (err) {
             console.error('Error al exportar a Excel:', err);
@@ -342,19 +323,13 @@ export default function ReportesFiltro() {
     };
 
     const exportToExcelFallback = async () => {
+        // Fallback usando XLSX básico (código existente simplificado)
         const cuadroSeleccionado = cuadros.find(c => c.idCuadroTurno == cuadroId);
-        const nombreCuadro = cuadroSeleccionado ? cuadroSeleccionado.nombre : "CUADRO DE TURNOS";
+        const nombreCuadro = cuadroSeleccionado ? cuadroSeleccionado.nombre : 'CUADRO DE TURNOS';
 
         const excelData = [];
-        excelData.push({
-            'Usuario': nombreCuadro.toUpperCase(),
-            'Total Turnos': '', 'Total Horas': '', 'Jornada': '',
-            'Fecha Inicio': '', 'Hora Inicio': '', 'Fecha Fin': '', 'Hora Fin': '', 'Horas': ''
-        });
-        excelData.push({
-            'Usuario': '', 'Total Turnos': '', 'Total Horas': '', 'Jornada': '',
-            'Fecha Inicio': '', 'Hora Inicio': '', 'Fecha Fin': '', 'Hora Fin': '', 'Horas': ''
-        });
+        excelData.push([`Usuario: ${nombreCuadro.toUpperCase()}`, 'Total Turnos', 'Total Horas', 'Jornada', 'Fecha Inicio', 'Hora Inicio', 'Fecha Fin', 'Hora Fin', 'Horas']);
+        excelData.push(['Usuario', 'Total Turnos', 'Total Horas', 'Jornada', 'Fecha Inicio', 'Hora Inicio', 'Fecha Fin', 'Hora Fin', 'Horas']);
 
         const turnosPorUsuario = reporte.detalleTurnos.reduce((acc, turno) => {
             const usuario = turno.usuario || "Sin asignar";
@@ -363,84 +338,61 @@ export default function ReportesFiltro() {
             return acc;
         }, {});
 
-        const usuariosParaExportar = personaSeleccionada
-            ? { [personaSeleccionada]: turnosPorUsuario[personaSeleccionada] || [] }
-            : turnosPorUsuario;
+        const usuariosParaExportar = personaSeleccionada ?
+            { [personaSeleccionada]: turnosPorUsuario[personaSeleccionada] } :
+            turnosPorUsuario;
 
         Object.entries(usuariosParaExportar).forEach(([usuario, turnos]) => {
             if (!turnos || turnos.length === 0) return;
             const totalHoras = turnos.reduce((sum, t) => sum + (t.horas || 0), 0);
-            excelData.push({
-                'Usuario': usuario,
-                'Total Turnos': `${turnos.length} turnos`,
-                'Total Horas': `${totalHoras} horas`,
-                'Jornada': '', 'Fecha Inicio': '', 'Hora Inicio': '',
-                'Fecha Fin': '', 'Hora Fin': '', 'Horas': ''
-            });
+            excelData.push([`Usuario: ${usuario}`, `Total Turnos: ${turnos.length} turnos`, `Total Horas: ${totalHoras} horas`, 'Jornada', 'Fecha Inicio', 'Hora Inicio', 'Fecha Fin', 'Hora Fin', 'Horas']);
+
             turnos.sort((a, b) => new Date(a.fechaInicio) - new Date(b.fechaInicio))
                 .forEach(turno => {
-                    excelData.push({
-                        'Usuario': '', 'Total Turnos': '', 'Total Horas': '',
-                        'Jornada': turno.jornada || 'N/A',
-                        'Fecha Inicio': formatearFecha(turno.fechaInicio),
-                        'Hora Inicio': formatearHora(turno.fechaInicio),
-                        'Fecha Fin': formatearFecha(turno.fechaFin),
-                        'Hora Fin': formatearHora(turno.fechaFin),
-                        'Horas': turno.horas || 0
-                    });
+                    excelData.push(['Usuario', 'Total Turnos', 'Total Horas', `Jornada: ${turno.jornada || 'N/A'}`, `Fecha Inicio: ${formatearFecha(turno.fechaInicio)}`, `Hora Inicio: ${formatearHora(turno.fechaInicio)}`, `Fecha Fin: ${formatearFecha(turno.fechaFin)}`, `Hora Fin: ${formatearHora(turno.fechaFin)}`, `Horas: ${turno.horas || 0}`]);
                 });
-            excelData.push({
-                'Usuario': '', 'Total Turnos': '', 'Total Horas': '', 'Jornada': '',
-                'Fecha Inicio': '', 'Hora Inicio': '', 'Fecha Fin': '', 'Hora Fin': '', 'Horas': ''
-            });
+
+            excelData.push(['Usuario', 'Total Turnos', 'Total Horas', 'Jornada', 'Fecha Inicio', 'Hora Inicio', 'Fecha Fin', 'Hora Fin', 'Horas']);
         });
 
         const worksheet = XLSX.utils.json_to_sheet(excelData);
-        worksheet['!cols'] = [
-            { wch: 35 }, { wch: 18 }, { wch: 18 }, { wch: 12 },
-            { wch: 15 }, { wch: 12 }, { wch: 15 }, { wch: 12 }, { wch: 9 }
-        ];
+        worksheet['!cols'] = [{ wch: 35 }, { wch: 18 }, { wch: 18 }, { wch: 12 }, { wch: 15 }, { wch: 12 }, { wch: 15 }, { wch: 12 }, { wch: 9 }];
         const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, 'Reporte Turnos');
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Reporte Turnos");
         const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
-        const data = new Blob([excelBuffer], {
-            type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-        });
-        saveAs(data, `Reporte_Turnos_${reporte.anio}_${String(reporte.mes).padStart(2, '0')}.xlsx`);
+        const data = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        saveAs(data, `ReporteTurnos${reporte.anio}${String(reporte.mes).padStart(2, '0')}.xlsx`);
     };
 
-    //Exportación PDF
+    // Exportación PDF (CÓDIGO COMPLETO)
     const exportToPDF = async () => {
         if (!reporte || !reporte.detalleTurnos.length) {
             alert('No hay datos para exportar');
             return;
         }
-        try {
-            const doc = new jsPDF({
-                orientation: "landscape",
-                unit: "pt",
-                format: "A4"
-            });
 
-            //Encabezado
+        try {
+            const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'A4' });
+
+            // Encabezado
             doc.setFontSize(12);
             doc.setFont('helvetica', 'bold');
             doc.text('Hospital Universitario San José de Popayán', 40, 30);
             doc.text('NIT 891580002-5', 40, 45);
 
-            //título del cuadro
+            // título del cuadro
             doc.setFontSize(14);
             doc.setFont('helvetica', 'bold');
             const cuadroSeleccionado = cuadros.find(c => c.idCuadroTurno == cuadroId);
             const nombreMes = obtenerNombreMes(mes);
-            let nombreCuadro = cuadroSeleccionado ? cuadroSeleccionado.nombre : "CUADRO DE TURNOS";
+            let nombreCuadro = cuadroSeleccionado ? cuadroSeleccionado.nombre : 'CUADRO DE TURNOS';
 
             // Truncar el nombre del cuadro si es muy largo
             if (nombreCuadro.length > 60) {
                 nombreCuadro = nombreCuadro.substring(0, 57) + '...';
             }
 
-            const tituloCompleto = `Reporte: ${nombreMes} ${reporte.anio} - Cuadro: ${nombreCuadro.toUpperCase()}`;
+            const tituloCompleto = `Reporte ${nombreMes} ${reporte.anio} - Cuadro ${nombreCuadro.toUpperCase()}`;
 
             // Dividir el título en múltiples líneas si es necesario
             const pageWidth = doc.internal.pageSize.getWidth();
@@ -448,11 +400,10 @@ export default function ReportesFiltro() {
 
             // Verificar si el título cabe en una línea
             const titleWidth = doc.getTextWidth(tituloCompleto);
-
             if (titleWidth > maxWidth) {
                 // Dividir en dos líneas
-                const linea1 = `Reporte: ${nombreMes} ${reporte.anio}`;
-                const linea2 = `Cuadro: ${nombreCuadro.toUpperCase()}`;
+                const linea1 = `Reporte ${nombreMes} ${reporte.anio}`;
+                const linea2 = `Cuadro ${nombreCuadro.toUpperCase()}`;
                 doc.text(linea1, 40, 65);
                 doc.text(linea2, 40, 85);
             } else {
@@ -460,13 +411,14 @@ export default function ReportesFiltro() {
                 doc.text(tituloCompleto, 40, 70);
             }
 
-            //Ajustar la posición del resumen según las líneas del título
+            // Ajustar la posición del resumen según las líneas del título
             let yPosition = titleWidth > maxWidth ? 105 : 90;
 
             doc.setFontSize(12);
             doc.setFont('helvetica', 'normal');
             const totalTurnos = reporte.detalleTurnos.length;
             const totalHoras = reporte.detalleTurnos.reduce((sum, t) => sum + (t.horas || 0), 0);
+
             doc.text(`Total Turnos: ${totalTurnos}`, 40, yPosition);
             doc.text(`Total Horas: ${totalHoras}`, 220, yPosition);
             doc.line(40, yPosition + 10, 800, yPosition + 10);
@@ -480,15 +432,16 @@ export default function ReportesFiltro() {
                 return acc;
             }, {});
 
-            const usuariosParaExportar = personaSeleccionada
-                ? { [personaSeleccionada]: turnosPorUsuario[personaSeleccionada] || [] }
-                : turnosPorUsuario;
+            const usuariosParaExportar = personaSeleccionada ?
+                { [personaSeleccionada]: turnosPorUsuario[personaSeleccionada] } :
+                turnosPorUsuario;
 
             Object.entries(usuariosParaExportar).forEach(([usuario, turnos]) => {
                 if (!turnos || turnos.length === 0) return;
+
                 const totalHorasUsuario = turnos.reduce((sum, t) => sum + (t.horas || 0), 0);
 
-                //Verificar espacio disponible antes de agregar nueva sección
+                // Verificar espacio disponible antes de agregar nueva sección
                 if (yPosition > 500) {
                     doc.addPage();
                     yPosition = 40;
@@ -497,20 +450,20 @@ export default function ReportesFiltro() {
                 doc.setFontSize(13);
                 doc.setFont('helvetica', 'bold');
 
-                //nombre de usuario**
+                // nombre de usuario
                 let nombreUsuario = usuario;
                 const maxUserNameWidth = 600; // Ancho máximo para el nombre
-                const userNameWidth = doc.getTextWidth(`${nombreUsuario} (${turnos.length} turnos - ${totalHorasUsuario} horas)`);
+                const userNameWidth = doc.getTextWidth(`${nombreUsuario} (${turnos.length} turnos) - ${totalHorasUsuario} horas`);
 
                 if (userNameWidth > maxUserNameWidth) {
                     // Truncar el nombre del usuario si es muy largo
-                    const availableWidth = maxUserNameWidth - doc.getTextWidth(` (${turnos.length} turnos - ${totalHorasUsuario} horas)`);
+                    const availableWidth = maxUserNameWidth - doc.getTextWidth(` (${turnos.length} turnos) - ${totalHorasUsuario} horas`);
                     while (doc.getTextWidth(nombreUsuario) > availableWidth && nombreUsuario.length > 10) {
                         nombreUsuario = nombreUsuario.substring(0, nombreUsuario.length - 4) + '...';
                     }
                 }
 
-                doc.text(`${nombreUsuario} (${turnos.length} turnos - ${totalHorasUsuario} horas)`, 40, yPosition);
+                doc.text(`${nombreUsuario} (${turnos.length} turnos) - ${totalHorasUsuario} horas`, 40, yPosition);
                 yPosition += 20;
 
                 const tableData = turnos
@@ -524,7 +477,7 @@ export default function ReportesFiltro() {
                         (turno.horas || 0).toString()
                     ]);
 
-                //Tabla más grande
+                // Tabla más grande
                 autoTable(doc, {
                     head: [['Jornada', 'Fecha Inicio', 'Hora Inicio', 'Fecha Fin', 'Hora Fin', 'Horas']],
                     body: tableData,
@@ -552,41 +505,21 @@ export default function ReportesFiltro() {
                     },
                     margin: { left: 40, right: 40 },
                     tableWidth: 'auto',
-
                     columnStyles: {
-                        0: {
-                            cellWidth: 90,
-                            halign: 'center'
-                        },
-                        1: {
-                            cellWidth: 95,
-                            halign: 'center'
-                        },
-                        2: {
-                            cellWidth: 75,
-                            halign: 'center'
-                        },
-                        3: {
-                            cellWidth: 95,
-                            halign: 'center'
-                        },
-                        4: {
-                            cellWidth: 75,
-                            halign: 'center'
-                        },
-                        5: {
-                            cellWidth: 55,
-                            halign: 'center',
-                            fontStyle: 'bold'
-                        }
+                        0: { cellWidth: 90, halign: 'center' },
+                        1: { cellWidth: 95, halign: 'center' },
+                        2: { cellWidth: 75, halign: 'center' },
+                        3: { cellWidth: 95, halign: 'center' },
+                        4: { cellWidth: 75, halign: 'center' },
+                        5: { cellWidth: 55, halign: 'center', fontStyle: 'bold' }
                     },
-                    //Dividir tabla automáticamente si no cabe en la página**
+                    // Dividir tabla automáticamente si no cabe en la página
                     didDrawPage: function (data) {
                         // Agregar numeración de página si hay múltiples páginas
                         if (doc.internal.getNumberOfPages() > 1) {
                             doc.setFontSize(8);
                             doc.setTextColor(100);
-                            doc.text('Página ' + doc.internal.getCurrentPageInfo().pageNumber, data.settings.margin.left, doc.internal.pageSize.height - 20);
+                            doc.text(`Página ${doc.internal.getCurrentPageInfo().pageNumber}`, data.settings.margin.left, doc.internal.pageSize.height - 20);
                         }
                     }
                 });
@@ -603,9 +536,9 @@ export default function ReportesFiltro() {
                 doc.setTextColor(100);
 
                 // Información del pie
-                const fechaGeneracion = `Generado el: ${new Date().toLocaleDateString('es-ES')}`;
+                const fechaGeneracion = `Generado el ${new Date().toLocaleDateString('es-ES')}`;
                 const numeroPagina = `Página ${i} de ${pageCount}`;
-                const textoLegal = 'Para uso exclusivo de trámites y servicios prestados por Hospital Universitario San José de Popayán';
+                const textoLegal = "Para uso exclusivo de trámites y servicios prestados por Hospital Universitario San José de Popayán";
 
                 // Línea superior del pie de página
                 doc.text(fechaGeneracion, 40, 575);
@@ -625,13 +558,16 @@ export default function ReportesFiltro() {
                     let currentLine = 1;
 
                     words.forEach(word => {
-                        const testLine = currentLine === 1 ? line1 + word + ' ' : line2 + word + ' ';
+                        const testLine = currentLine === 1 ? `${line1} ${word}` : `${line2} ${word}`;
                         if (doc.getTextWidth(testLine) > availableWidth && currentLine === 1) {
                             currentLine = 2;
-                            line2 = word + ' ';
+                            line2 = word;
                         } else {
-                            if (currentLine === 1) line1 += word + ' ';
-                            else line2 += word + ' ';
+                            if (currentLine === 1) {
+                                line1 += ` ${word}`;
+                            } else {
+                                line2 += ` ${word}`;
+                            }
                         }
                     });
 
@@ -640,24 +576,22 @@ export default function ReportesFiltro() {
                 }
             }
 
-            doc.save(`Reporte_Turnos_${reporte.anio}_${String(reporte.mes).padStart(2, '0')}.pdf`);
+            doc.save(`ReporteTurnos${reporte.anio}${String(reporte.mes).padStart(2, '0')}.pdf`);
+
         } catch (err) {
             console.error('Error al exportar PDF:', err);
-            alert('Error al exportar el archivo PDF: ' + err.message);
+            alert(`Error al exportar el archivo PDF: ${err.message}`);
         }
     };
 
-
-    // Componente de tabla para la interfaz web
+    // Resto del código (TablaMejorada, paginación, etc.) permanece igual...
     const TablaMejorada = ({ usuario, turnos, totalHoras }) => (
         <div className="mb-6 shadow-lg rounded-lg overflow-hidden border border-gray-200">
             {/* Encabezado del usuario */}
             <div className="bg-gradient-to-r from-gray-800 to-gray-600 text-white px-6 py-4">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                     {/* Nombre */}
-                    <h3 className="text-lg font-semibold break-words max-w-full sm:max-w-2xl">
-                        {usuario}
-                    </h3>
+                    <h3 className="text-lg font-semibold break-words max-w-full sm:max-w-2xl">{usuario}</h3>
                     <div className="flex gap-6 text-sm bg-black bg-opacity-20 px-3 py-1 rounded">
                         <span className="font-medium">Turnos: <span className="text-green-300">{turnos.length}</span></span>
                         <span className="font-medium">Total Horas: <span className="text-blue-300">{totalHoras}</span></span>
@@ -682,14 +616,14 @@ export default function ReportesFiltro() {
                         {turnos
                             .sort((a, b) => new Date(a.fechaInicio) - new Date(b.fechaInicio))
                             .map((turno, index) => (
-                                <tr key={index} className={`transition-colors hover:bg-gray-50 ${index % 2 === 0 ? "bg-white" : "bg-gray-25"}`}>
+                                <tr key={index} className={`transition-colors hover:bg-gray-50 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-25'}`}>
                                     <td className="border border-gray-300 px-4 py-3">
-                                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${turno.jornada === "Mañana" ? "bg-green-100 text-green-800 border border-green-200" :
-                                            turno.jornada === "Tarde" ? "bg-orange-100 text-orange-800 border border-orange-200" :
-                                                turno.jornada === "Noche" ? "bg-blue-100 text-blue-800 border border-blue-200" :
-                                                    "bg-gray-100 text-gray-800 border border-gray-200"
+                                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${turno.jornada === 'Mañana' ? 'bg-green-100 text-green-800 border border-green-200' :
+                                            turno.jornada === 'Tarde' ? 'bg-orange-100 text-orange-800 border border-orange-200' :
+                                                turno.jornada === 'Noche' ? 'bg-blue-100 text-blue-800 border border-blue-200' :
+                                                    'bg-gray-100 text-gray-800 border border-gray-200'
                                             }`}>
-                                            {turno.jornada || "N/A"}
+                                            {turno.jornada || 'N/A'}
                                         </span>
                                     </td>
                                     <td className="border border-gray-300 px-4 py-3 text-gray-700">{formatearFecha(turno.fechaInicio)}</td>
@@ -709,6 +643,7 @@ export default function ReportesFiltro() {
 
     // Resto del código de paginación y utilidades...
     let totalPages = 1, currentPersonas = [], startIndex = 0, endIndex = 0, totalPersonas = 0;
+
     if (reporte && reporte.detalleTurnos.length > 0) {
         const turnosPorUsuario = reporte.detalleTurnos.reduce((acc, turno) => {
             const usuario = turno.usuario || "Sin asignar";
@@ -716,10 +651,12 @@ export default function ReportesFiltro() {
             acc[usuario].push(turno);
             return acc;
         }, {});
+
         let personas = Object.keys(turnosPorUsuario);
         if (personaSeleccionada) {
             personas = personas.filter(persona => persona === personaSeleccionada);
         }
+
         totalPersonas = personas.length;
         totalPages = Math.ceil(personas.length / itemsPerPage);
         startIndex = (currentPage - 1) * itemsPerPage;
@@ -727,23 +664,53 @@ export default function ReportesFiltro() {
         currentPersonas = personas.slice(startIndex, endIndex);
     }
 
-    const goToPage = (page) => setCurrentPage(page);
-    const goToPrevious = () => { if (currentPage > 1) setCurrentPage(currentPage - 1); };
-    const goToNext = () => { if (currentPage < totalPages) setCurrentPage(currentPage + 1); };
+    const goToPage = (page) => {
+        setCurrentPage(page);
+    };
+
+    const goToPrevious = () => {
+        if (currentPage > 1) setCurrentPage(currentPage - 1);
+    };
+
+    const goToNext = () => {
+        if (currentPage < totalPages) setCurrentPage(currentPage + 1);
+    };
+
     const getVisiblePageNumbers = () => {
-        const delta = 2, range = [], rangeWithDots = [];
-        for (let i = Math.max(2, currentPage - delta); i <= Math.min(totalPages - 1, currentPage + delta); i++) range.push(i);
-        if (currentPage - delta > 2) rangeWithDots.push(1, '...');
-        else rangeWithDots.push(1);
+        const delta = 2;
+        const range = [];
+        const rangeWithDots = [];
+
+        for (let i = Math.max(2, currentPage - delta); i <= Math.min(totalPages - 1, currentPage + delta); i++) {
+            range.push(i);
+        }
+
+        if (currentPage - delta > 2) {
+            rangeWithDots.push(1, '...');
+        } else {
+            rangeWithDots.push(1);
+        }
+
         rangeWithDots.push(...range);
-        if (currentPage + delta < totalPages - 1) rangeWithDots.push('...', totalPages);
-        else if (totalPages > 1) rangeWithDots.push(totalPages);
+
+        if (currentPage + delta < totalPages - 1) {
+            rangeWithDots.push('...', totalPages);
+        } else if (totalPages > 1) {
+            rangeWithDots.push(totalPages);
+        }
+
         return rangeWithDots;
     };
 
-    const formatearFecha = (fecha) => !fecha ? "N/A" : new Date(fecha).toLocaleDateString("es-ES", { day: "2-digit", month: "2-digit", year: "numeric" });
-    const formatearHora = (fecha) => !fecha ? "N/A" : new Date(fecha).toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
-    const COLORS = ["#4CAF50", "#FF9800", "#2196F3"];
+    const formatearFecha = (fecha) => {
+        return !fecha ? 'N/A' : new Date(fecha).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    };
+
+    const formatearHora = (fecha) => {
+        return !fecha ? 'N/A' : new Date(fecha).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+    };
+
+    const COLORS = ['#4CAF50', '#FF9800', '#2196F3'];
 
     return (
         <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
@@ -828,17 +795,31 @@ export default function ReportesFiltro() {
                         >
                             {loading ? 'Generando...' : 'Generar Reporte'}
                         </button>
-                        {/* resto de botones... */}
+                        {reporte && reporte.detalleTurnos.length > 0 && (
+                            <>
+                                <button
+                                    onClick={exportToExcel}
+                                    className="bg-green-600 hover:bg-green-700 text-white rounded-lg px-6 py-2 transition-colors flex items-center gap-2 font-medium shadow-md"
+                                >
+                                    Excel
+                                </button>
+                                <button
+                                    onClick={exportToPDF}
+                                    className="bg-red-600 hover:bg-red-700 text-white rounded-lg px-6 py-2 transition-colors flex items-center gap-2 font-medium shadow-md"
+                                >
+                                    PDF
+                                </button>
+                            </>
+                        )}
                     </div>
                 </CardContent>
-
             </Card>
 
             {/* Error o Loading */}
             {error && (
                 <Card className="shadow-lg border-red-200">
                     <CardContent className="p-4 text-red-600 bg-red-50">
-                        <p className="font-medium">⚠️ {error}</p>
+                        <p className="font-medium">{error}</p>
                     </CardContent>
                 </Card>
             )}
@@ -891,26 +872,14 @@ export default function ReportesFiltro() {
                             <CardContent className="p-6">
                                 <h2 className="text-xl font-bold mb-4 text-gray-800">Horas por Persona</h2>
                                 <ResponsiveContainer width="100%" height={320}>
-                                    <BarChart
-                                        data={Object.entries(reporte.horasPorUsuario).map(([nombre, horas]) => ({
-                                            nombre: nombre.length > 15 ? nombre.substring(0, 15) + '...' : nombre,
-                                            horas,
-                                            nombreCompleto: nombre
-                                        }))}
-                                    >
-                                        <XAxis
-                                            dataKey="nombre"
-                                            angle={-45}
-                                            textAnchor="end"
-                                            height={80}
-                                            fontSize={11}
-                                        />
+                                    <BarChart data={Object.entries(reporte.horasPorUsuario).map(([nombre, horas]) => ({
+                                        nombre: nombre.length > 15 ? nombre.substring(0, 15) + '...' : nombre,
+                                        horas,
+                                        nombreCompleto: nombre
+                                    }))}>
+                                        <XAxis dataKey="nombre" angle={-45} textAnchor="end" height={80} fontSize={11} />
                                         <YAxis />
-                                        <Tooltip
-                                            labelFormatter={(value, payload) =>
-                                                payload && payload[0] ? payload[0].payload.nombreCompleto : value
-                                            }
-                                        />
+                                        <Tooltip labelFormatter={(value, payload) => payload && payload[0] ? payload[0].payload.nombreCompleto : value} />
                                         <Legend />
                                         <Bar dataKey="horas" fill="#4CAF50" radius={[4, 4, 0, 0]} />
                                     </BarChart>
@@ -924,7 +893,7 @@ export default function ReportesFiltro() {
                                 <ResponsiveContainer width="100%" height={320}>
                                     <PieChart>
                                         <Pie
-                                            data={["Mañana", "Tarde", "Noche"].map(j => ({
+                                            data={['Mañana', 'Tarde', 'Noche'].map(j => ({
                                                 jornada: j,
                                                 valor: reporte.detalleTurnos.filter(t => t.jornada === j).length
                                             }))}
@@ -933,7 +902,7 @@ export default function ReportesFiltro() {
                                             outerRadius={120}
                                             label={({ jornada, valor }) => `${jornada}: ${valor}`}
                                         >
-                                            {["Mañana", "Tarde", "Noche"].map((_, i) => (
+                                            {['Mañana', 'Tarde', 'Noche'].map((entry, i) => (
                                                 <Cell key={i} fill={COLORS[i % COLORS.length]} />
                                             ))}
                                         </Pie>
@@ -947,100 +916,118 @@ export default function ReportesFiltro() {
                     {/* Detalle de personas con tabla */}
                     <Card className="shadow-lg border-0">
                         {reporte && reporte.detalleTurnos.length > 0 && (
-                            <div className="flex flex-col sm:flex-row justify-between items-center gap-4 p-6 bg-gray-50 border-b">
-                                <h2 className="text-xl font-bold text-gray-800">
-                                    Detalle de Turnos {personaSeleccionada ? `- ${personaSeleccionada}` : 'por Persona'}
-                                </h2>
-                                <div className="flex items-center gap-3">
-                                    <span className="text-sm text-gray-600 font-medium">Mostrar:</span>
-                                    <select
-                                        value={itemsPerPage}
-                                        onChange={e => { setItemsPerPage(Number(e.target.value)); setCurrentPage(1); }}
-                                        className="border border-gray-300 rounded-md px-3 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                    >
-                                        <option value={1}>1</option>
-                                        <option value={3}>3</option>
-                                        <option value={5}>5</option>
-                                        <option value={10}>10</option>
-                                        <option value={15}>15</option>
-                                    </select>
-                                    <span className="text-sm text-gray-600 font-medium">personas por página</span>
-                                </div>
-                            </div>
-                        )}
-                        <CardContent className="p-6">
-                            <div className="space-y-6">
-                                {(() => {
-                                    const turnosPorUsuario = reporte.detalleTurnos.reduce((acc, turno) => {
-                                        const usuario = turno.usuario || "Sin asignar";
-                                        if (!acc[usuario]) acc[usuario] = [];
-                                        acc[usuario].push(turno);
-                                        return acc;
-                                    }, {});
-                                    return currentPersonas.map((usuario) => {
-                                        const turnos = turnosPorUsuario[usuario];
-                                        const totalHoras = turnos.reduce((sum, t) => sum + (t.horas || 0), 0);
-                                        return (
-                                            <TablaMejorada
-                                                key={usuario}
-                                                usuario={usuario}
-                                                turnos={turnos}
-                                                totalHoras={totalHoras}
-                                            />
-                                        );
-                                    });
-                                })()}
-                                {reporte.detalleTurnos.length === 0 && (
-                                    <div className="text-center py-12 text-gray-500 bg-gray-50 rounded-lg">
-                                        <div className="text-6xl mb-4">📋</div>
-                                        <h3 className="text-xl font-medium mb-2">No hay datos disponibles</h3>
-                                        <p>No hay turnos registrados para el período seleccionado</p>
+                            <>
+                                <div className="flex flex-col sm:flex-row justify-between items-center gap-4 p-6 bg-gray-50 border-b">
+                                    <h2 className="text-xl font-bold text-gray-800">
+                                        Detalle de Turnos{personaSeleccionada ? ` - ${personaSeleccionada}` : ''} por Persona
+                                    </h2>
+                                    <div className="flex items-center gap-3">
+                                        <span className="text-sm text-gray-600 font-medium">Mostrar</span>
+                                        <select
+                                            value={itemsPerPage}
+                                            onChange={(e) => {
+                                                setItemsPerPage(Number(e.target.value));
+                                                setCurrentPage(1);
+                                            }}
+                                            className="border border-gray-300 rounded-md px-3 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                        >
+                                            <option value={1}>1</option>
+                                            <option value={3}>3</option>
+                                            <option value={5}>5</option>
+                                            <option value={10}>10</option>
+                                            <option value={15}>15</option>
+                                        </select>
+                                        <span className="text-sm text-gray-600 font-medium">personas por página</span>
                                     </div>
-                                )}
-                            </div>
-                        </CardContent>
+                                </div>
+                                <CardContent className="p-6">
+                                    <div className="space-y-6">
+                                        {(() => {
+                                            const turnosPorUsuario = reporte.detalleTurnos.reduce((acc, turno) => {
+                                                const usuario = turno.usuario || "Sin asignar";
+                                                if (!acc[usuario]) acc[usuario] = [];
+                                                acc[usuario].push(turno);
+                                                return acc;
+                                            }, {});
 
-                        {/* Paginación */}
-                        {reporte && totalPersonas > 0 && (
-                            <div className="flex flex-col sm:flex-row justify-between items-center gap-4 p-6 bg-gray-50 border-t">
-                                <div className="text-sm text-gray-600">
-                                    Mostrando <span className="font-semibold">{startIndex + 1}</span> a <span className="font-semibold">{Math.min(endIndex, totalPersonas)}</span> de <span className="font-semibold">{totalPersonas}</span> personas
-                                    {personaSeleccionada && (
-                                        <span className="ml-3 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
-                                            Filtrado: {personaSeleccionada}
-                                        </span>
-                                    )}
-                                </div>
-                                {totalPages > 1 && (
-                                    <div className="flex items-center gap-1">
-                                        <button
-                                            onClick={goToPrevious}
-                                            disabled={currentPage === 1}
-                                            className={`p-2 rounded-md transition-colors ${currentPage === 1 ? 'text-gray-400 cursor-not-allowed' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'}`}
-                                            title="Página anterior"
-                                        >❮</button>
-                                        {getVisiblePageNumbers().map((pageNumber, index) => (
-                                            <button
-                                                key={index}
-                                                onClick={() => pageNumber !== '...' && goToPage(pageNumber)}
-                                                disabled={pageNumber === '...'}
-                                                className={`px-3 py-1 rounded-md text-sm transition-colors ${pageNumber === currentPage
-                                                    ? 'bg-blue-600 text-white shadow-md'
-                                                    : pageNumber === '...'
-                                                        ? 'text-gray-400 cursor-default'
+                                            return currentPersonas.map(usuario => {
+                                                const turnos = turnosPorUsuario[usuario];
+                                                const totalHoras = turnos.reduce((sum, t) => sum + (t.horas || 0), 0);
+                                                return (
+                                                    <TablaMejorada
+                                                        key={usuario}
+                                                        usuario={usuario}
+                                                        turnos={turnos}
+                                                        totalHoras={totalHoras}
+                                                    />
+                                                );
+                                            });
+                                        })()}
+
+                                        {reporte.detalleTurnos.length === 0 && (
+                                            <div className="text-center py-12 text-gray-500 bg-gray-50 rounded-lg">
+                                                <div className="text-6xl mb-4">📋</div>
+                                                <h3 className="text-xl font-medium mb-2">No hay datos disponibles</h3>
+                                                <p>No hay turnos registrados para el período seleccionado</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                </CardContent>
+
+                                {/* Paginación */}
+                                {reporte && totalPersonas > 0 && (
+                                    <div className="flex flex-col sm:flex-row justify-between items-center gap-4 p-6 bg-gray-50 border-t">
+                                        <div className="text-sm text-gray-600">
+                                            Mostrando <span className="font-semibold">{startIndex + 1}</span> a <span className="font-semibold">{Math.min(endIndex, totalPersonas)}</span> de <span className="font-semibold">{totalPersonas}</span> personas
+                                            {personaSeleccionada && <span className="ml-3 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">Filtrado: {personaSeleccionada}</span>}
+                                        </div>
+
+                                        {totalPages > 1 && (
+                                            <div className="flex items-center gap-1">
+                                                <button
+                                                    onClick={goToPrevious}
+                                                    disabled={currentPage === 1}
+                                                    className={`p-2 rounded-md transition-colors ${currentPage === 1
+                                                        ? 'text-gray-400 cursor-not-allowed'
                                                         : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                                                    }`}
-                                            >{pageNumber}</button>
-                                        ))}
-                                        <button
-                                            onClick={goToNext}
-                                            disabled={currentPage === totalPages}
-                                            className={`p-2 rounded-md transition-colors ${currentPage === totalPages ? 'text-gray-400 cursor-not-allowed' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'}`}
-                                            title="Página siguiente"
-                                        >❯</button>
+                                                        }`}
+                                                    title="Página anterior"
+                                                >
+                                                    ‹
+                                                </button>
+
+                                                {getVisiblePageNumbers().map((pageNumber, index) => (
+                                                    <button
+                                                        key={index}
+                                                        onClick={() => pageNumber !== '...' && goToPage(pageNumber)}
+                                                        disabled={pageNumber === '...'}
+                                                        className={`px-3 py-1 rounded-md text-sm transition-colors ${pageNumber === currentPage
+                                                            ? 'bg-blue-600 text-white shadow-md'
+                                                            : pageNumber === '...'
+                                                                ? 'text-gray-400 cursor-default'
+                                                                : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                                                            }`}
+                                                    >
+                                                        {pageNumber}
+                                                    </button>
+                                                ))}
+
+                                                <button
+                                                    onClick={goToNext}
+                                                    disabled={currentPage === totalPages}
+                                                    className={`p-2 rounded-md transition-colors ${currentPage === totalPages
+                                                        ? 'text-gray-400 cursor-not-allowed'
+                                                        : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                                                        }`}
+                                                    title="Página siguiente"
+                                                >
+                                                    ›
+                                                </button>
+                                            </div>
+                                        )}
                                     </div>
                                 )}
-                            </div>
+                            </>
                         )}
                     </Card>
                 </div>
