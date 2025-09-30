@@ -625,6 +625,3 @@ Este frontend complementa el **Sistema de Gestión de Turnos** del Hospital Univ
 
 **Hospital Universitario San José** - Sistema de Gestión de Turnos (Frontend)
 _Interfaz moderna para la gestión eficiente del talento humano en salud_
-<span style="display:none">[^1][^2]</span>
-
-<div align="center">⁂</div>
