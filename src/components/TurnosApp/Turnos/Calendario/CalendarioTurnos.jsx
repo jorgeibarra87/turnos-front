@@ -1,4 +1,3 @@
-// components/CalendarioTurnos.js
 import React, { useState } from 'react';
 import { Calendar, ChevronLeft, ChevronRight, Eye, Edit, User, Clock, Filter, CalendarClock, Calendar1 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -6,6 +5,7 @@ import { useCalendarioTurnos } from '../Calendario/hooks/useCalendarioTurnos';
 import { useCuadrosTurno } from '../Calendario/hooks/useCuadrosTurno';
 import { useProcesos } from '../Calendario/hooks/useProcesos';
 import { usePerfiles } from '../Calendario/hooks/usePerfiles';
+import SearchableDropdown from '../../Turnos/SearchableDropdown';
 import ModalDetalleTurno from './ModalDetalleTurno';
 
 export default function CalendarioTurnos() {
@@ -18,13 +18,15 @@ export default function CalendarioTurnos() {
         mes: fechaActual.getMonth().toString()
     });
 
+    // Estado para el cuadro seleccionado (para SearchableDropdown)
+    const [selectedCuadro, setSelectedCuadro] = useState(null);
+
     // ESTADO PARA EL MODAL
     const [modalDetalle, setModalDetalle] = useState({
         isOpen: false,
         turno: null,
         cuadroNombre: "",
         equipoNombre: ""
-
     });
 
     // Hooks
@@ -32,6 +34,30 @@ export default function CalendarioTurnos() {
     const { procesos, loading: loadingProcesos } = useProcesos(filtros.cuadroTurno);
     const { perfiles, loading: loadingPerfiles } = usePerfiles(filtros.cuadroTurno);
     const { turnos, loading: loadingTurnos, error } = useCalendarioTurnos(filtros, fechaActual);
+
+    // Función para manejar selección de cuadro con SearchableDropdown
+    const handleCuadroSelect = (cuadro) => {
+        console.log('Cuadro seleccionado:', cuadro);
+        setSelectedCuadro(cuadro);
+        setFiltros({
+            ...filtros,
+            cuadroTurno: cuadro.idCuadroTurno.toString(),
+            proceso: '', // Limpiar filtros dependientes
+            perfil: ''   // Limpiar filtros dependientes
+        });
+    };
+
+    // Función para limpiar selección de cuadro
+    const handleCuadroClear = () => {
+        console.log('Limpiando selección de cuadro');
+        setSelectedCuadro(null);
+        setFiltros({
+            ...filtros,
+            cuadroTurno: '',
+            proceso: '',
+            perfil: ''
+        });
+    };
 
     // Función para calcular duración total del turno
     const calcularDuracionTurno = (horaInicio, horaFin) => {
@@ -92,9 +118,6 @@ export default function CalendarioTurnos() {
 
     // Función para obtener turnos por fecha
     const obtenerTurnosPorFecha = (fechaString) => {
-        //console.log('Buscando turnos para fecha:', fechaString);
-        //console.log('Total turnos disponibles:', turnos.length);
-
         const turnosDelDia = turnos.filter(turno => {
             if (!turno.fechaInicio) return false;
 
@@ -105,14 +128,9 @@ export default function CalendarioTurnos() {
                 fechaTurnoString = turno.fechaInicio;
             }
 
-            const coincide = fechaTurnoString === fechaString;
-            if (coincide) {
-                //console.log(`✓ Turno encontrado para ${fechaString}:`, turno);
-            }
-            return coincide;
+            return fechaTurnoString === fechaString;
         });
 
-        //console.log(`Turnos encontrados para ${fechaString}:`, turnosDelDia);
         return turnosDelDia;
     };
 
@@ -169,15 +187,6 @@ export default function CalendarioTurnos() {
         navigate(`/editar-turno/${turno.idTurno}?cuadroNombre=${encodeURIComponent(cuadroNombre)}&equipoNombre=${encodeURIComponent(nombreEquipo)}`);
     };
 
-    const handleCuadroChange = (e) => {
-        setFiltros({
-            ...filtros,
-            cuadroTurno: e.target.value,
-            proceso: '',
-            perfil: ''
-        });
-    };
-
     const aplicarFiltros = () => {
         console.log('Filtros aplicados:', filtros);
         // Forzar recarga si es necesario
@@ -206,16 +215,12 @@ export default function CalendarioTurnos() {
             {/* Header */}
             <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
                 <div className="flex items-center justify-between mb-6">
-                    <div className="flex items-center justify-center gap-3 rounded-2xl border-b-4  border-primary-green-husj pl-4 pr-4 pb-1 pt-1 mb-4 w-fit mx-2">
+                    <div className="flex items-center justify-center gap-3 rounded-2xl border-b-4 border-primary-green-husj pl-4 pr-4 pb-1 pt-1 mb-4 w-fit mx-2">
                         <Calendar1 size={40} className="text-primary-green-husj" />
                         <h1 className="text-4xl font-extrabold text-gray-800">
                             Calendario de Turnos
                         </h1>
                     </div>
-                    {/* <h1 className="text-3xl font-bold flex items-center gap-2">
-                        <Calendar className="text-blue-600" size={32} />
-                        Calendario de Turnos
-                    </h1> */}
 
                     <div className="flex items-center gap-4">
                         <button onClick={() => navegarMes(-1)} className="p-2 hover:bg-gray-100 rounded-lg">
@@ -231,82 +236,88 @@ export default function CalendarioTurnos() {
                 </div>
 
                 {/* Filtros */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-                    <div>
-                        <label className="block text-sm font-medium mb-1">Cuadro de Turno:</label>
-                        <select
-                            value={filtros.cuadroTurno}
-                            onChange={handleCuadroChange}
-                            className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                        >
-                            <option value="">Selecciona Cuadro Turno</option>
-                            {cuadrosTurno.map(cuadro => (
-                                <option key={cuadro.idCuadroTurno} value={cuadro.idCuadroTurno}>
-                                    {cuadro.nombre}
+                <div className="space-y-2">
+                    {/* Primera fila: Cuadro de Turno y proceso (SearchableDropdown) */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="">
+                            <label className="block text-sm font-medium mb-1">Cuadro de Turno:</label>
+                            <SearchableDropdown
+                                options={cuadrosTurno}
+                                placeholder="Selecciona Cuadro de Turno..."
+                                onSelect={handleCuadroSelect}
+                                onClear={handleCuadroClear}
+                                value={selectedCuadro?.nombre || ""}
+                                displayProperty="nombre"
+                                idProperty="idCuadroTurno"
+                                secondaryProperty="nombreEquipo"
+                                loading={loadingCuadros}
+                                error={null}
+                                className="w-full"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium mb-1">Proceso:</label>
+                            <select
+                                value={filtros.proceso}
+                                onChange={(e) => setFiltros({ ...filtros, proceso: e.target.value })}
+                                className="w-full h-10 px-4 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 box-border"
+                                disabled={!filtros.cuadroTurno || loadingProcesos}
+                            >
+                                <option value="">
+                                    {loadingProcesos ? 'Cargando...' : 'Selecciona Proceso'}
                                 </option>
-                            ))}
-                        </select>
+                                {procesos.map(proceso => (
+                                    <option key={proceso.idProceso || proceso.id} value={proceso.idProceso || proceso.id}>
+                                        {proceso.nombre}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
                     </div>
 
-                    <div>
-                        <label className="block text-sm font-medium mb-1">Proceso:</label>
-                        <select
-                            value={filtros.proceso}
-                            onChange={(e) => setFiltros({ ...filtros, proceso: e.target.value })}
-                            className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                            disabled={!filtros.cuadroTurno || loadingProcesos}
-                        >
-                            <option value="">
-                                {loadingProcesos ? 'Cargando...' : 'Selecciona Proceso'}
-                            </option>
-                            {procesos.map(proceso => (
-                                <option key={proceso.idProceso || proceso.id} value={proceso.idProceso || proceso.id}>
-                                    {proceso.nombre}
+                    {/* Segunda fila:Perfil y Mes */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium mb-1">Perfil:</label>
+                            <select
+                                value={filtros.perfil}
+                                onChange={(e) => setFiltros({ ...filtros, perfil: e.target.value })}
+                                className="w-full h-10 px-4 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 box-border"
+                                disabled={!filtros.cuadroTurno || loadingPerfiles}
+                            >
+                                <option value="">
+                                    {loadingPerfiles ? 'Cargando...' : 'Selecciona Perfil'}
                                 </option>
-                            ))}
-                        </select>
-                    </div>
+                                {perfiles.map(perfil => (
+                                    <option key={perfil.id} value={perfil.nombre}>
+                                        {perfil.nombre}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
 
-                    <div>
-                        <label className="block text-sm font-medium mb-1">Perfil:</label>
-                        <select
-                            value={filtros.perfil}
-                            onChange={(e) => setFiltros({ ...filtros, perfil: e.target.value })}
-                            className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                            disabled={!filtros.cuadroTurno || loadingPerfiles}
-                        >
-                            <option value="">
-                                {loadingPerfiles ? 'Cargando...' : 'Selecciona Perfil'}
-                            </option>
-                            {perfiles.map(perfil => (
-                                <option key={perfil.id} value={perfil.nombre}>
-                                    {perfil.nombre}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium mb-1">Mes:</label>
-                        <select
-                            value={filtros.mes}
-                            onChange={(e) => {
-                                const nuevoMes = parseInt(e.target.value);
-                                const nuevaFecha = new Date(fechaActual);
-                                nuevaFecha.setMonth(nuevoMes);
-                                setFechaActual(nuevaFecha);
-                                setFiltros({ ...filtros, mes: e.target.value });
-                            }}
-                            className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                        >
-                            {meses.map((mes, index) => (
-                                <option key={index} value={index}>{mes}</option>
-                            ))}
-                        </select>
+                        <div>
+                            <label className="block text-sm font-medium mb-1">Mes:</label>
+                            <select
+                                value={filtros.mes}
+                                onChange={(e) => {
+                                    const nuevoMes = parseInt(e.target.value);
+                                    const nuevaFecha = new Date(fechaActual);
+                                    nuevaFecha.setMonth(nuevoMes);
+                                    setFechaActual(nuevaFecha);
+                                    setFiltros({ ...filtros, mes: e.target.value });
+                                }}
+                                className="w-full h-10 px-4 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 box-border"
+                            >
+                                {meses.map((mes, index) => (
+                                    <option key={index} value={index}>{mes}</option>
+                                ))}
+                            </select>
+                        </div>
                     </div>
                 </div>
 
-                <div className="flex gap-2">
+                <div className="flex gap-2 mt-4">
                     <button
                         onClick={aplicarFiltros}
                         className="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-lg flex items-center gap-2"
@@ -335,16 +346,23 @@ export default function CalendarioTurnos() {
                     <h3 className="text-lg font-semibold mb-2">Calendario Turnos de Selección:</h3>
                     <div className="p-1 bg-gray-100 rounded-lg">
                         <span className="font-medium">Cuadro de turno:</span>
-                        <div className="text-sm text-gray-600">
-                            {filtros.cuadroTurno
-                                ? cuadrosTurno.find(c => c.idCuadroTurno.toString() === filtros.cuadroTurno)?.nombre
-                                : 'No seleccionado'
-                            }
+                        <div className="text-sm text-gray-600 mt-1">
+                            {selectedCuadro ? (
+                                <div>
+                                    <div className="font-medium text-blue-700">{selectedCuadro.nombre}</div>
+                                    {selectedCuadro.nombreEquipo && (
+                                        <div className="text-xs text-gray-500">Equipo: {selectedCuadro.nombreEquipo}</div>
+                                    )}
+                                </div>
+                            ) : (
+                                'No seleccionado'
+                            )}
                         </div>
                     </div>
                 </div>
             </div>
 
+            {/* Resto del código del calendario permanece igual... */}
             {/* Calendario */}
             <div className="bg-white rounded-lg shadow-sm overflow-hidden">
                 {/* Header del calendario */}
@@ -424,9 +442,6 @@ export default function CalendarioTurnos() {
                                                         <span className="bg-green-100 text-green-800 rounded text-[10px] font-medium">
                                                             {turno.totalHoras || duracionCalculada}h
                                                         </span>
-                                                        {/* <span className="text-gray-800 font-medium text-[10px] pr-2">
-                                                            {turno.jornada || 'N/A'}
-                                                        </span> */}
                                                         <span
                                                             className={
                                                                 turno.jornada === 'Mañana'
