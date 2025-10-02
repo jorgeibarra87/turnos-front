@@ -216,8 +216,31 @@ export default function CrearContrato() {
     };
 
     const handleGuardarContrato = async () => {
-        if (!contratoData.numContrato.trim()) {
-            setError('El número de contrato es requerido');
+        const erroresValidacion = [];
+
+        if (!contratoData.numContrato?.trim()) {
+            erroresValidacion.push("El número de contrato es obligatorio");
+        }
+
+        if (!contratoData.supervisor?.trim()) {
+            erroresValidacion.push("El supervisor es obligatorio");
+        }
+
+        if (!contratoData.contratista?.trim()) {
+            erroresValidacion.push("El contratista es obligatorio");
+        }
+
+        if (!contratoData.fechaInicio) {
+            erroresValidacion.push("La fecha de inicio es obligatoria");
+        }
+
+        if (!contratoData.fechaTerminacion) {
+            erroresValidacion.push("La fecha de finalización es obligatoria");
+        }
+
+        // Si hay errores de validación, mostrarlos
+        if (erroresValidacion.length > 0) {
+            setError("Por favor, completa los siguientes campos:\n• " + erroresValidacion.join("\n• "));
             return;
         }
 
@@ -235,7 +258,7 @@ export default function CrearContrato() {
                 procesosIds: procesosIds
             };
 
-            //console.log('Datos a enviar:', contratoCompleto); // Para debug
+            //console.log("📤 DATOS COMPLETOS A ENVIAR:", JSON.stringify(contratoCompleto, null, 2));
 
             if (isEditMode) {
                 // Usar apiService

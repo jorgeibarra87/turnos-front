@@ -354,6 +354,21 @@ export default function CrearCuadro() {
                 observaciones: observaciones.trim() || null,
             };
 
+            // LÓGICA PARA MULTIPROCESO
+            if (selectedCategory.toLowerCase() === 'multiproceso') {
+
+                console.log('🔄 Cuadro multiproceso detectado');
+
+                // agregar campo vacío
+                cuadroData.idsProcesosAtencion = []; // Array vacío por defecto
+
+                // redirigir
+                alert('Para cuadros multiproceso, usa la opción específica de multiproceso');
+                navigate('/crearCuadroMulti');
+                setSaving(false);
+                return;
+            }
+
             // Establecer el ID correcto según la categoría
             if (selectedCategory === 'Macroproceso') {
                 cuadroData.idMacroproceso = selectedOption[optionId];
