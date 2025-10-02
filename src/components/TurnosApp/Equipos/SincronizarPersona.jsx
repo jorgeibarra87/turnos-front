@@ -172,7 +172,7 @@ export default function SincronizarPersona({ onClose, onPersonaSincronizada }) {
                 if (response.status === 404) {
                     throw new Error('No se encontraron datos para este documento');
                 } else if (response.status >= 500) {
-                    throw new Error('Error del servidor. Inténtalo más tarde');
+                    throw new Error('Error del servidor, problema inesperado al procesar la solicitud. Inténtalo más tarde');
                 } else {
                     throw new Error(`Error en la consulta: ${response.status}`);
                 }
