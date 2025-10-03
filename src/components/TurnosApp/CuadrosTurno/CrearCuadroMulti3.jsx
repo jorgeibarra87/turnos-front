@@ -13,6 +13,7 @@ export default function CrearCuadroMulti3() {
     const equipoNombre = searchParams.get('equipoNombre');
     const isEditMode = searchParams.get('edit') === 'true';
     const cuadroId = searchParams.get('id');
+    const observaciones = searchParams.get('observaciones') || "";
 
     const [miembros, setMiembros] = useState([]);
     const [procesosData, setProcesosData] = useState([]);
@@ -121,6 +122,7 @@ export default function CrearCuadroMulti3() {
                 mes: isEditMode && cuadroOriginal ? cuadroOriginal.mes : (fechaActual.getMonth() + 1).toString().padStart(2, '0'),
                 turnoExcepcion: isEditMode && cuadroOriginal ? cuadroOriginal.turnoExcepcion : false,
                 idEquipo: parseInt(equipoId),
+                observaciones: observaciones || null,
                 idsProcesosAtencion: procesosIds.map(id => parseInt(id))
             };
 

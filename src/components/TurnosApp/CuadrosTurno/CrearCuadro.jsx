@@ -358,11 +358,7 @@ export default function CrearCuadro() {
             if (selectedCategory.toLowerCase() === 'multiproceso') {
 
                 console.log('🔄 Cuadro multiproceso detectado');
-
-                // agregar campo vacío
                 cuadroData.idsProcesosAtencion = []; // Array vacío por defecto
-
-                // redirigir
                 alert('Para cuadros multiproceso, usa la opción específica de multiproceso');
                 navigate('/crearCuadroMulti');
                 setSaving(false);

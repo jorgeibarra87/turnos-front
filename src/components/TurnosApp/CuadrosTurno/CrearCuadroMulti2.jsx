@@ -16,6 +16,7 @@ export default function SiguientePaso() {
     const [error, setError] = useState(null);
     const [cuadroOriginal, setCuadroOriginal] = useState(null);
     const [loadingCuadro, setLoadingCuadro] = useState(false);
+    const [observaciones, setObservaciones] = useState("");
 
     // Estados para los nombres de los procesos
     const [nombresProcesos, setNombresProcesos] = useState([]);
@@ -32,6 +33,7 @@ export default function SiguientePaso() {
                 // apiCuadroService
                 const cuadroData = await apiCuadroService.cuadros.getById(cuadroId);
                 setCuadroOriginal(cuadroData);
+                setObservaciones(cuadroData.observaciones || "");
 
                 // Preseleccionar el equipo
                 setSelectedEquipo({
@@ -138,7 +140,8 @@ export default function SiguientePaso() {
             categoria: categoria || '',
             procesos: procesos || '',
             equipoId: selectedEquipo.id,
-            equipoNombre: selectedEquipo.nombre
+            equipoNombre: selectedEquipo.nombre,
+            observaciones: observaciones.trim() || ''
         });
 
         if (isEditMode) {
@@ -254,6 +257,22 @@ export default function SiguientePaso() {
                             Equipo seleccionado: {selectedEquipo.nombre}
                         </p>
                     )}
+                </div>
+
+                {/* Observacion */}
+                <div className="w-full">
+                    <label htmlFor="observaciones" className="block text-sm font-medium text-gray-700 mb-2">
+                        Observaciones
+                    </label>
+                    <textarea
+                        id="observaciones"
+                        value={observaciones}
+                        onChange={(e) => setObservaciones(e.target.value)}
+                        placeholder="Escribe aquí observaciones del cuadro..."
+                        rows={3}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm 
+           focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
                 </div>
 
                 <div className='flex justify-center items-center gap-4 mt-4'>

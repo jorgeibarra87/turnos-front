@@ -135,7 +135,7 @@ export default function CrearCuadroMulti() {
                     </div>
                 )}
 
-                <div className='w-full space-y-2'>
+                <div className='space-y-2'>
                     <div className="p-4 border rounded-lg">
                         <h3 className="font-semibold mb-2">Agregar Procesos</h3>
 
@@ -144,7 +144,7 @@ export default function CrearCuadroMulti() {
                         ) : error ? (
                             <p className="text-red-500">Error: {error}</p>
                         ) : (
-                            <div className="flex gap-2">
+                            <div className="space-y-2">
                                 <select
                                     value={selectedProceso}
                                     onChange={(e) => setSelectedProceso(e.target.value)}
