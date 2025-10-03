@@ -273,7 +273,7 @@ export default function PersonasTitulosTable() {
                     titulos={titulos}
                     editando={editando}
                     onClose={() => setShowForm(false)}
-                    onSaved={loadUsuariosTitulos}
+                    onSaved={loadData}
                 />
             )}
         </div>
